@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gcoin/screens/drawer/faq.dart';
 import 'dart:math';
 
 import 'package:gcoin/screens/drawer/refferal_team.dart';
@@ -1953,9 +1954,9 @@ class PiNetworkDrawer extends StatelessWidget {
                   _buildDrawerItem(
                     context,
                     Icons.sports_esports_rounded,
-                    'Games',
+                    'FAQ',
                     false,
-                    null,
+                    () => Get.to(() => FAQPage()),
                   ),
                   _buildDrawerItem(
                     context,
