@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gcoin/screens/homescreen/homescreen.dart';
 import 'package:get/get.dart';
 
 import '../../routes/route.dart';
@@ -58,45 +59,43 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _mainAnimationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _mainAnimationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _mainAnimationController,
-      curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _mainAnimationController,
+        curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
+      ),
+    );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _mainAnimationController,
-      curve: const Interval(0.4, 1.0, curve: Curves.elasticOut),
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _mainAnimationController,
+        curve: const Interval(0.4, 1.0, curve: Curves.elasticOut),
+      ),
+    );
 
-    _floatingAnimation = Tween<double>(
-      begin: -10,
-      end: 10,
-    ).animate(CurvedAnimation(
-      parent: _floatingAnimationController,
-      curve: Curves.easeInOut,
-    ));
+    _floatingAnimation = Tween<double>(begin: -10, end: 10).animate(
+      CurvedAnimation(
+        parent: _floatingAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
 
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.1,
-    ).animate(CurvedAnimation(
-      parent: _pulseAnimationController,
-      curve: Curves.easeInOut,
-    ));
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(
+        parent: _pulseAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
   }
 
   void _startAnimations() {
@@ -136,10 +135,7 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
           ),
         ),
         child: Stack(
-          children: [
-            _buildBackgroundElements(),
-            _buildMainContent(size),
-          ],
+          children: [_buildBackgroundElements(), _buildMainContent(size)],
         ),
       ),
     );
@@ -289,7 +285,9 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
               'Sign in to continue mining G Coins',
               style: TextStyle(
                 fontSize: 16,
-                color: const Color(0xFFCED9CE).withOpacity(0.8), // smallTextColor
+                color: const Color(
+                  0xFFCED9CE,
+                ).withOpacity(0.8), // smallTextColor
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -385,14 +383,13 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
             decoration: InputDecoration(
               hintText: 'Enter your email or username',
               hintStyle: TextStyle(
-                color: const Color(0xFF66BB6A).withOpacity(0.6), // hintTextColor
+                color: const Color(
+                  0xFF66BB6A,
+                ).withOpacity(0.6), // hintTextColor
                 fontSize: 16,
               ),
               prefixIcon: Icon(
@@ -474,10 +471,7 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
             focusNode: _passwordFocusNode,
             obscureText: _obscurePassword,
             textInputAction: TextInputAction.done,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
             decoration: InputDecoration(
               hintText: 'Enter your password',
               hintStyle: TextStyle(
@@ -575,9 +569,10 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
                     borderRadius: BorderRadius.circular(6),
                   ),
                   side: BorderSide(
-                    color: _rememberMe
-                        ? const Color(0xFF7ED321)
-                        : const Color(0xFF2D4A2E),
+                    color:
+                        _rememberMe
+                            ? const Color(0xFF7ED321)
+                            : const Color(0xFF2D4A2E),
                     width: 2,
                   ),
                 ),
@@ -585,10 +580,7 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
               const SizedBox(width: 4),
               const Text(
                 'Remember me',
-                style: TextStyle(
-                  color: Color(0xFFCED9CE),
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Color(0xFFCED9CE), fontSize: 14),
               ),
             ],
           ),
@@ -644,24 +636,25 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        child: _isLoading
-            ? const SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(
-            color: Colors.white,
-            strokeWidth: 2,
-          ),
-        )
-            : const Text(
-          'SIGN IN',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
-        ),
+        child:
+            _isLoading
+                ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+                : const Text(
+                  'SIGN IN',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
       ),
     );
   }
@@ -705,6 +698,7 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
   }
 
   void _handleSignIn() {
+    Get.to(() => PiNetworkHomeScreen());
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
