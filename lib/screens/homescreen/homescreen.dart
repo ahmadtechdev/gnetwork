@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
+import 'package:gcoin/screens/drawer/refferal_team.dart';
+import 'package:get/get.dart';
+
 class PiNetworkHomeScreen extends StatefulWidget {
   @override
   _PiNetworkHomeScreenState createState() => _PiNetworkHomeScreenState();
@@ -1866,7 +1869,6 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
   }
 }
 
-// Enhanced Drawer Widget
 class PiNetworkDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -1927,32 +1929,70 @@ class PiNetworkDrawer extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 children: [
-                  _buildDrawerItem(Icons.home_rounded, 'Home', true),
                   _buildDrawerItem(
+                    context,
+                    Icons.home_rounded,
+                    'Home',
+                    true,
+                    null,
+                  ),
+                  _buildDrawerItem(
+                    context,
                     Icons.account_balance_wallet_rounded,
                     'Wallet',
                     false,
+                    null,
                   ),
                   _buildDrawerItem(
+                    context,
                     Icons.security_rounded,
                     'Security Circle',
                     false,
+                    null,
                   ),
                   _buildDrawerItem(
+                    context,
                     Icons.sports_esports_rounded,
                     'Games',
                     false,
+                    null,
                   ),
-                  _buildDrawerItem(Icons.store_rounded, 'Marketplace', false),
-                  _buildDrawerItem(Icons.person_rounded, 'Profile', false),
-                  _buildDrawerItem(Icons.settings_rounded, 'Settings', false),
+                  _buildDrawerItem(
+                    context,
+                    Icons.store_rounded,
+                    'Referral Team',
+                    false,
+                    () => Get.to(() => ReferralTeamPage()),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.person_rounded,
+                    'Profile',
+                    false,
+                    null,
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.settings_rounded,
+                    'Settings',
+                    false,
+                    null,
+                  ),
                   Divider(color: Color(0xFF7ED321).withOpacity(0.2)),
                   _buildDrawerItem(
+                    context,
                     Icons.help_outline_rounded,
                     'Help & Support',
                     false,
+                    null,
                   ),
-                  _buildDrawerItem(Icons.logout_rounded, 'Logout', false),
+                  _buildDrawerItem(
+                    context,
+                    Icons.logout_rounded,
+                    'Logout',
+                    false,
+                    null,
+                  ),
                 ],
               ),
             ),
@@ -1962,7 +2002,13 @@ class PiNetworkDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerItem(IconData icon, String title, bool isActive) {
+  Widget _buildDrawerItem(
+    BuildContext context,
+    IconData icon,
+    String title,
+    bool isActive,
+    VoidCallback? onTap,
+  ) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
@@ -1985,8 +2031,14 @@ class PiNetworkDrawer extends StatelessWidget {
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
           ),
         ),
-        onTap: () {},
+        onTap:
+            onTap ??
+            () {
+              Navigator.pop(context);
+            },
       ),
     );
   }
 }
+
+// MyColor class reference (you already have this in your project)
