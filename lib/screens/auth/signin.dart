@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gcoin/screens/homescreen/homescreen.dart';
+import 'package:gcoin/utils/app_colors.dart';
 import 'package:get/get.dart';
 
 import '../../routes/route.dart';
@@ -41,19 +42,16 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
   }
 
   void _setupAnimations() {
-    // Main animation controller for entrance animations
     _mainAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
 
-    // Floating animation for background elements
     _floatingAnimationController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     );
 
-    // Pulse animation for logo
     _pulseAnimationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -123,14 +121,14 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
     return Scaffold(
       body: Container(
         height: size.height,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF0D1F0F), // backgroundColor
-              Color(0xFF1B2E1C), // appBarColor
-              Color(0xFF2D4A2E), // fieldDisableBorderColor
+              MyColor.backgroundColor,
+              MyColor.appBarColor,
+              MyColor.fieldDisableBorderColor,
             ],
           ),
         ),
@@ -144,35 +142,13 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
   Widget _buildBackgroundElements() {
     return Stack(
       children: [
-        // Floating orbs
+        // Floating orbs - reduced size for compactness
         AnimatedBuilder(
           animation: _floatingAnimation,
           builder: (context, child) {
             return Positioned(
-              top: 100 + _floatingAnimation.value,
-              right: 50,
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF7ED321).withOpacity(0.3),
-                      const Color(0xFF7ED321).withOpacity(0.1),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        AnimatedBuilder(
-          animation: _floatingAnimation,
-          builder: (context, child) {
-            return Positioned(
-              bottom: 200 - _floatingAnimation.value,
-              left: 30,
+              top: 80 + _floatingAnimation.value,
+              right: 40,
               child: Container(
                 width: 60,
                 height: 60,
@@ -180,8 +156,8 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF4CAF50).withOpacity(0.4),
-                      const Color(0xFF4CAF50).withOpacity(0.1),
+                      MyColor.gCoinPrimary.withOpacity(0.3),
+                      MyColor.gCoinPrimary.withOpacity(0.1),
                     ],
                   ),
                 ),
@@ -189,18 +165,40 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
             );
           },
         ),
-        // Mining pattern background
+        AnimatedBuilder(
+          animation: _floatingAnimation,
+          builder: (context, child) {
+            return Positioned(
+              bottom: 150 - _floatingAnimation.value,
+              left: 25,
+              child: Container(
+                width: 45,
+                height: 45,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      MyColor.gCoinSecondary.withOpacity(0.4),
+                      MyColor.gCoinSecondary.withOpacity(0.1),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        // Reduced mining pattern background
         Positioned(
-          top: -50,
-          right: -50,
+          top: -30,
+          right: -30,
           child: Container(
-            width: 200,
-            height: 200,
+            width: 150,
+            height: 150,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: const Color(0xFF7ED321).withOpacity(0.1),
-                width: 2,
+                color: MyColor.gCoinPrimary.withOpacity(0.1),
+                width: 1.5,
               ),
             ),
           ),
@@ -212,16 +210,16 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
   Widget _buildMainContent(Size size) {
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           children: [
-            SizedBox(height: size.height * 0.08),
+            SizedBox(height: size.height * 0.05), // Reduced from 0.08
             _buildHeader(),
-            SizedBox(height: size.height * 0.06),
+            SizedBox(height: size.height * 0.04), // Reduced from 0.06
             _buildSignInCard(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16), // Reduced from 24
             _buildSignUpOption(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16), // Reduced from 20
           ],
         ),
       ),
@@ -235,59 +233,52 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
         position: _slideAnimation,
         child: Column(
           children: [
-            // Animated Logo
+            // Animated Logo - reduced size
             AnimatedBuilder(
               animation: _pulseAnimation,
               builder: (context, child) {
                 return Transform.scale(
                   scale: _pulseAnimation.value,
                   child: Container(
-                    width: 100,
-                    height: 100,
+                    width: 80, // Reduced from 100
+                    height: 80, // Reduced from 100
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF7ED321), // gCoinPrimary
-                          Color(0xFF4CAF50), // gCoinSecondary
-                        ],
-                      ),
+                      gradient: MyColor.getGCoinPrimaryGradient(),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF7ED321).withOpacity(0.4),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+                          color: MyColor.gCoinPrimary.withOpacity(0.4),
+                          blurRadius: 16, // Reduced from 20
+                          offset: const Offset(0, 6), // Reduced from 8
                         ),
                       ],
                     ),
                     child: const Icon(
                       Icons.monetization_on_rounded,
-                      size: 50,
+                      size: 40, // Reduced from 50
                       color: Colors.white,
                     ),
                   ),
                 );
               },
             ),
-            const SizedBox(height: 24),
-            // Welcome Text
-            const Text(
+            const SizedBox(height: 18), // Reduced from 24
+            // Welcome Text - reduced size
+            Text(
               'Welcome Back',
               style: TextStyle(
-                fontSize: 32,
+                fontSize: 28, // Reduced from 32
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFE8F5E8), // headingTextColor
+                color: MyColor.headingTextColor,
                 letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6), // Reduced from 8
             Text(
               'Sign in to continue mining G Coins',
               style: TextStyle(
-                fontSize: 16,
-                color: const Color(
-                  0xFFCED9CE,
-                ).withOpacity(0.8), // smallTextColor
+                fontSize: 14, // Reduced from 16
+                color: MyColor.smallTextColor.withOpacity(0.8),
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -303,24 +294,24 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(
-          padding: const EdgeInsets.all(28),
+          padding: const EdgeInsets.all(20), // Reduced from 28
           decoration: BoxDecoration(
-            color: const Color(0xFF1B2E1C), // cardBgColor
-            borderRadius: BorderRadius.circular(24),
+            color: MyColor.cardBgColor,
+            borderRadius: BorderRadius.circular(20), // Reduced from 24
             border: Border.all(
-              color: const Color(0xFF388E3C).withOpacity(0.3), // borderColor
+              color: MyColor.cardBorderColor.withOpacity(0.3),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF7ED321).withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: MyColor.gCoinPrimary.withOpacity(0.1),
+                blurRadius: 16, // Reduced from 20
+                offset: const Offset(0, 6), // Reduced from 8
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 30,
-                offset: const Offset(0, 15),
+                color: MyColor.gCoinShadow,
+                blurRadius: 25, // Reduced from 30
+                offset: const Offset(0, 12), // Reduced from 15
               ),
             ],
           ),
@@ -329,21 +320,21 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
+                Text(
                   'Sign In',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 22, // Reduced from 24
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFE8F5E8), // headingTextColor
+                    color: MyColor.headingTextColor,
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24), // Reduced from 32
                 _buildEmailField(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16), // Reduced from 20
                 _buildPasswordField(),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16), // Reduced from 20
                 _buildRememberMeAndForgotPassword(),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24), // Reduced from 32
                 _buildSignInButton(),
               ],
             ),
@@ -357,22 +348,22 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Email or Username',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13, // Reduced from 14
             fontWeight: FontWeight.w500,
-            color: Color(0xFFA5D6A7), // labelTextColor
+            color: MyColor.labelTextColor,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6), // Reduced from 8
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14), // Reduced from 16
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF7ED321).withOpacity(0.1),
-                blurRadius: 8,
+                color: MyColor.gCoinPrimary.withOpacity(0.1),
+                blurRadius: 6, // Reduced from 8
                 offset: const Offset(0, 2),
               ),
             ],
@@ -383,51 +374,49 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
-            style: const TextStyle(color: Colors.white, fontSize: 16),
+            style: TextStyle(color: MyColor.getInputTextColor(), fontSize: 15), // Reduced from 16
             decoration: InputDecoration(
               hintText: 'Enter your email or username',
               hintStyle: TextStyle(
-                color: const Color(
-                  0xFF66BB6A,
-                ).withOpacity(0.6), // hintTextColor
-                fontSize: 16,
+                color: MyColor.hintTextColor.withOpacity(0.6),
+                fontSize: 15, // Reduced from 16
               ),
               prefixIcon: Icon(
                 Icons.person_outline_rounded,
-                color: const Color(0xFF7ED321).withOpacity(0.7),
-                size: 22,
+                color: MyColor.gCoinPrimary.withOpacity(0.7),
+                size: 20, // Reduced from 22
               ),
               filled: true,
-              fillColor: const Color(0xFF1B2E1C), // fieldFillColor
+              fillColor: MyColor.fieldFillColor,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14), // Reduced from 16
                 borderSide: BorderSide(
-                  color: const Color(0xFF2D4A2E).withOpacity(0.5),
+                  color: MyColor.fieldDisableBorderColor.withOpacity(0.5),
                 ),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14), // Reduced from 16
                 borderSide: BorderSide(
-                  color: const Color(0xFF2D4A2E).withOpacity(0.5),
+                  color: MyColor.fieldDisableBorderColor.withOpacity(0.5),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(
-                  color: Color(0xFF7ED321), // fieldEnableBorderColor
+                borderRadius: BorderRadius.circular(14), // Reduced from 16
+                borderSide: BorderSide(
+                  color: MyColor.fieldEnableBorderColor,
                   width: 2,
                 ),
               ),
               errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE53935), // colorRed
+                borderRadius: BorderRadius.circular(14), // Reduced from 16
+                borderSide: BorderSide(
+                  color: MyColor.colorRed,
                   width: 2,
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
+                horizontal: 14, // Reduced from 16
+                vertical: 14, // Reduced from 16
               ),
             ),
             validator: (value) {
@@ -446,22 +435,22 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Password',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13, // Reduced from 14
             fontWeight: FontWeight.w500,
-            color: Color(0xFFA5D6A7), // labelTextColor
+            color: MyColor.labelTextColor,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6), // Reduced from 8
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14), // Reduced from 16
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF7ED321).withOpacity(0.1),
-                blurRadius: 8,
+                color: MyColor.gCoinPrimary.withOpacity(0.1),
+                blurRadius: 6, // Reduced from 8
                 offset: const Offset(0, 2),
               ),
             ],
@@ -471,17 +460,17 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
             focusNode: _passwordFocusNode,
             obscureText: _obscurePassword,
             textInputAction: TextInputAction.done,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
+            style: TextStyle(color: MyColor.getInputTextColor(), fontSize: 15), // Reduced from 16
             decoration: InputDecoration(
               hintText: 'Enter your password',
               hintStyle: TextStyle(
-                color: const Color(0xFF66BB6A).withOpacity(0.6),
-                fontSize: 16,
+                color: MyColor.hintTextColor.withOpacity(0.6),
+                fontSize: 15, // Reduced from 16
               ),
               prefixIcon: Icon(
                 Icons.lock_outline_rounded,
-                color: const Color(0xFF7ED321).withOpacity(0.7),
-                size: 22,
+                color: MyColor.gCoinPrimary.withOpacity(0.7),
+                size: 20, // Reduced from 22
               ),
               suffixIcon: IconButton(
                 onPressed: () {
@@ -493,41 +482,41 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
                   _obscurePassword
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
-                  color: const Color(0xFF66BB6A).withOpacity(0.7),
-                  size: 22,
+                  color: MyColor.hintTextColor.withOpacity(0.7),
+                  size: 20, // Reduced from 22
                 ),
               ),
               filled: true,
-              fillColor: const Color(0xFF1B2E1C),
+              fillColor: MyColor.fieldFillColor,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14), // Reduced from 16
                 borderSide: BorderSide(
-                  color: const Color(0xFF2D4A2E).withOpacity(0.5),
+                  color: MyColor.fieldDisableBorderColor.withOpacity(0.5),
                 ),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14), // Reduced from 16
                 borderSide: BorderSide(
-                  color: const Color(0xFF2D4A2E).withOpacity(0.5),
+                  color: MyColor.fieldDisableBorderColor.withOpacity(0.5),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(
-                  color: Color(0xFF7ED321),
+                borderRadius: BorderRadius.circular(14), // Reduced from 16
+                borderSide: BorderSide(
+                  color: MyColor.fieldEnableBorderColor,
                   width: 2,
                 ),
               ),
               errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE53935),
+                borderRadius: BorderRadius.circular(14), // Reduced from 16
+                borderSide: BorderSide(
+                  color: MyColor.colorRed,
                   width: 2,
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
+                horizontal: 14, // Reduced from 16
+                vertical: 14, // Reduced from 16
               ),
             ),
             validator: (value) {
@@ -546,16 +535,16 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
   }
 
   Widget _buildRememberMeAndForgotPassword() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: 24,
-                height: 24,
+                width: 20, // Reduced from 24
+                height: 20, // Reduced from 24
                 child: Checkbox(
                   value: _rememberMe,
                   onChanged: (value) {
@@ -563,98 +552,91 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
                       _rememberMe = value ?? false;
                     });
                   },
-                  activeColor: const Color(0xFF7ED321),
-                  checkColor: Colors.white,
+                  activeColor: MyColor.gCoinPrimary,
+                  checkColor: MyColor.colorWhite,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(5), // Reduced from 6
                   ),
                   side: BorderSide(
-                    color:
-                        _rememberMe
-                            ? const Color(0xFF7ED321)
-                            : const Color(0xFF2D4A2E),
+                    color: _rememberMe ? MyColor.gCoinPrimary : MyColor.fieldDisableBorderColor,
                     width: 2,
                   ),
                 ),
               ),
               const SizedBox(width: 4),
-              const Text(
+              Text(
                 'Remember me',
-                style: TextStyle(color: Color(0xFFCED9CE), fontSize: 14),
+                style: TextStyle(
+                  color: MyColor.smallTextColor,
+                  fontSize: 13, // Reduced from 14
+                ),
               ),
             ],
           ),
-          TextButton(
-            onPressed: () {
-              // Handle forgot password
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Forgot password functionality'),
-                  backgroundColor: Color(0xFF7ED321),
-                ),
-              );
-            },
-            child: const Text(
-              'Forgot Password?',
-              style: TextStyle(
-                color: Color(0xFF7ED321),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+        ),
+        TextButton(
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Forgot password functionality'),
+                backgroundColor: MyColor.gCoinPrimary,
               ),
+            );
+          },
+          child: Text(
+            'Forgot Password?',
+            style: TextStyle(
+              color: MyColor.gCoinPrimary,
+              fontSize: 13, // Reduced from 14
+              fontWeight: FontWeight.w500,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildSignInButton() {
     return Container(
-      height: 56,
+      height: 50, // Reduced from 56
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF7ED321), // gCoinPrimary
-            Color(0xFF4CAF50), // gCoinSecondary
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
+        gradient: MyColor.getGCoinPrimaryGradient(),
+        borderRadius: BorderRadius.circular(14), // Reduced from 16
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF7ED321).withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: MyColor.gCoinPrimary.withOpacity(0.4),
+            blurRadius: 10, // Reduced from 12
+            offset: const Offset(0, 5), // Reduced from 6
           ),
         ],
       ),
       child: ElevatedButton(
         onPressed: _isLoading ? null : _handleSignIn,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
+          backgroundColor: MyColor.transparentColor,
+          shadowColor: MyColor.transparentColor,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14), // Reduced from 16
           ),
         ),
-        child:
-            _isLoading
-                ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-                : const Text(
-                  'SIGN IN',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
+        child: _isLoading
+            ? SizedBox(
+          width: 20, // Reduced from 24
+          height: 20, // Reduced from 24
+          child: CircularProgressIndicator(
+            color: MyColor.colorWhite,
+            strokeWidth: 2,
+          ),
+        )
+            : Text(
+          'SIGN IN',
+          style: TextStyle(
+            color: MyColor.colorWhite,
+            fontSize: 15, // Reduced from 16
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
       ),
     );
   }
@@ -668,26 +650,25 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
           Text(
             "Don't have an account? ",
             style: TextStyle(
-              color: const Color(0xFFCED9CE).withOpacity(0.8),
-              fontSize: 16,
+              color: MyColor.smallTextColor.withOpacity(0.8),
+              fontSize: 14, // Reduced from 16
             ),
           ),
           TextButton(
             onPressed: () {
-              // Handle sign up navigation
               Get.toNamed(RouteHelper.signup);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Navigate to Sign Up screen'),
-                  backgroundColor: Color(0xFF7ED321),
+                SnackBar(
+                  content: const Text('Navigate to Sign Up screen'),
+                  backgroundColor: MyColor.gCoinPrimary,
                 ),
               );
             },
-            child: const Text(
+            child: Text(
               'Sign Up',
               style: TextStyle(
-                color: Color(0xFF7ED321),
-                fontSize: 16,
+                color: MyColor.gCoinPrimary,
+                fontSize: 14, // Reduced from 16
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -711,9 +692,9 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Sign in successful!'),
-            backgroundColor: Color(0xFF4CAF50),
+          SnackBar(
+            content: const Text('Sign in successful!'),
+            backgroundColor: MyColor.gCoinSuccess,
           ),
         );
       });

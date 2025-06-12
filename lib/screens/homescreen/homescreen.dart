@@ -237,7 +237,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
 
             SizedBox(height: 32),
 
-            // Pi Balance Section with scale animation
+            // G Balance Section with scale animation
             ScaleTransition(
               scale: _scaleAnimation,
               child: AnimatedBuilder(
@@ -519,7 +519,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     ),
                   ),
                   Text(
-                    'in the Pi Ecosystem',
+                    'in the G Network Ecosystem',
                     style: TextStyle(
                       color: Color(0xFF7ED321),
                       fontSize: 18,
@@ -605,7 +605,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                   SizedBox(height: 24),
 
                   Text(
-                    'Build games on Pi &',
+                    'Build games on G Network &',
                     style: TextStyle(
                       color: Color(0xFFCED9CE),
                       fontSize: 16,
@@ -1907,7 +1907,7 @@ class PiNetworkDrawer extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Pi Network',
+                        'G Network',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,

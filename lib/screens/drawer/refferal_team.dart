@@ -297,7 +297,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
               Icon(Icons.warning_rounded, color: Colors.red, size: 24),
               SizedBox(width: 8),
               Text(
-                'You are at risk of losing Pi!',
+                'You are at risk of losing G Coin!',
                 style: TextStyle(
                   color: Colors.red,
                   fontSize: 18,
@@ -308,7 +308,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
           ),
           SizedBox(height: 12),
           Text(
-            'If your Referral and Security Team members don\'t finish the Mainnet Checklist by the Grace Period deadline, you will lose some bonus Pi attributed to their contributions. If they only migrate the balance within their 6-month rolling window, you\'ll only receive bonuses contributed by them within that period.',
+            'If your Referral and Security Team members don\'t finish the Mainnet Checklist by the Grace Period deadline, you will lose some bonus G Network attributed to their contributions. If they only migrate the balance within their 6-month rolling window, you\'ll only receive bonuses contributed by them within that period.',
             style: TextStyle(
               color: MyColor.getTextColor(),
               fontSize: 14,
