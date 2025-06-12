@@ -292,19 +292,23 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.warning_rounded, color: Colors.red, size: 24),
-              SizedBox(width: 8),
-              Text(
-                'You are at risk of losing G Coin!',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+
+              children: [
+                Icon(Icons.warning_rounded, color: Colors.red, size: 24),
+                SizedBox(width: 8),
+                Text(
+                  'You are at risk of losing G Coin!',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           SizedBox(height: 12),
           Text(

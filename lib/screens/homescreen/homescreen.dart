@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:gcoin/screens/drawer/faq.dart';
+import 'package:gcoin/screens/drawer/mineg.dart';
+import 'package:gcoin/screens/drawer/node.dart';
 import 'package:gcoin/screens/drawer/profile.dart';
 import 'dart:math';
 
 import 'package:gcoin/screens/drawer/refferal_team.dart';
+import 'package:gcoin/screens/drawer/support.dart';
 import 'package:get/get.dart';
 
 class PiNetworkHomeScreen extends StatefulWidget {
@@ -1965,6 +1968,27 @@ class GNetworkDrawer extends StatelessWidget {
                     'Referral Team',
                     false,
                     () => Get.to(() => ReferralTeamPage()),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.person_rounded,
+                    'Mine g',
+                    false,
+                          () => Get.to(() => MineGScreen()),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.person_rounded,
+                    'Node',
+                    false,
+                          () => Get.to(() => GNodeVerificationScreen()),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.person_rounded,
+                    'Support',
+                    false,
+                          () => Get.to(() => ModernSupportScreen()),
                   ),
                   _buildDrawerItem(
                     context,
