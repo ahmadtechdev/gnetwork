@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gcoin/screens/drawer/faq.dart';
+import 'package:gcoin/screens/drawer/profile.dart';
 import 'dart:math';
 
 import 'package:gcoin/screens/drawer/refferal_team.dart';
@@ -100,7 +101,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF0D1F0F),
-      drawer: PiNetworkDrawer(),
+      drawer: GNetworkDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -1870,7 +1871,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
   }
 }
 
-class PiNetworkDrawer extends StatelessWidget {
+class GNetworkDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -1970,7 +1971,7 @@ class PiNetworkDrawer extends StatelessWidget {
                     Icons.person_rounded,
                     'Profile',
                     false,
-                    null,
+                          () => Get.to(() => ModernProfileScreen()),
                   ),
                   _buildDrawerItem(
                     context,
