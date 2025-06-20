@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:gcoin/screens/auth/signup/signup_controller.dart';
+import 'package:get/get.dart';
 
 class GCoinSignUpScreen extends StatefulWidget {
   const GCoinSignUpScreen({super.key});
@@ -9,6 +11,8 @@ class GCoinSignUpScreen extends StatefulWidget {
 
 class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
     with TickerProviderStateMixin {
+  final SignUpController _signUpController = Get.put(SignUpController());
+  final _referByController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -60,45 +64,43 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _mainAnimationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _mainAnimationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _mainAnimationController,
-      curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _mainAnimationController,
+        curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
+      ),
+    );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _mainAnimationController,
-      curve: const Interval(0.4, 1.0, curve: Curves.elasticOut),
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _mainAnimationController,
+        curve: const Interval(0.4, 1.0, curve: Curves.elasticOut),
+      ),
+    );
 
-    _floatingAnimation = Tween<double>(
-      begin: -10,
-      end: 10,
-    ).animate(CurvedAnimation(
-      parent: _floatingAnimationController,
-      curve: Curves.easeInOut,
-    ));
+    _floatingAnimation = Tween<double>(begin: -10, end: 10).animate(
+      CurvedAnimation(
+        parent: _floatingAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
 
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.1,
-    ).animate(CurvedAnimation(
-      parent: _pulseAnimationController,
-      curve: Curves.easeInOut,
-    ));
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(
+        parent: _pulseAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
   }
 
   void _startAnimations() {
@@ -142,10 +144,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
           ),
         ),
         child: Stack(
-          children: [
-            _buildBackgroundElements(),
-            _buildMainContent(size),
-          ],
+          children: [_buildBackgroundElements(), _buildMainContent(size)],
         ),
       ),
     );
@@ -310,7 +309,9 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
               'Create your account and start mining',
               style: TextStyle(
                 fontSize: 16,
-                color: const Color(0xFFCED9CE).withOpacity(0.8), // smallTextColor
+                color: const Color(
+                  0xFFCED9CE,
+                ).withOpacity(0.8), // smallTextColor
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -328,10 +329,10 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: const Color(0xFF1B2E1C), // cardBgColor
+            color: const Color(0xFF1B2E1C),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: const Color(0xFF388E3C).withOpacity(0.3), // borderColor
+              color: const Color(0xFF388E3C).withOpacity(0.3),
               width: 1,
             ),
             boxShadow: [
@@ -357,7 +358,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFE8F5E8), // headingTextColor
+                    color: Color(0xFFE8F5E8),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -368,6 +369,8 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
                 _buildPasswordField(),
                 const SizedBox(height: 20),
                 _buildConfirmPasswordField(),
+                const SizedBox(height: 20),
+                _buildReferByField(), // Add this new field
                 const SizedBox(height: 20),
                 _buildTermsAndConditions(),
                 const SizedBox(height: 32),
@@ -409,14 +412,13 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
             focusNode: _nameFocusNode,
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) => _emailFocusNode.requestFocus(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
             decoration: InputDecoration(
               hintText: 'Enter your full name',
               hintStyle: TextStyle(
-                color: const Color(0xFF66BB6A).withOpacity(0.6), // hintTextColor
+                color: const Color(
+                  0xFF66BB6A,
+                ).withOpacity(0.6), // hintTextColor
                 fontSize: 16,
               ),
               prefixIcon: Icon(
@@ -472,6 +474,77 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
     );
   }
 
+  Widget _buildReferByField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Referral Code (Optional)',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFFA5D6A7),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF7ED321).withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: _referByController,
+            textInputAction: TextInputAction.next,
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+            decoration: InputDecoration(
+              hintText: 'Enter referral code if any',
+              hintStyle: TextStyle(
+                color: const Color(0xFF66BB6A).withOpacity(0.6),
+                fontSize: 16,
+              ),
+              prefixIcon: Icon(
+                Icons.person_add_alt_1_outlined,
+                color: const Color(0xFF7ED321).withOpacity(0.7),
+                size: 22,
+              ),
+              filled: true,
+              fillColor: const Color(0xFF1B2E1C),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: const Color(0xFF2D4A2E).withOpacity(0.5),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: const Color(0xFF2D4A2E).withOpacity(0.5),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: Color(0xFF7ED321),
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildEmailField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -502,14 +575,13 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
             decoration: InputDecoration(
               hintText: 'Enter your email address',
               hintStyle: TextStyle(
-                color: const Color(0xFF66BB6A).withOpacity(0.6), // hintTextColor
+                color: const Color(
+                  0xFF66BB6A,
+                ).withOpacity(0.6), // hintTextColor
                 fontSize: 16,
               ),
               prefixIcon: Icon(
@@ -554,7 +626,9 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
               if (value == null || value.isEmpty) {
                 return 'Please enter your email address';
               }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+              if (!RegExp(
+                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+              ).hasMatch(value)) {
                 return 'Please enter a valid email address';
               }
               return null;
@@ -595,10 +669,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
             obscureText: _obscurePassword,
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) => _confirmPasswordFocusNode.requestFocus(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
             decoration: InputDecoration(
               hintText: 'Create a password',
               hintStyle: TextStyle(
@@ -704,10 +775,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
             focusNode: _confirmPasswordFocusNode,
             obscureText: _obscureConfirmPassword,
             textInputAction: TextInputAction.done,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
             decoration: InputDecoration(
               hintText: 'Confirm your password',
               hintStyle: TextStyle(
@@ -801,9 +869,10 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
               borderRadius: BorderRadius.circular(6),
             ),
             side: BorderSide(
-              color: _acceptTerms
-                  ? const Color(0xFF7ED321)
-                  : const Color(0xFF2D4A2E),
+              color:
+                  _acceptTerms
+                      ? const Color(0xFF7ED321)
+                      : const Color(0xFF2D4A2E),
               width: 2,
             ),
           ),
@@ -871,53 +940,77 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
   }
 
   Widget _buildSignUpButton() {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF7ED321), // gCoinPrimary
-            Color(0xFF4CAF50), // gCoinSecondary
+    return Obx(() {
+      return Container(
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF7ED321), Color(0xFF4CAF50)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF7ED321).withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF7ED321).withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+        child: ElevatedButton(
+          onPressed: _signUpController.isLoading.value ? null : _handleSignUp,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _handleSignUp,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          child:
+              _signUpController.isLoading.value
+                  ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                  : const Text(
+                    'CREATE ACCOUNT',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
         ),
-        child: _isLoading
-            ? const SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(
-            color: Colors.white,
-            strokeWidth: 2,
-          ),
-        )
-            : const Text(
-          'CREATE ACCOUNT',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
-        ),
-      ),
-    );
+      );
+    });
+  }
+
+  void _handleSignUp() {
+    if (_formKey.currentState!.validate()) {
+      if (!_acceptTerms) {
+        Get.snackbar(
+          'Error',
+          'Please accept the Terms & Conditions',
+          backgroundColor: const Color(0xFFE53935),
+        );
+        return;
+      }
+
+      _signUpController.registerUser(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        username:
+            _emailController.text
+                .trim(), // You might want to add a separate username field
+        password: _passwordController.text.trim(),
+        confirmPassword: _confirmPasswordController.text.trim(),
+        referBy: _referByController.text.trim(),
+      );
+    }
   }
 
   Widget _buildSignInOption() {
@@ -950,40 +1043,5 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
         ],
       ),
     );
-  }
-
-  void _handleSignUp() {
-    if (_formKey.currentState!.validate()) {
-      if (!_acceptTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please accept the Terms & Conditions'),
-            backgroundColor: Color(0xFFE53935),
-          ),
-        );
-        return;
-      }
-
-      setState(() {
-        _isLoading = true;
-      });
-
-      // Simulate API call
-      Future.delayed(const Duration(seconds: 2), () {
-        setState(() {
-          _isLoading = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Account created successfully!'),
-            backgroundColor: Color(0xFF4CAF50),
-          ),
-        );
-
-        // Navigate back to sign in or to main app
-        Navigator.pop(context);
-      });
-    }
   }
 }

@@ -1,7 +1,7 @@
-import 'package:gcoin/screens/auth/signup.dart';
+import 'package:gcoin/screens/auth/signup/signup.dart';
 import 'package:get/get.dart';
 
-import '../screens/auth/signin.dart';
+import '../screens/auth/signin/signin.dart';
 import '../screens/onbroading/onbroading.dart';
 
 class RouteHelper {

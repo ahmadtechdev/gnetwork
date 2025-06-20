@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:gcoin/screens/auth/signin/signin_controller.dart';
 import 'package:gcoin/screens/homescreen/homescreen.dart';
 import 'package:gcoin/utils/app_colors.dart';
 import 'package:get/get.dart';
 
-import '../../routes/route.dart';
+import '../../../routes/route.dart';
 
 class GCoinSignInScreen extends StatefulWidget {
   const GCoinSignInScreen({super.key});
@@ -14,6 +15,7 @@ class GCoinSignInScreen extends StatefulWidget {
 
 class _GCoinSignInScreenState extends State<GCoinSignInScreen>
     with TickerProviderStateMixin {
+  final SignInController _signInController = Get.put(SignInController());
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -374,7 +376,10 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
-            style: TextStyle(color: MyColor.getInputTextColor(), fontSize: 15), // Reduced from 16
+            style: TextStyle(
+              color: MyColor.colorWhite,
+              fontSize: 15,
+            ), // Reduced from 16
             decoration: InputDecoration(
               hintText: 'Enter your email or username',
               hintStyle: TextStyle(
@@ -409,10 +414,7 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14), // Reduced from 16
-                borderSide: BorderSide(
-                  color: MyColor.colorRed,
-                  width: 2,
-                ),
+                borderSide: BorderSide(color: MyColor.colorRed, width: 2),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 14, // Reduced from 16
@@ -460,7 +462,10 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
             focusNode: _passwordFocusNode,
             obscureText: _obscurePassword,
             textInputAction: TextInputAction.done,
-            style: TextStyle(color: MyColor.getInputTextColor(), fontSize: 15), // Reduced from 16
+            style: TextStyle(
+              color: MyColor.colorWhite,
+              fontSize: 15,
+            ), // Reduced from 16
             decoration: InputDecoration(
               hintText: 'Enter your password',
               hintStyle: TextStyle(
@@ -509,10 +514,7 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14), // Reduced from 16
-                borderSide: BorderSide(
-                  color: MyColor.colorRed,
-                  width: 2,
-                ),
+                borderSide: BorderSide(color: MyColor.colorRed, width: 2),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 14, // Reduced from 16
@@ -543,51 +545,50 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: 20, // Reduced from 24
-                height: 20, // Reduced from 24
-                child: Checkbox(
-                  value: _rememberMe,
-                  onChanged: (value) {
-                    setState(() {
-                      _rememberMe = value ?? false;
-                    });
-                  },
-                  activeColor: MyColor.gCoinPrimary,
-                  checkColor: MyColor.colorWhite,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5), // Reduced from 6
-                  ),
-                  side: BorderSide(
-                    color: _rememberMe ? MyColor.gCoinPrimary : MyColor.fieldDisableBorderColor,
-                    width: 2,
+                width: 20,
+                height: 20,
+                child: Obx(
+                  () => Checkbox(
+                    value: _signInController.rememberMe.value,
+                    onChanged: (value) {
+                      _signInController.rememberMe.value = value ?? false;
+                    },
+                    activeColor: MyColor.gCoinPrimary,
+                    checkColor: MyColor.colorWhite,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    side: BorderSide(
+                      color:
+                          _signInController.rememberMe.value
+                              ? MyColor.gCoinPrimary
+                              : MyColor.fieldDisableBorderColor,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 4),
               Text(
                 'Remember me',
-                style: TextStyle(
-                  color: MyColor.smallTextColor,
-                  fontSize: 13, // Reduced from 14
-                ),
+                style: TextStyle(color: MyColor.smallTextColor, fontSize: 13),
               ),
             ],
           ),
         ),
         TextButton(
           onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Forgot password functionality'),
-                backgroundColor: MyColor.gCoinPrimary,
-              ),
+            Get.snackbar(
+              'Forgot Password',
+              'Functionality coming soon',
+              backgroundColor: MyColor.gCoinPrimary,
             );
           },
           child: Text(
             'Forgot Password?',
             style: TextStyle(
               color: MyColor.gCoinPrimary,
-              fontSize: 13, // Reduced from 14
+              fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -597,48 +598,51 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
   }
 
   Widget _buildSignInButton() {
-    return Container(
-      height: 50, // Reduced from 56
-      decoration: BoxDecoration(
-        gradient: MyColor.getGCoinPrimaryGradient(),
-        borderRadius: BorderRadius.circular(14), // Reduced from 16
-        boxShadow: [
-          BoxShadow(
-            color: MyColor.gCoinPrimary.withOpacity(0.4),
-            blurRadius: 10, // Reduced from 12
-            offset: const Offset(0, 5), // Reduced from 6
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _handleSignIn,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: MyColor.transparentColor,
-          shadowColor: MyColor.transparentColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14), // Reduced from 16
-          ),
+    return Obx(() {
+      return Container(
+        height: 50,
+        decoration: BoxDecoration(
+          gradient: MyColor.getGCoinPrimaryGradient(),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: MyColor.gCoinPrimary.withOpacity(0.4),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
-        child: _isLoading
-            ? SizedBox(
-          width: 20, // Reduced from 24
-          height: 20, // Reduced from 24
-          child: CircularProgressIndicator(
-            color: MyColor.colorWhite,
-            strokeWidth: 2,
+        child: ElevatedButton(
+          onPressed: _signInController.isLoading.value ? null : _handleSignIn,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: MyColor.transparentColor,
+            shadowColor: MyColor.transparentColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
           ),
-        )
-            : Text(
-          'SIGN IN',
-          style: TextStyle(
-            color: MyColor.colorWhite,
-            fontSize: 15, // Reduced from 16
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
+          child:
+              _signInController.isLoading.value
+                  ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: MyColor.colorWhite,
+                      strokeWidth: 2,
+                    ),
+                  )
+                  : Text(
+                    'SIGN IN',
+                    style: TextStyle(
+                      color: MyColor.colorWhite,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildSignUpOption() {
@@ -679,25 +683,11 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
   }
 
   void _handleSignIn() {
-    Get.to(() => PiNetworkHomeScreen());
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      // Simulate API call
-      Future.delayed(const Duration(seconds: 2), () {
-        setState(() {
-          _isLoading = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Sign in successful!'),
-            backgroundColor: MyColor.gCoinSuccess,
-          ),
-        );
-      });
+      _signInController.loginUser(
+        emailOrUsername: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
     }
   }
 }
