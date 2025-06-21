@@ -27,7 +27,7 @@ class SignUpController extends GetxController {
 
       if (response != null && response.data['success'] == true) {
         Get.snackbar('Success', response.data['message']);
-        Get.offNamed('/signin'); // Navigate to sign in after successful registration
+        Get.offNamed('/sign_in'); // Navigate to sign in after successful registration
       }
     } finally {
       isLoading(false);

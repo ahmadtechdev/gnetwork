@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart' as dio;
 import 'package:get/get.dart';
 
+import 'local_stroge.dart';
+
 class ApiService {
   final _dio = dio.Dio();
 
@@ -124,6 +126,34 @@ class ApiService {
       Get.snackbar(
         'Error',
         e.response?.data['message'] ?? 'Failed to resend OTP',
+      );
+      return null;
+    }
+  }
+
+  // Add this method to ApiService class
+  Future<dio.Response?> logoutUser() async {
+    try {
+      final token = LocalStorage.getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await _dio.post(
+        'https://lightyellow-ape-562667.hostingersite.com/api/logout',
+        options: dio.Options(
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response;
+    } on dio.DioException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.response?.data['message'] ?? 'Logout failed',
       );
       return null;
     }

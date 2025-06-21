@@ -5,6 +5,7 @@ import 'package:gcoin/utils/app_colors.dart';
 import 'package:get/get.dart';
 
 import '../../../routes/route.dart';
+import '../forget_password/forget_password_screen.dart';
 
 class GCoinSignInScreen extends StatefulWidget {
   const GCoinSignInScreen({super.key});
@@ -578,11 +579,12 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
         ),
         TextButton(
           onPressed: () {
-            Get.snackbar(
-              'Forgot Password',
-              'Functionality coming soon',
-              backgroundColor: MyColor.gCoinPrimary,
-            );
+            // Get.snackbar(
+            //   'Forgot Password',
+            //   'Functionality coming soon',
+            //   backgroundColor: MyColor.gCoinPrimary,
+            // );
+            Get.to(()=> ForgotPasswordScreen());
           },
           child: Text(
             'Forgot Password?',

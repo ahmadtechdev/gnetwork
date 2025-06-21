@@ -9,6 +9,10 @@ import 'package:gcoin/screens/drawer/refferal_team.dart';
 import 'package:gcoin/screens/drawer/support.dart';
 import 'package:get/get.dart';
 
+import '../../api_service/api_service.dart';
+import '../../api_service/local_stroge.dart';
+import 'home_controller.dart';
+
 class PiNetworkHomeScreen extends StatefulWidget {
   @override
   _PiNetworkHomeScreenState createState() => _PiNetworkHomeScreenState();
@@ -16,6 +20,7 @@ class PiNetworkHomeScreen extends StatefulWidget {
 
 class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
     with TickerProviderStateMixin {
+  final HomeController _homeController = Get.put(HomeController());
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _scaleController;
@@ -102,6 +107,18 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    return Obx(() {
+      if (_homeController.isLoading.value) {
+        return Scaffold(
+          backgroundColor: Color(0xFF0D1F0F),
+          body: Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFF7ED321),
+            ),
+          ),
+        );
+      }
+
     return Scaffold(
       backgroundColor: Color(0xFF0D1F0F),
       drawer: GNetworkDrawer(),
@@ -125,7 +142,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
         ),
       ),
       floatingActionButton: _buildFloatingActionButtons(),
-    );
+    ); });
   }
 
   Widget _buildEnhancedHeader() {
@@ -158,42 +175,19 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                       return AnimatedContainer(
                         duration: Duration(milliseconds: 200),
                         curve: Curves.easeInOut,
-                        child: GestureDetector(
-                          onTap: () => Scaffold.of(context).openDrawer(),
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            duration: Duration(milliseconds: 300),
-                            builder: (context, value, child) {
-                              return Transform.scale(
-                                scale: 0.9 + (0.1 * value),
-                                child: Container(
-                                  padding: EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFF1B2E1C),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Color(0xFF7ED321).withOpacity(0.3),
-                                      width: 1,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(
-                                          0xFF7ED321,
-                                        ).withOpacity(0.2 * value),
-                                        blurRadius: 8,
-                                        offset: Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    Icons.menu_rounded,
-                                    color: Color(0xFF7ED321),
-                                    size: 24,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.0, end: double.parse(_homeController.getBalance())),
+                          duration: Duration(seconds: 2),
+                          builder: (context, value, child) {
+                            return IconButton(
+                              onPressed: () => Scaffold.of(context).openDrawer(),
+                              icon: Icon(
+                                Icons.menu_rounded,
+                                color: Color(0xFFE8F5E8),
+                                size: 32,
+                              ),
+                            );
+                          },
                         ),
                       );
                     },
@@ -377,7 +371,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     child: _buildStatCard(
                       icon: Icons.flash_on_rounded,
                       title: 'Mining Rate',
-                      value: '0.00 π/h',
+                      value: '${_homeController.getMiningRate()} π/h',
                       color: Color(0xFF7ED321),
                     ),
                   ),
@@ -399,7 +393,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     child: _buildStatCard(
                       icon: Icons.people_rounded,
                       title: 'Network',
-                      value: '0/1',
+                      value: _homeController.getNetworkCount(),
                       color: Color(0xFF66BB6A),
                     ),
                   ),
@@ -705,14 +699,14 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         // Chat Button
-        _buildAnimatedFAB(
-          icon: Icons.chat_bubble_outline_rounded,
-          backgroundColor: Color(0xFF1B2E1C),
-          iconColor: Color(0xFF7ED321),
-          heroTag: "chat",
-          delay: 0,
-        ),
-        SizedBox(height: 12),
+        // _buildAnimatedFAB(
+        //   icon: Icons.chat_bubble_outline_rounded,
+        //   backgroundColor: Color(0xFF1B2E1C),
+        //   iconColor: Color(0xFF7ED321),
+        //   heroTag: "chat",
+        //   delay: 0,
+        // ),
+        // SizedBox(height: 12),
 
         // Shield Button
         _buildAnimatedStatFAB(
@@ -726,7 +720,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
         // People Button
         _buildAnimatedStatFAB(
           icon: Icons.people_outline_rounded,
-          value: '0/1',
+          value: _homeController.getNetworkCount(),
           backgroundColor: Color(0xFF66BB6A),
           delay: 400,
         ),
@@ -735,7 +729,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
         // Mining Rate Button
         _buildAnimatedStatFAB(
           icon: Icons.flash_on_rounded,
-          value: '0.00 π/h',
+          value: '${_homeController.getMiningRate()} π/h',
           backgroundColor: Color(0xFF7ED321),
           delay: 600,
         ),
@@ -879,65 +873,65 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Enhanced Post description with modern card design
-                  Container(
-                    padding: EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Color(0xFF1B2E1C),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Color(0xFF7ED321).withOpacity(0.2),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFF7ED321).withOpacity(0.1),
-                          blurRadius: 12,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Color(0xFF7ED321),
-                                    Color(0xFF4CAF50),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                '@PiCoreTeam',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                            Spacer(),
-                            Text(
-                              'May 30th - 9:56pm',
-                              style: TextStyle(
-                                color: Color(0xFFCED9CE),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 16),
-                      ],
-                    ),
-                  ),
+                  // Container(
+                  //   padding: EdgeInsets.all(20),
+                  //   decoration: BoxDecoration(
+                  //     color: Color(0xFF1B2E1C),
+                  //     borderRadius: BorderRadius.circular(16),
+                  //     border: Border.all(
+                  //       color: Color(0xFF7ED321).withOpacity(0.2),
+                  //       width: 1,
+                  //     ),
+                  //     boxShadow: [
+                  //       BoxShadow(
+                  //         color: Color(0xFF7ED321).withOpacity(0.1),
+                  //         blurRadius: 12,
+                  //         offset: Offset(0, 4),
+                  //       ),
+                  //     ],
+                  //   ),
+                  //   child: Column(
+                  //     crossAxisAlignment: CrossAxisAlignment.start,
+                  //     children: [
+                  //       Row(
+                  //         children: [
+                  //           Container(
+                  //             padding: EdgeInsets.symmetric(
+                  //               horizontal: 12,
+                  //               vertical: 6,
+                  //             ),
+                  //             decoration: BoxDecoration(
+                  //               gradient: LinearGradient(
+                  //                 colors: [
+                  //                   Color(0xFF7ED321),
+                  //                   Color(0xFF4CAF50),
+                  //                 ],
+                  //               ),
+                  //               borderRadius: BorderRadius.circular(12),
+                  //             ),
+                  //             child: Text(
+                  //               '@PiCoreTeam',
+                  //               style: TextStyle(
+                  //                 color: Colors.white,
+                  //                 fontWeight: FontWeight.bold,
+                  //                 fontSize: 12,
+                  //               ),
+                  //             ),
+                  //           ),
+                  //           Spacer(),
+                  //           Text(
+                  //             'May 30th - 9:56pm',
+                  //             style: TextStyle(
+                  //               color: Color(0xFFCED9CE),
+                  //               fontSize: 12,
+                  //             ),
+                  //           ),
+                  //         ],
+                  //       ),
+                  //       SizedBox(height: 16),
+                  //     ],
+                  //   ),
+                  // ),
 
                   SizedBox(height: 20),
 
@@ -999,32 +993,19 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
 
           SizedBox(height: 16),
 
-          // Pioneer Post Cards (keeping existing implementation)
-          _buildPioneerPostCard(
-            username: '@ron123cash',
-            tag: '#PiArt',
-            date: '7 May',
-            title: 'GLOBAL PI MARKET',
-            subtitle: 'GPM',
-            description:
-                'MAINNET ECOSYSTEM LISTED\nBuyer Protection & Seller Reviews\nglobalpimarket.com',
-            likes: 3988,
-            comments: 23689,
-            backgroundColor: Colors.lightBlue[200]!,
-          ),
-
-          SizedBox(height: 16),
-          _buildPioneerPostCard(
-            username: '@ron123cash',
-            tag: '#PiArt',
-            date: '8 May',
-            title: 'GLOBAL PI MARKET',
-            subtitle: 'GPM',
-            description:
-                'MAINNET ECOSYSTEM LISTED\nBuyer Protection & Seller Reviews\nglobalpimarket.com',
-            likes: 3988,
-            comments: 23689,
-            backgroundColor: Colors.lightBlue[200]!,
+          Column(
+            children: _homeController.posts.map((post) => _buildPioneerPostCard(
+              username: '@${_homeController.userData['username']}',
+              tag: '#GMining',
+              date: 'Today',
+              title: post['title'],
+              subtitle: 'GCoin',
+              description: post['content'],
+              likes: int.tryParse(post['like'] ?? '0') ?? 0,
+              comments: int.tryParse(post['share'] ?? '0') ?? 0,
+              backgroundColor: Colors.lightBlue[200]!,
+              imageUrl: post['image'], // Pass the image URL from API response
+            )).toList(),
           ),
         ],
       ),
@@ -1041,6 +1022,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
     required int likes,
     required int comments,
     required Color backgroundColor,
+    String? imageUrl, // Added imageUrl parameter
     bool isVPSCard = false,
   }) {
     return Container(
@@ -1115,7 +1097,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
 
           SizedBox(height: 16),
 
-          // Content Card (keeping existing implementation but with updated colors)
+          // Content Card with Image
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(16),
@@ -1123,166 +1105,156 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
               color: backgroundColor,
               borderRadius: BorderRadius.circular(12),
             ),
-            child:
-                isVPSCard
-                    ? Column(
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            color: Colors.blue[800],
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Container(
-                          padding: EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // Title
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                SizedBox(height: 16),
+
+                // Image
+                if (imageUrl != null && imageUrl.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      imageUrl,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 200,
+                          width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.blue[800],
-                            borderRadius: BorderRadius.circular(50),
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
-                            Icons.computer,
-                            color: Colors.white,
-                            size: 30,
+                            Icons.image_not_supported,
+                            color: Colors.grey[600],
+                            size: 50,
                           ),
-                        ),
-                      ],
-                    )
-                    : Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'GLOBAL PI MARKET',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 20),
-                        Container(
-                          padding: EdgeInsets.all(20),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 200,
+                          width: double.infinity,
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black, width: 3),
-                            borderRadius: BorderRadius.circular(50),
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Column(
-                            children: [
-                              Text(
-                                'GPM',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                'π',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 20),
-                        Text(
-                          'MAINNET ECOSYSTEM LISTED\nBuyer Protection & Seller Reviews\nglobalpimarket.com',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-          ),
-
-          if (!isVPSCard) ...[
-            SizedBox(height: 16),
-            Text(
-              'Join the future and boost the\necosystem 🚀🚀🚀',
-              style: TextStyle(color: Color(0xFFE8F5E8), fontSize: 14),
-            ),
-
-            SizedBox(height: 16),
-
-            // Actions with updated colors
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF7ED321).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '−',
-                    style: TextStyle(
-                      color: Color(0xFF7ED321),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                        );
+                      },
                     ),
                   ),
-                ),
-                SizedBox(width: 10),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.local_fire_department,
-                        color: Colors.orange,
-                        size: 16,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        likes.toString(),
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(width: 10),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF7ED321).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '+',
-                    style: TextStyle(
-                      color: Color(0xFF7ED321),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Spacer(),
+
+                SizedBox(height: 16),
+
+                // Description
                 Text(
-                  '$comments 💬',
-                  style: TextStyle(color: Color(0xFFCED9CE), fontSize: 12),
+                  description,
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
-          ],
+          ),
+
+          SizedBox(height: 16),
+          Text(
+            'Join the future and boost the\necosystem 🚀🚀🚀',
+            style: TextStyle(color: Color(0xFFE8F5E8), fontSize: 14),
+          ),
+
+          SizedBox(height: 16),
+
+          // Actions with updated colors
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Color(0xFF7ED321).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '−',
+                  style: TextStyle(
+                    color: Color(0xFF7ED321),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              SizedBox(width: 10),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.local_fire_department,
+                      color: Colors.orange,
+                      size: 16,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      likes.toString(),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 10),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Color(0xFF7ED321).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '+',
+                  style: TextStyle(
+                    color: Color(0xFF7ED321),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Spacer(),
+              Text(
+                '$comments 💬',
+                style: TextStyle(color: Color(0xFFCED9CE), fontSize: 12),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -1759,111 +1731,74 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     ],
                   ),
                   SizedBox(height: 16),
-                  ...activities.asMap().entries.map((entry) {
-                    int index = entry.key;
-                    Map<String, dynamic> activity = entry.value;
-                    return TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: Duration(milliseconds: 600),
-                      builder: (context, animValue, child) {
-                        return Transform.translate(
-                          offset: Offset(30 * (1 - animValue), 0),
-                          child: Opacity(
-                            opacity: animValue,
-                            child: Container(
-                              margin: EdgeInsets.only(bottom: 12),
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Color(0xFF7ED321).withOpacity(0.05),
-                                    Color(0xFF4CAF50).withOpacity(0.03),
+                  ..._homeController.logs.map((log) => Container(
+                    margin: EdgeInsets.only(bottom: 12),
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Color(0xFF7ED321).withOpacity(0.05),
+                          Color(0xFF4CAF50).withOpacity(0.03),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Color(0xFF7ED321).withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF7ED321).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.notifications_rounded,
+                            color: Color(0xFF7ED321),
+                            size: 16,
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              RichText(
+                                text: TextSpan(
+                                  style: TextStyle(
+                                    color: Color(0xFFE8F5E8),
+                                    fontSize: 14,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: log['name'],
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF7ED321),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: ' ${log['action']}',
+                                    ),
                                   ],
                                 ),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Color(0xFF7ED321).withOpacity(0.1),
-                                  width: 1,
+                              ),
+                              Text(
+                                log['created_at'],
+                                style: TextStyle(
+                                  color: Color(0xFFCED9CE),
+                                  fontSize: 12,
                                 ),
                               ),
-                              child: Row(
-                                children: [
-                                  AnimatedBuilder(
-                                    animation: _pulseController,
-                                    builder: (context, child) {
-                                      return Transform.scale(
-                                        scale:
-                                            1.0 +
-                                            0.1 *
-                                                sin(
-                                                  _pulseController.value *
-                                                          2 *
-                                                          pi +
-                                                      index,
-                                                ),
-                                        child: Container(
-                                          padding: EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: Color(
-                                              0xFF7ED321,
-                                            ).withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: Icon(
-                                            activity['icon'] as IconData,
-                                            color: Color(0xFF7ED321),
-                                            size: 16,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        RichText(
-                                          text: TextSpan(
-                                            style: TextStyle(
-                                              color: Color(0xFFE8F5E8),
-                                              fontSize: 14,
-                                            ),
-                                            children: [
-                                              TextSpan(
-                                                text: activity['user'],
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF7ED321),
-                                                ),
-                                              ),
-                                              TextSpan(
-                                                text: ' ${activity['action']}',
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Text(
-                                          activity['time'],
-                                          style: TextStyle(
-                                            color: Color(0xFFCED9CE),
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            ],
                           ),
-                        );
-                      },
-                    );
-                  }).toList(),
+                        ),
+                      ],
+                    ),
+                  )).toList(),
                 ],
               ),
             ),
@@ -1971,32 +1906,33 @@ class GNetworkDrawer extends StatelessWidget {
                   ),
                   _buildDrawerItem(
                     context,
-                    Icons.person_rounded,
+                    Icons.military_tech, // for "Mine g" - implies mining or achievement
                     'Mine g',
                     false,
-                          () => Get.to(() => MineGScreen()),
+                        () => Get.to(() => MineGScreen()),
                   ),
                   _buildDrawerItem(
                     context,
-                    Icons.person_rounded,
+                    Icons.verified_user, // for "Node" - verification/security
                     'Node',
                     false,
-                          () => Get.to(() => GNodeVerificationScreen()),
+                        () => Get.to(() => GNodeVerificationScreen()),
                   ),
                   _buildDrawerItem(
                     context,
-                    Icons.person_rounded,
+                    Icons.support_agent, // for "Support"
                     'Support',
                     false,
-                          () => Get.to(() => ModernSupportScreen()),
+                        () => Get.to(() => ModernSupportScreen()),
                   ),
                   _buildDrawerItem(
                     context,
-                    Icons.person_rounded,
+                    Icons.account_circle, // for "Profile"
                     'Profile',
                     false,
-                          () => Get.to(() => ModernProfileScreen()),
+                        () => Get.to(() => ModernProfileScreen()),
                   ),
+
                   _buildDrawerItem(
                     context,
                     Icons.settings_rounded,
@@ -2012,12 +1948,21 @@ class GNetworkDrawer extends StatelessWidget {
                     false,
                     null,
                   ),
+                  // Replace the logout _buildDrawerItem with this:
                   _buildDrawerItem(
                     context,
                     Icons.logout_rounded,
                     'Logout',
                     false,
-                    null,
+                        () async {
+                      final apiService = ApiService();
+                      final response = await apiService.logoutUser();
+                      if (response != null && response.statusCode == 200) {
+                        await LocalStorage.clear();
+                        // Navigate to login screen or wherever appropriate
+                        Get.offAllNamed('/sign_in'); // Adjust this based on your navigation setup
+                      }
+                    },
                   ),
                 ],
               ),
