@@ -1,25 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-import '../../utils/app_colors.dart'; // Import your color file
+import '../../api_service/api_service.dart';
+import '../../utils/app_colors.dart';
+import '../homescreen/home_controller.dart';
 
-class GNodeVerificationScreen extends StatefulWidget {
+class EmailVerificationScreen extends StatefulWidget {
+  const EmailVerificationScreen({super.key});
+
   @override
-  _GNodeVerificationScreenState createState() => _GNodeVerificationScreenState();
+  _EmailVerificationScreenState createState() =>
+      _EmailVerificationScreenState();
 }
 
-class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with TickerProviderStateMixin {
-  final TextEditingController _codeController = TextEditingController();
+class _EmailVerificationScreenState extends State<EmailVerificationScreen>
+    with TickerProviderStateMixin {
+  final TextEditingController _otpController = TextEditingController();
+  final ApiService _apiService = ApiService();
+  // Add this focus node at the top of your state class
+  FocusNode _otpFocusNode = FocusNode();
+
   late AnimationController _animationController;
   late AnimationController _pulseController;
   late Animation<double> _slideAnimation;
   late Animation<double> _pulseAnimation;
 
-  List<String> codeDigits = ['', '', '', '', '', '', '', ''];
+  List<String> otpDigits = ['', '', '', ''];
   int currentIndex = 0;
+  bool isLoading = false;
+  bool isEmailVerified = false;
+  String? verifiedAt;
+  String userEmail = '';
 
   @override
   void initState() {
     super.initState();
+
+    // Get user data from controller
+    final homeController = Get.put(HomeController());
+    isEmailVerified = homeController.userData['email_verified_at'] != null;
+    verifiedAt = homeController.userData['email_verified_at'];
+    userEmail = homeController.userData['email'] ?? 'your email';
+
     _animationController = AnimationController(
       duration: Duration(milliseconds: 800),
       vsync: this,
@@ -30,21 +52,13 @@ class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with 
       vsync: this,
     );
 
-    _slideAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutBack,
-    ));
+    _slideAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
+    );
 
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.1,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
 
     _animationController.forward();
     _pulseController.repeat(reverse: true);
@@ -52,29 +66,81 @@ class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with 
 
   @override
   void dispose() {
+    _otpFocusNode.dispose();
     _animationController.dispose();
     _pulseController.dispose();
-    _codeController.dispose();
+    _otpController.dispose();
     super.dispose();
   }
 
-  void _onCodeChanged(String value) {
+  void _onOtpChanged(String value) {
     setState(() {
-      for (int i = 0; i < 8; i++) {
+      for (int i = 0; i < 4; i++) {
         if (i < value.length) {
-          codeDigits[i] = value[i].toUpperCase();
+          otpDigits[i] = value[i];
         } else {
-          codeDigits[i] = '';
+          otpDigits[i] = '';
         }
       }
       currentIndex = value.length;
     });
   }
 
+  Future<void> _sendVerificationEmail() async {
+    setState(() => isLoading = true);
+    try {
+      final response = await _apiService.sendEmailVerification();
+      if (response?.statusCode == 200) {
+        Get.snackbar(
+          'Success',
+          'Verification code sent to $userEmail',
+          backgroundColor: Color(0xFF7ED321),
+        );
+      }
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _verifyEmail() async {
+    if (_otpController.text.length != 4) {
+      Get.snackbar(
+        'Error',
+        'Please enter a valid 4-digit code',
+        backgroundColor: Colors.red,
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+    try {
+      final response = await _apiService.verifyEmailWithOtp(
+        _otpController.text,
+      );
+
+      final homeController = Get.put(HomeController());
+      if (response?.statusCode == 200) {
+        // Refresh user data
+        await homeController.fetchDashboardData();
+        setState(() {
+          isEmailVerified = true;
+          verifiedAt = homeController.userData['email_verified_at'];
+        });
+        Get.snackbar(
+          'Success',
+          'Email verified successfully!',
+          backgroundColor: Color(0xFF7ED321),
+        );
+      }
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-
+  final homeController = Get.put(HomeController());
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -91,7 +157,7 @@ class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with 
           child: Column(
             children: [
               // Custom Header Section
-              Container(
+              SizedBox(
                 height: screenHeight * 0.25,
                 child: Stack(
                   children: [
@@ -107,7 +173,9 @@ class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with 
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: MyColor.getGCoinPrimaryColor().withOpacity(0.3),
+                              color: MyColor.getGCoinPrimaryColor().withOpacity(
+                                0.3,
+                              ),
                               blurRadius: 40,
                             ),
                           ],
@@ -154,7 +222,10 @@ class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with 
                               Row(
                                 children: [
                                   Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withOpacity(0.15),
                                       borderRadius: BorderRadius.circular(20),
@@ -163,7 +234,8 @@ class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with 
                                       ),
                                     ),
                                     child: Text(
-                                      '0.08151 π',
+                                      homeController.getBalance() +
+                                          ' G',
                                       style: TextStyle(
                                         color: MyColor.getTextColor(),
                                         fontWeight: FontWeight.w600,
@@ -173,7 +245,10 @@ class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with 
                                   ),
                                   SizedBox(width: 12),
                                   Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withOpacity(0.15),
                                       borderRadius: BorderRadius.circular(20),
@@ -218,7 +293,7 @@ class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with 
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Node Verification',
+                                  'Email Verification',
                                   style: TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
@@ -227,7 +302,7 @@ class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with 
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  'Secure Access Required',
+                                  'Secure your account',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: MyColor.getSecondaryTextColor(),
@@ -277,278 +352,8 @@ class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with 
 
                         SizedBox(height: 32),
 
-                        // Description with icon
-                        Container(
-                          padding: EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                MyColor.getGCoinPrimaryColor().withOpacity(0.1),
-                                MyColor.getGCoinSecondaryColor().withOpacity(0.05),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: MyColor.getGCoinPrimaryColor().withOpacity(0.2),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  gradient: MyColor.getGCoinPrimaryGradient(),
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                                child: Icon(
-                                  Icons.smartphone,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                              ),
-                              SizedBox(width: 16),
-                              Expanded(
-                                child: Text(
-                                  'Enter the verification code from the G Node App to finish the Node sign-in process.',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: MyColor.getTextColor(),
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(height: 40),
-
-                        // Code input section
-                        Text(
-                          'Verification Code',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: MyColor.getHeadingTextColor(),
-                          ),
-                        ),
-
-                        SizedBox(height: 20),
-
-                        // Custom code input boxes
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: List.generate(8, (index) {
-                            return Container(
-                              width: 35,
-                              height: 45,
-                              decoration: BoxDecoration(
-                                gradient: index < currentIndex
-                                    ? MyColor.getGCoinPrimaryGradient()
-                                    : null,
-                                color: index < currentIndex
-                                    ? null
-                                    : MyColor.getGCoinSurfaceColor(),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: index == currentIndex
-                                      ? MyColor.getGCoinPrimaryColor()
-                                      : MyColor.getGCoinDividerColor(),
-                                  width: index == currentIndex ? 2 : 1,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  codeDigits[index],
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: index < currentIndex
-                                        ? Colors.white
-                                        : MyColor.getTextColor(),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-
-                        // Hidden text field for input
-                        Opacity(
-                          opacity: 0.01,
-                          child: TextField(
-                            controller: _codeController,
-                            maxLength: 8,
-                            onChanged: _onCodeChanged,
-                            keyboardType: TextInputType.text,
-                            textCapitalization: TextCapitalization.characters,
-                          ),
-                        ),
-
-                        SizedBox(height: 32),
-
-                        // Continue button with modern design
-                        Container(
-                          width: double.infinity,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            gradient: MyColor.getGCoinHeroGradient(),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: MyColor.getGCoinPrimaryColor().withOpacity(0.4),
-                                blurRadius: 12,
-                                offset: Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: () {
-                                // Handle continue
-                              },
-                              child: Center(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Verify & Continue',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    SizedBox(width: 8),
-                                    Icon(
-                                      Icons.arrow_forward,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: 40),
-
-                        // Download section with card design
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: MyColor.getGCoinElevatedCardColor(),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: MyColor.getGCoinDividerColor(),
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.download,
-                                color: MyColor.getGCoinPrimaryColor(),
-                                size: 32,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'Download G Node App',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: MyColor.getHeadingTextColor(),
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Get the official app from:',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: MyColor.getSecondaryTextColor(),
-                                ),
-                              ),
-                              SizedBox(height: 12),
-                              GestureDetector(
-                                onTap: () {
-                                  // Handle URL
-                                },
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    gradient: MyColor.getGCoinAccentGradient(),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    'node.mineg.com',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(height: 24),
-
-                        // Security warning with modern alert design
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: MyColor.getGCoinWarningColor().withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: MyColor.getGCoinWarningColor().withOpacity(0.2),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: MyColor.getGCoinWarningColor(),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Icon(
-                                      Icons.security,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                  ),
-                                  SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      'Security Guidelines',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: MyColor.getGCoinWarningColor(),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 16),
-                              _buildSecurityPoint('Only download from node.mineg.com'),
-                              SizedBox(height: 8),
-                              _buildSecurityPoint('Never share your verification code'),
-                              SizedBox(height: 8),
-                              _buildSecurityPoint('Only use codes from official G Node App'),
-                            ],
-                          ),
-                        ),
+                        if (isEmailVerified) _buildVerifiedStatus(),
+                        if (!isEmailVerified) _buildVerificationForm(),
 
                         SizedBox(height: 40),
                       ],
@@ -560,6 +365,300 @@ class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with 
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildVerifiedStatus() {
+    return Column(
+      children: [
+        // Success icon
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            gradient: MyColor.getGCoinSuccessGradient(),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(Icons.check, color: Colors.white, size: 50),
+        ),
+
+        SizedBox(height: 24),
+
+        // Success message
+        Text(
+          'Email Verified',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: MyColor.getGCoinSuccessColor(),
+          ),
+        ),
+
+        SizedBox(height: 8),
+
+        Text(
+          'Your email $userEmail was verified',
+          style: TextStyle(
+            fontSize: 16,
+            color: MyColor.getSecondaryTextColor(),
+          ),
+        ),
+
+        SizedBox(height: 8),
+
+        if (verifiedAt != null)
+          Text(
+            'Verified on ${_formatVerifiedDate(verifiedAt!)}',
+            style: TextStyle(
+              fontSize: 14,
+              color: MyColor.getSecondaryTextColor(),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildVerificationForm() {
+    return Column(
+      children: [
+        // Description with icon
+        Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                MyColor.getGCoinPrimaryColor().withOpacity(0.1),
+                MyColor.getGCoinSecondaryColor().withOpacity(0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: MyColor.getGCoinPrimaryColor().withOpacity(0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  gradient: MyColor.getGCoinPrimaryGradient(),
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Icon(Icons.email, color: Colors.white, size: 24),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Verify your email address',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: MyColor.getHeadingTextColor(),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'We sent a verification code to $userEmail. Enter the code below to verify your email.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: MyColor.getTextColor(),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        SizedBox(height: 40),
+
+        // OTP input section
+        Text(
+          'Verification Code',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: MyColor.getHeadingTextColor(),
+          ),
+        ),
+
+        SizedBox(height: 20),
+
+        // Custom OTP input boxes
+        GestureDetector(
+          onTap: () {
+            FocusScope.of(context).requestFocus(_otpFocusNode);
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(4, (index) {
+              return Container(
+                width: 50,
+                height: 60,
+                decoration: BoxDecoration(
+                  gradient:
+                      index < currentIndex
+                          ? MyColor.getGCoinPrimaryGradient()
+                          : null,
+                  color:
+                      index < currentIndex
+                          ? null
+                          : MyColor.getGCoinSurfaceColor(),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color:
+                        index == currentIndex
+                            ? MyColor.getGCoinPrimaryColor()
+                            : MyColor.getGCoinDividerColor(),
+                    width: index == currentIndex ? 2 : 1,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    otpDigits[index],
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color:
+                          index < currentIndex
+                              ? Colors.white
+                              : MyColor.getTextColor(),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+
+        // Hidden text field for input
+        Positioned(
+          left: 0,
+          top: 0,
+          child: SizedBox(
+            width: 1,
+            height: 1,
+            child: TextField(
+              controller: _otpController,
+              focusNode: _otpFocusNode,
+              maxLength: 4,
+              keyboardType: TextInputType.number,
+              onChanged: _onOtpChanged,
+              style: TextStyle(fontSize: 1), // Make text tiny
+            ),
+          ),
+        ),
+
+        SizedBox(height: 24),
+
+        // Resend code button
+        TextButton(
+          onPressed: isLoading ? null : _sendVerificationEmail,
+          child: Text(
+            'Resend Verification Code',
+            style: TextStyle(
+              color: MyColor.getGCoinPrimaryColor(),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+
+        SizedBox(height: 32),
+
+        // Verify button
+        Container(
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: MyColor.getGCoinHeroGradient(),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: MyColor.getGCoinPrimaryColor().withOpacity(0.4),
+                blurRadius: 12,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: isLoading ? null : _verifyEmail,
+              child: Center(
+                child:
+                    isLoading
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                          'Verify Email',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+              ),
+            ),
+          ),
+        ),
+
+        SizedBox(height: 40),
+
+        // Security warning
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: MyColor.getGCoinWarningColor().withOpacity(0.08),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: MyColor.getGCoinWarningColor().withOpacity(0.2),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: MyColor.getGCoinWarningColor(),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(Icons.security, color: Colors.white, size: 16),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Security Guidelines',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: MyColor.getGCoinWarningColor(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
+              _buildSecurityPoint('Never share your verification code'),
+              SizedBox(height: 8),
+              _buildSecurityPoint('The code expires after 10 minutes'),
+              SizedBox(height: 8),
+              _buildSecurityPoint(
+                'Check your spam folder if you don\'t see the email',
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -588,5 +687,14 @@ class _GNodeVerificationScreenState extends State<GNodeVerificationScreen> with 
         ),
       ],
     );
+  }
+
+  String _formatVerifiedDate(String dateString) {
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.day}/${date.month}/${date.year} at ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateString;
+    }
   }
 }

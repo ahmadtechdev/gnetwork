@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:gcoin/utils/app_colors.dart';
 import 'package:get/get.dart';
+import '../../../utils/app_colors.dart';
+import 'refferal_controller.dart';
+
 
 class ReferralTeamPage extends StatefulWidget {
   @override
@@ -12,8 +14,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-
-  String selectedFilter = 'All';
+  final ReferralTeamController _controller = Get.put(ReferralTeamController());
 
   @override
   void initState() {
@@ -48,35 +49,43 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
     return Scaffold(
       backgroundColor: MyColor.getScreenBgColor(),
       appBar: _buildAppBar(),
-      body: AnimatedBuilder(
-        animation: _fadeAnimation,
-        builder: (context, child) {
-          return FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildReferralStatsCard(),
-                    SizedBox(height: 20),
-                    _buildWarningCard(),
-                    SizedBox(height: 24),
-                    _buildMembersSection(),
-                    SizedBox(height: 16),
-                    _buildMembersList(),
-                    SizedBox(height: 20),
-                    _buildActionButtons(),
-                    SizedBox(height: 100), // Extra space for bottom navigation
-                  ],
+      body: Obx(() {
+        if (_controller.isLoading.value) {
+          return Center(child: CircularProgressIndicator());
+        }
+        return AnimatedBuilder(
+          animation: _fadeAnimation,
+          builder: (context, child) {
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildReferralStatsCard(),
+                      SizedBox(height: 20),
+                      if (_controller.referrals.isEmpty) _buildEmptyState(),
+                      if (_controller.referrals.isNotEmpty) ...[
+                        _buildWarningCard(),
+                        SizedBox(height: 24),
+                        _buildMembersSection(),
+                        SizedBox(height: 16),
+                        _buildMembersList(),
+                        SizedBox(height: 20),
+                      ],
+                      _buildActionButtons(),
+                      SizedBox(height: 100), // Extra space for bottom navigation
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
-      ),
+            );
+          },
+        );
+      }),
     );
   }
 
@@ -94,16 +103,16 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
       ),
       title: Column(
         children: [
-          Text(
-            '122.34966',
+          Obx(() => Text(
+            '${_controller.referrals.length}',
             style: TextStyle(
               color: MyColor.getAppbarTitleColor(),
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
-          ),
+          )),
           Text(
-            'π',
+            'Referrals',
             style: TextStyle(
               color: MyColor.getAppbarTitleColor(),
               fontSize: 14,
@@ -181,7 +190,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
                     ),
                   ),
                   SizedBox(height: 8),
-                  RichText(
+                  Obx(() => RichText(
                     text: TextSpan(
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
@@ -190,28 +199,28 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
                       children: [
                         TextSpan(text: 'You have invited '),
                         TextSpan(
-                          text: '0 new Pioneers',
+                          text: '${_controller.referrals.length} ${_controller.referrals.length == 1 ? 'Team Member' : 'Team Members'}',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         TextSpan(text: ' so far.'),
                       ],
                     ),
-                  ),
+                  )),
                   SizedBox(height: 4),
-                  Text(
-                    'Your Referral Team has 1 members.\n0 of 1 are currently mining.',
+                  Obx(() => Text(
+                    'Your Referral Team has ${_controller.referrals.length} members.\n${_controller.totalMining.value} of ${_controller.referrals.length} are currently mining.',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.8),
                       fontSize: 13,
                     ),
-                  ),
+                  )),
                 ],
               ),
             ],
           ),
+          SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
             children: [
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -239,7 +248,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
                   ],
                 ),
               ),
-              Container(
+              Obx(() => Container(
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
@@ -255,7 +264,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        '0',
+                        '${_controller.totalMining.value}',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 28,
@@ -273,8 +282,52 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
                     ],
                   ),
                 ),
-              ),
+              )),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: MyColor.getGCoinCardColor(),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: MyColor.getGCoinShadowColor(),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.group_add,
+            size: 60,
+            color: MyColor.getGCoinPrimaryColor().withOpacity(0.5),
+          ),
+          SizedBox(height: 20),
+          Text(
+            'No Referrals Yet',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: MyColor.getTextColor(),
+            ),
+          ),
+          SizedBox(height: 12),
+          Text(
+            'Invite friends to join your referral team and boost your mining rate!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: MyColor.getSecondaryTextColor(),
+            ),
           ),
         ],
       ),
@@ -295,7 +348,6 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-
               children: [
                 Icon(Icons.warning_rounded, color: Colors.red, size: 24),
                 SizedBox(width: 8),
@@ -312,28 +364,24 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
           ),
           SizedBox(height: 12),
           Text(
-            'If your Referral and Security Team members don\'t finish the Mainnet Checklist by the Grace Period deadline, you will lose some bonus G Network attributed to their contributions. If they only migrate the balance within their 6-month rolling window, you\'ll only receive bonuses contributed by them within that period.',
+            'If your Referral and Security Team members don\'t finish the Mainnet Checklist by the Grace Period deadline, you will lose some bonus G Network attributed to their contributions.',
             style: TextStyle(
               color: MyColor.getTextColor(),
               fontSize: 14,
               height: 1.5,
             ),
           ),
-          SizedBox(height: 12),
-          Text(
-            'Ask your team to migrate so you also don\'t lose your bonus attributable to them.',
-            style: TextStyle(
-              color: MyColor.getTextColor(),
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              height: 1.4,
-            ),
-          ),
           SizedBox(height: 16),
           Container(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Get.snackbar(
+                  'Info',
+                  'Feature coming soon',
+                  snackPosition: SnackPosition.BOTTOM,
+                );
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: MyColor.getGCoinPrimaryColor(),
                 foregroundColor: Colors.white,
@@ -344,7 +392,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
                 elevation: 0,
               ),
               child: Text(
-                'See Pioneers',
+                'See Team Members',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
@@ -402,7 +450,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
         ),
         SizedBox(height: 12),
         Text(
-          'Invite new Pioneers to join your Referral Team!\nBoost your mining rate for every actively mining Member. Ping daily to remind them to mine!',
+          'Invite new Team Members to join your Referral Team!\nBoost your mining rate for every actively mining Member.',
           style: TextStyle(
             color: MyColor.getTextColor1(),
             fontSize: 14,
@@ -414,7 +462,14 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
   }
 
   Widget _buildMembersList() {
+    return Obx(() => Column(
+      children: _controller.referrals.map((referral) => _buildMemberCard(referral)).toList(),
+    ));
+  }
+
+  Widget _buildMemberCard(Map<String, dynamic> referral) {
     return Container(
+      margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: MyColor.getCardBg(),
@@ -446,7 +501,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hafiz Muhammad',
+                  referral['name'] ?? 'Unknown',
                   style: TextStyle(
                     color: MyColor.getHeadingTextColor(),
                     fontSize: 16,
@@ -455,7 +510,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Nabras asif',
+                  '@${referral['username'] ?? 'username'}',
                   style: TextStyle(
                     color: MyColor.getTextColor1(),
                     fontSize: 14,
@@ -469,18 +524,22 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: _controller.getStatusColor(referral['mine_status'] ?? 0).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.bedtime_rounded, color: Colors.grey, size: 16),
+                    Icon(
+                      _controller.getStatusIcon(referral['mine_status'] ?? 0),
+                      color: _controller.getStatusColor(referral['mine_status'] ?? 0),
+                      size: 16,
+                    ),
                     SizedBox(width: 4),
                     Text(
-                      'zzz',
+                      _controller.getStatusText(referral['mine_status'] ?? 0),
                       style: TextStyle(
-                        color: Colors.grey,
+                        color: _controller.getStatusColor(referral['mine_status'] ?? 0),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -490,20 +549,14 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
               ),
               SizedBox(height: 8),
               Text(
-                'Inactive',
+                'Joined ${referral['created_at'] ?? 'recently'}',
                 style: TextStyle(
                   color: Colors.grey,
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ],
-          ),
-          SizedBox(width: 8),
-          Icon(
-            Icons.shield_rounded,
-            color: MyColor.getGCoinPrimaryColor(),
-            size: 20,
           ),
         ],
       ),
@@ -515,7 +568,13 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed: () {},
+            onPressed: () {
+              Get.snackbar(
+                'Info',
+                'Feature coming soon',
+                snackPosition: SnackPosition.BOTTOM,
+              );
+            },
             style: OutlinedButton.styleFrom(
               side: BorderSide(
                 color: MyColor.getGCoinPrimaryColor(),
@@ -539,7 +598,13 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
         SizedBox(width: 12),
         Expanded(
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              Get.snackbar(
+                'Info',
+                'Feature coming soon',
+                snackPosition: SnackPosition.BOTTOM,
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: MyColor.getGCoinPrimaryColor(),
               foregroundColor: Colors.white,

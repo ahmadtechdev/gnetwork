@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:gcoin/screens/drawer/faq.dart';
-import 'package:gcoin/screens/drawer/mineg.dart';
+import 'package:gcoin/screens/drawer/faq/faq.dart';
+import 'package:gcoin/screens/drawer/mineg/mineg.dart';
 import 'package:gcoin/screens/drawer/node.dart';
-import 'package:gcoin/screens/drawer/profile.dart';
+import 'package:gcoin/screens/drawer/profile/profile.dart';
 import 'dart:math';
 
-import 'package:gcoin/screens/drawer/refferal_team.dart';
-import 'package:gcoin/screens/drawer/support.dart';
+import 'package:gcoin/screens/drawer/refferal/refferal_team.dart';
+import 'package:gcoin/screens/drawer/support/support.dart';
 import 'package:get/get.dart';
 
 import '../../api_service/api_service.dart';
@@ -123,21 +123,28 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
       backgroundColor: Color(0xFF0D1F0F),
       drawer: GNetworkDrawer(),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Enhanced Header with gradient background
-              _buildEnhancedHeader(),
-
-              // Stats Cards Section
-              _buildStatsCardsSection(),
-
-              // Enhanced Game Apps Section
-              _buildEnhancedGameAppsSection(),
-
-              // Pioneer Posts Section
-              _buildPioneerPostsSection(),
-            ],
+        child: RefreshIndicator(
+          color: Color(0xFF7ED321),
+          backgroundColor: Color(0xFF0D1F0F),
+          onRefresh: () async {
+            await _homeController.fetchDashboardData();
+          },
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Enhanced Header with gradient background
+                _buildEnhancedHeader(),
+          
+                // Stats Cards Section
+                _buildStatsCardsSection(),
+          
+                // Enhanced Game Apps Section
+                _buildEnhancedGameAppsSection(),
+          
+                // Pioneer Posts Section
+                _buildPioneerPostsSection(),
+              ],
+            ),
           ),
         ),
       ),
@@ -275,11 +282,11 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                             textBaseline: TextBaseline.alphabetic,
                             children: [
                               TweenAnimationBuilder<double>(
-                                tween: Tween(begin: 0.0, end: 122.34280),
+                                tween: Tween(begin: 0.0, end: double.parse(_homeController.userData['balance'])),
                                 duration: Duration(seconds: 2),
                                 builder: (context, value, child) {
                                   return Text(
-                                    value.toStringAsFixed(5),
+                                    value.toStringAsFixed(3),
                                     style: TextStyle(
                                       color: Color(0xFFE8F5E8),
                                       fontSize: 36,
@@ -297,7 +304,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                                     angle:
                                         _rotationAnimation.value * 2 * 3.14159,
                                     child: Text(
-                                      'π',
+                                      'G',
                                       style: TextStyle(
                                         color: Color(0xFF7ED321),
                                         fontSize: 28,
@@ -371,7 +378,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     child: _buildStatCard(
                       icon: Icons.flash_on_rounded,
                       title: 'Mining Rate',
-                      value: '${_homeController.getMiningRate()} π/h',
+                      value: '${_homeController.getMiningRate()} G/h',
                       color: Color(0xFF7ED321),
                     ),
                   ),
@@ -586,7 +593,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                                 ],
                               ),
                               child: Text(
-                                'π',
+                                'G',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 28,
@@ -694,21 +701,11 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
     );
   }
 
+  // Update _buildFloatingActionButtons in homescreen.dart
   Widget _buildFloatingActionButtons() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        // Chat Button
-        // _buildAnimatedFAB(
-        //   icon: Icons.chat_bubble_outline_rounded,
-        //   backgroundColor: Color(0xFF1B2E1C),
-        //   iconColor: Color(0xFF7ED321),
-        //   heroTag: "chat",
-        //   delay: 0,
-        // ),
-        // SizedBox(height: 12),
-
-        // Shield Button
         _buildAnimatedStatFAB(
           icon: Icons.security_rounded,
           value: '20%',
@@ -716,8 +713,6 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
           delay: 200,
         ),
         SizedBox(height: 12),
-
-        // People Button
         _buildAnimatedStatFAB(
           icon: Icons.people_outline_rounded,
           value: _homeController.getNetworkCount(),
@@ -725,29 +720,89 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
           delay: 400,
         ),
         SizedBox(height: 12),
-
-        // Mining Rate Button
-        _buildAnimatedStatFAB(
-          icon: Icons.flash_on_rounded,
-          value: '${_homeController.getMiningRate()} π/h',
-          backgroundColor: Color(0xFF7ED321),
-          delay: 600,
-        ),
+        _buildMiningFAB(),
         SizedBox(height: 12),
-
-        // Invite Button
-        _buildAnimatedFAB(
-          icon: Icons.send_rounded,
-          backgroundColor: Color(0xFF7ED321),
-          iconColor: Colors.white,
-          heroTag: "invite",
-          label: 'Invite',
-          delay: 800,
+        GestureDetector(
+          onTap: ()=> Get.snackbar("G Network", "Soon Available", backgroundColor: Colors.green, colorText: Colors.white),
+          child: _buildAnimatedFAB(
+            icon: Icons.send_rounded,
+            backgroundColor: Color(0xFF7ED321),
+            iconColor: Colors.white,
+            heroTag: "invite",
+            label: 'Invite',
+            delay: 800,
+          ),
         ),
       ],
     );
   }
 
+  // Update _buildMiningFAB to include onTap
+  Widget _buildMiningFAB() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 600),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(100 * (1 - value), 0),
+          child: Opacity(
+            opacity: value,
+            child: GestureDetector(
+              onTap: () {
+                if (!_homeController.isMining.value) {
+                  _homeController.startMining();
+                } else {
+                  Get.snackbar(
+                    'Mining in Progress',
+                    'Please wait until current mining completes',
+                    backgroundColor: Colors.orange,
+                  );
+                }
+              },
+              child: Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _homeController.isMining.value
+                      ? Colors.orange
+                      : Color(0xFF7ED321),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (_homeController.isMining.value
+                          ? Colors.orange
+                          : Color(0xFF7ED321)).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.flash_on_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    SizedBox(height: 4),
+                    Obx(() => Text(
+                      _homeController.isMining.value
+                          ? _homeController.formatTime(_homeController.miningTimeLeft.value)
+                          : '${_homeController.getMiningRate()} G/h',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    )),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
   Widget _buildAnimatedFAB({
     required IconData icon,
     required Color backgroundColor,
@@ -1064,14 +1119,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                 ),
               ),
               SizedBox(width: 12),
-              Text(
-                username,
-                style: TextStyle(
-                  color: Color(0xFFE8F5E8),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(width: 8),
+
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -1833,7 +1881,7 @@ class GNetworkDrawer extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      'π',
+                      'G',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
@@ -1854,7 +1902,7 @@ class GNetworkDrawer extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Pioneer Dashboard',
+                        'Dashboard',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.8),
                           fontSize: 12,
@@ -1876,20 +1924,20 @@ class GNetworkDrawer extends StatelessWidget {
                     true,
                     null,
                   ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.account_balance_wallet_rounded,
-                    'Wallet',
-                    false,
-                    null,
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.security_rounded,
-                    'Security Circle',
-                    false,
-                    null,
-                  ),
+                  // _buildDrawerItem(
+                  //   context,
+                  //   Icons.account_balance_wallet_rounded,
+                  //   'Wallet',
+                  //   false,
+                  //   null,
+                  // ),
+                  // _buildDrawerItem(
+                  //   context,
+                  //   Icons.security_rounded,
+                  //   'Security Circle',
+                  //   false,
+                  //   null,
+                  // ),
                   _buildDrawerItem(
                     context,
                     Icons.sports_esports_rounded,
@@ -1916,7 +1964,7 @@ class GNetworkDrawer extends StatelessWidget {
                     Icons.verified_user, // for "Node" - verification/security
                     'Node',
                     false,
-                        () => Get.to(() => GNodeVerificationScreen()),
+                        () => Get.to(() => EmailVerificationScreen()),
                   ),
                   _buildDrawerItem(
                     context,
@@ -1933,21 +1981,21 @@ class GNetworkDrawer extends StatelessWidget {
                         () => Get.to(() => ModernProfileScreen()),
                   ),
 
-                  _buildDrawerItem(
-                    context,
-                    Icons.settings_rounded,
-                    'Settings',
-                    false,
-                    null,
-                  ),
+                  // _buildDrawerItem(
+                  //   context,
+                  //   Icons.settings_rounded,
+                  //   'Settings',
+                  //   false,
+                  //   null,
+                  // ),
                   Divider(color: Color(0xFF7ED321).withOpacity(0.2)),
-                  _buildDrawerItem(
-                    context,
-                    Icons.help_outline_rounded,
-                    'Help & Support',
-                    false,
-                    null,
-                  ),
+                  // _buildDrawerItem(
+                  //   context,
+                  //   Icons.help_outline_rounded,
+                  //   'Help & Support',
+                  //   false,
+                  //   null,
+                  // ),
                   // Replace the logout _buildDrawerItem with this:
                   _buildDrawerItem(
                     context,

@@ -16,10 +16,12 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _userNameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _nameFocusNode = FocusNode();
   final _emailFocusNode = FocusNode();
+  final _userNameFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
   final _confirmPasswordFocusNode = FocusNode();
 
@@ -366,6 +368,8 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
                 const SizedBox(height: 20),
                 _buildEmailField(),
                 const SizedBox(height: 20),
+                _buildUserNameField(),
+                const SizedBox(height: 20),
                 _buildPasswordField(),
                 const SizedBox(height: 20),
                 _buildConfirmPasswordField(),
@@ -574,7 +578,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
             focusNode: _emailFocusNode,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
+            onFieldSubmitted: (_) => _userNameFocusNode.requestFocus(),
             style: const TextStyle(color: Colors.white, fontSize: 16),
             decoration: InputDecoration(
               hintText: 'Enter your email address',
@@ -631,6 +635,95 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
               ).hasMatch(value)) {
                 return 'Please enter a valid email address';
               }
+              return null;
+            },
+          ),
+        ),
+      ],
+    );
+  }
+  Widget _buildUserNameField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'User Name',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFFA5D6A7), // labelTextColor
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF7ED321).withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: _userNameController,
+            focusNode: _userNameFocusNode,
+            keyboardType: TextInputType.text,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+            decoration: InputDecoration(
+              hintText: 'Enter your user name',
+              hintStyle: TextStyle(
+                color: const Color(
+                  0xFF66BB6A,
+                ).withOpacity(0.6), // hintTextColor
+                fontSize: 16,
+              ),
+              prefixIcon: Icon(
+                Icons.person,
+                color: const Color(0xFF7ED321).withOpacity(0.7),
+                size: 22,
+              ),
+              filled: true,
+              fillColor: const Color(0xFF1B2E1C), // fieldFillColor
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: const Color(0xFF2D4A2E).withOpacity(0.5),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: const Color(0xFF2D4A2E).withOpacity(0.5),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: Color(0xFF7ED321), // fieldEnableBorderColor
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: Color(0xFFE53935), // colorRed
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your user name';
+              }
+
               return null;
             },
           ),
@@ -1004,7 +1097,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         username:
-            _emailController.text
+            _userNameController.text
                 .trim(), // You might want to add a separate username field
         password: _passwordController.text.trim(),
         confirmPassword: _confirmPasswordController.text.trim(),

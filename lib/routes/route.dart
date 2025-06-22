@@ -10,6 +10,7 @@ class RouteHelper {
   static const String sign = '/sign_in';
   static const String signup = '/sign_up';
   static const String resetPassword = '/reset-password';
+  static const String homeScreen = '/home-password';
 
 
   static List<GetPage> routes = [

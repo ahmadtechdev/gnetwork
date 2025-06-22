@@ -1,91 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
-import '../../utils/app_colors.dart';
+import '../../../utils/app_colors.dart';
+import 'profile_controller.dart';
 
-class ModernProfileScreen extends StatefulWidget {
-  const ModernProfileScreen({Key? key}) : super(key: key);
 
-  @override
-  State<ModernProfileScreen> createState() => _ModernProfileScreenState();
-}
-
-class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  bool hideRealName = false;
-  bool hideBalance = false;
-  bool pushNotifications = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _animationController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+class ModernProfileScreen extends StatelessWidget {
+  ModernProfileScreen({super.key});
+  final ProfileController _controller = Get.put(ProfileController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: MyColor.getScreenBgColor(),
-      body: CustomScrollView(
-        slivers: [
-          // Modern App Bar with Gradient
-          SliverAppBar(
-            expandedHeight: 80,
-            floating: false,
-            pinned: true,
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            leading: Container(
-              margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: MyColor.getGCoinGlassColor(),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: MyColor.getGCoinGlassBorderColor(),
-                  width: 1,
-                ),
-              ),
-              child: IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios_rounded,
-                  color: MyColor.getTextColor(),
-                  size: 20,
-                ),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-            actions: [
-              Container(
+      body: Obx(() {
+        if (_controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return CustomScrollView(
+          slivers: [
+            // Modern App Bar with Gradient
+            SliverAppBar(
+              expandedHeight: 80,
+              floating: false,
+              pinned: true,
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              leading: Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: MyColor.getGCoinGlassColor(),
@@ -97,77 +39,92 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
                 ),
                 child: IconButton(
                   icon: Icon(
-                    Icons.language_rounded,
+                    Icons.arrow_back_ios_rounded,
                     color: MyColor.getTextColor(),
                     size: 20,
                   ),
-                  onPressed: () {},
+                  onPressed: () => Navigator.pop(context),
                 ),
               ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: MyColor.getGCoinHeroGradient(),
-                ),
-                child: Container(
+              actions: [
+                Container(
+                  margin: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        MyColor.getScreenBgColor().withOpacity(0.1),
-                      ],
+                    color: MyColor.getGCoinGlassColor(),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: MyColor.getGCoinGlassBorderColor(),
+                      width: 1,
+                    ),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.language_rounded,
+                      color: MyColor.getTextColor(),
+                      size: 20,
+                    ),
+                    onPressed: () {},
+                  ),
+                ),
+              ],
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: MyColor.getGCoinHeroGradient(),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          MyColor.getScreenBgColor().withOpacity(0.1),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          // Profile Content
-          SliverToBoxAdapter(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // G Balance Card
-                      _buildPiBalanceCard(),
-                      const SizedBox(height: 24),
+            // Profile Content
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // G Balance Card
+                    _buildPiBalanceCard(),
+                    const SizedBox(height: 24),
 
-                      // Profile Info Card
-                      _buildProfileInfoCard(),
-                      const SizedBox(height: 24),
+                    // Profile Info Card
+                    _buildProfileInfoCard(),
+                    const SizedBox(height: 24),
 
-                      // Settings Section
-                      _buildSettingsSection(),
-                      const SizedBox(height: 24),
+                    // Settings Section
+                    _buildSettingsSection(),
+                    const SizedBox(height: 24),
 
-                      // Account Verification Section
-                      _buildAccountVerificationSection(),
-                      const SizedBox(height: 24),
+                    // Account Verification Section
+                    _buildAccountVerificationSection(),
+                    const SizedBox(height: 24),
 
-                      // Account Actions Section
-                      _buildAccountActionsSection(),
-                      const SizedBox(height: 24),
+                    // Account Actions Section
+                    _buildAccountActionsSection(),
+                    const SizedBox(height: 24),
 
-                      // Sign Out Button
-                      _buildSignOutButton(),
-                      const SizedBox(height: 32),
-                    ],
-                  ),
+                    // Sign Out Button
+                    _buildSignOutButton(),
+                    const SizedBox(height: 32),
+                  ],
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
 
@@ -213,14 +170,16 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '0.07929 π',
+                Obx(() => Text(
+                  _controller.hideBalance.value
+                      ? '*****'
+                      : '${_controller.userProfile['balance']} G',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
+                )),
               ],
             ),
           ),
@@ -256,7 +215,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
                 radius: 28,
                 backgroundColor: MyColor.gCoinPrimary,
                 child: Text(
-                  'AR',
+                  _controller.getInitials(_controller.userProfile['name']),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -269,14 +228,16 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Ahmad Raza',
+                    Obx(() => Text(
+                      _controller.hideRealName.value
+                          ? 'Hidden Name'
+                          : _controller.userProfile['name'] ?? 'No Name',
                       style: TextStyle(
                         color: MyColor.getTextColor(),
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
+                    )),
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -353,23 +314,16 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
           // Username Section
           _buildInfoItem(
             'Username:',
-            '@ahmadtechdev',
+            '@${_controller.userProfile['username']?.split('@')[0] ?? 'username'}',
             Icons.person_outline_rounded,
           ),
-          const SizedBox(height: 16),
 
-          // Invitation Code Section
-          _buildInfoItem(
-            'Invitation code to share:',
-            'ahmadtechdev',
-            Icons.card_giftcard_rounded,
-          ),
           const SizedBox(height: 16),
 
           // Referral Link Section
           _buildInfoItem(
-            'Referral link to share:',
-            'minepi.com/ahmadtechdev',
+            'Referral code to share:',
+            '${_controller.userProfile['username']?? ''}',
             Icons.link_rounded,
             showShare: true,
           ),
@@ -432,7 +386,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
             IconButton(
               onPressed: () {
                 HapticFeedback.lightImpact();
-                // Handle share action
+                _controller.handleAccountAction('Share referral link');
               },
               icon: Icon(
                 Icons.share_rounded,
@@ -476,31 +430,31 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
           ),
           const SizedBox(height: 20),
 
-          _buildSettingItem(
+          Obx(() => _buildSettingItem(
             'Hide real name',
             'Hide my real name from members of my Referral Team',
-            hideRealName,
-                (value) => setState(() => hideRealName = value),
+            _controller.hideRealName.value,
+            _controller.toggleHideRealName,
             Icons.visibility_off_rounded,
-          ),
+          )),
           const SizedBox(height: 16),
 
-          _buildSettingItem(
+          Obx(() => _buildSettingItem(
             'Hide Balance',
             'Hide the balance number shown at the top of the app.\nHiding the balance will not affect your mining rate.',
-            hideBalance,
-                (value) => setState(() => hideBalance = value),
+            _controller.hideBalance.value,
+            _controller.toggleHideBalance,
             Icons.account_balance_wallet_outlined,
-          ),
+          )),
           const SizedBox(height: 16),
 
-          _buildSettingItem(
+          Obx(() => _buildSettingItem(
             'Push Notifications',
             'In order to disable notifications, you must go to your phone\'s settings page.',
-            pushNotifications,
-                (value) => setState(() => pushNotifications = value),
+            _controller.pushNotifications.value,
+            _controller.togglePushNotifications,
             Icons.notifications_outlined,
-          ),
+          )),
         ],
       ),
     );
@@ -608,6 +562,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
             'Add',
             MyColor.gCoinWarning,
             false,
+            onTap: () => _controller.handleVerificationAction('Phone'),
           ),
           const SizedBox(height: 12),
 
@@ -617,6 +572,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
             'Verified',
             MyColor.gCoinSuccess,
             true,
+            onTap: () => _controller.handleVerificationAction('Facebook'),
           ),
           const SizedBox(height: 12),
 
@@ -627,6 +583,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
             MyColor.gCoinWarning,
             false,
             showWarning: true,
+            onTap: () => _controller.handleVerificationAction('Email'),
           ),
           const SizedBox(height: 8),
           Text(
@@ -642,81 +599,92 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
     );
   }
 
-  Widget _buildVerificationItem(String title, IconData icon, String action, Color actionColor, bool isVerified, {bool showWarning = false}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: MyColor.getGCoinSurfaceColor(),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: MyColor.getGCoinDividerColor(),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: actionColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: actionColor,
-              size: 20,
-            ),
+  Widget _buildVerificationItem(
+      String title,
+      IconData icon,
+      String action,
+      Color actionColor,
+      bool isVerified, {
+        bool showWarning = false,
+        VoidCallback? onTap,
+      }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: MyColor.getGCoinSurfaceColor(),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: MyColor.getGCoinDividerColor(),
+            width: 1,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Row(
-              children: [
-                Text(
-                  title,
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: actionColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: actionColor,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Row(
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: MyColor.getTextColor(),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (showWarning) ...[
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: MyColor.gCoinWarning,
+                      size: 16,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (isVerified)
+              Icon(
+                Icons.check_circle_rounded,
+                color: MyColor.gCoinSuccess,
+                size: 20,
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: actionColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: actionColor.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  action,
                   style: TextStyle(
-                    color: MyColor.getTextColor(),
-                    fontSize: 16,
+                    color: actionColor,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                if (showWarning) ...[
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: MyColor.gCoinWarning,
-                    size: 16,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          if (isVerified)
-            Icon(
-              Icons.check_circle_rounded,
-              color: MyColor.gCoinSuccess,
-              size: 20,
-            )
-          else
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: actionColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: actionColor.withOpacity(0.3),
-                  width: 1,
-                ),
               ),
-              child: Text(
-                action,
-                style: TextStyle(
-                  color: actionColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -747,6 +715,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
             Icons.security_rounded,
             MyColor.gCoinWarning,
             'Report',
+            onTap: () => _controller.handleAccountAction('Report compromised account'),
           ),
           const SizedBox(height: 16),
 
@@ -756,6 +725,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
             Icons.report_outlined,
             MyColor.colorRed,
             'Report',
+            onTap: () => _controller.handleAccountAction('Self-report fake account'),
           ),
           const SizedBox(height: 16),
 
@@ -765,83 +735,94 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
             Icons.delete_outline_rounded,
             MyColor.colorRed,
             'See How',
+            onTap: () => _controller.handleAccountAction('Account deletion'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionItem(String title, String description, IconData icon, Color color, String action) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: MyColor.getGCoinSurfaceColor(),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: MyColor.getGCoinDividerColor(),
-          width: 1,
+  Widget _buildActionItem(
+      String title,
+      String description,
+      IconData icon,
+      Color color,
+      String action, {
+        VoidCallback? onTap,
+      }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: MyColor.getGCoinSurfaceColor(),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: MyColor.getGCoinDividerColor(),
+            width: 1,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: MyColor.getTextColor(),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(
-                    color: MyColor.getSecondaryTextColor(),
-                    fontSize: 12,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: color.withOpacity(0.3),
-                width: 1,
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
-            ),
-            child: Text(
-              action,
-              style: TextStyle(
+              child: Icon(
+                icon,
                 color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+                size: 20,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: MyColor.getTextColor(),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: MyColor.getSecondaryTextColor(),
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: color.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                action,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -874,7 +855,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> with TickerPr
           borderRadius: BorderRadius.circular(16),
           onTap: () {
             HapticFeedback.lightImpact();
-            // Handle sign out
+            _controller.logout();
           },
           child: Container(
             padding: const EdgeInsets.all(16),

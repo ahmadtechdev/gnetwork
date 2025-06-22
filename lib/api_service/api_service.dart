@@ -148,12 +148,233 @@ class ApiService {
           },
         ),
       );
-
+      if (response.statusCode == 200) {
+        await LocalStorage.clear();
+        await LocalStorage.clearAllMiningData(); // Add this line
+      }
       return response;
     } on dio.DioException catch (e) {
       Get.snackbar(
         'Error',
         e.response?.data['message'] ?? 'Logout failed',
+      );
+      return null;
+    }
+  }
+
+  // Add to api_service.dart
+  Future<dio.Response?> getFAQs() async {
+    try {
+      final token = LocalStorage.getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await _dio.get(
+        'https://lightyellow-ape-562667.hostingersite.com/api/faqs',
+        options: dio.Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response;
+    } on dio.DioException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.response?.data['message'] ?? 'Failed to fetch FAQs',
+      );
+      return null;
+    }
+  }
+
+
+  // Add to api_service.dart
+  Future<dio.Response?> startMining() async {
+    try {
+      final token = LocalStorage.getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await _dio.post(
+        'https://lightyellow-ape-562667.hostingersite.com/api/start-mining',
+        options: dio.Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response;
+    } on dio.DioException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.response?.data['message'] ?? 'Failed to start mining',
+      );
+      return null;
+    }
+  }
+
+
+  // Add to api_service.dart
+  Future<dio.Response?> sendEmailVerification() async {
+    try {
+      final token = LocalStorage.getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await _dio.post(
+        'https://lightyellow-ape-562667.hostingersite.com/api/verify-email',
+        options: dio.Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response;
+    } on dio.DioException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.response?.data['message'] ?? 'Failed to send verification email',
+      );
+      return null;
+    }
+  }
+
+  Future<dio.Response?> verifyEmailWithOtp(String otp) async {
+    try {
+      final token = LocalStorage.getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await _dio.post(
+        'https://lightyellow-ape-562667.hostingersite.com/api/verify-email',
+        options: dio.Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+        data: {'otp': otp},
+      );
+
+      return response;
+    } on dio.DioException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.response?.data['message'] ?? 'Failed to verify email',
+      );
+      return null;
+    }
+  }
+
+  // Add to api_service.dart
+  Future<dio.Response?> getSupportArticles() async {
+    try {
+      final token = LocalStorage.getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await _dio.get(
+        'https://lightyellow-ape-562667.hostingersite.com/api/support-article',
+        options: dio.Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response;
+    } on dio.DioException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.response?.data['message'] ?? 'Failed to fetch support articles',
+      );
+      return null;
+    }
+  }
+
+  // Add to api_service.dart
+  Future<dio.Response?> getProfile() async {
+    try {
+      final token = LocalStorage.getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await _dio.get(
+        'https://lightyellow-ape-562667.hostingersite.com/api/profile',
+        options: dio.Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response;
+    } on dio.DioException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.response?.data['message'] ?? 'Failed to fetch profile',
+      );
+      return null;
+    }
+  }
+
+  // Add to api_service.dart
+  Future<dio.Response?> mineG() async {
+    try {
+      final token = LocalStorage.getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await _dio.get(
+        'https://lightyellow-ape-562667.hostingersite.com/api/mine-g',
+        options: dio.Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response;
+    } on dio.DioException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.response?.data['message'] ?? 'Failed to mine G',
+      );
+      return null;
+    }
+  }
+
+  // Add to api_service.dart
+  Future<dio.Response?> getReferrals() async {
+    try {
+      final token = LocalStorage.getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await _dio.get(
+        'https://lightyellow-ape-562667.hostingersite.com/api/referals',
+        options: dio.Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response;
+    } on dio.DioException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.response?.data['message'] ?? 'Failed to fetch referrals',
       );
       return null;
     }
