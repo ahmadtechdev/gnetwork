@@ -5,6 +5,8 @@ import 'refferal_controller.dart';
 
 
 class ReferralTeamPage extends StatefulWidget {
+  const ReferralTeamPage({super.key});
+
   @override
   _ReferralTeamPageState createState() => _ReferralTeamPageState();
 }
@@ -372,7 +374,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
             ),
           ),
           SizedBox(height: 16),
-          Container(
+          SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {

@@ -28,7 +28,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
   bool _acceptTerms = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _isLoading = false;
+  // bool _isLoading = false;
 
   late AnimationController _mainAnimationController;
   late AnimationController _floatingAnimationController;
@@ -828,9 +828,9 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
               if (value.length < 8) {
                 return 'Password must be at least 8 characters';
               }
-              if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)) {
-                return 'Password must contain uppercase, lowercase and number';
-              }
+              // if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)) {
+              //   return 'Password must contain uppercase, lowercase and number';
+              // }
               return null;
             },
           ),

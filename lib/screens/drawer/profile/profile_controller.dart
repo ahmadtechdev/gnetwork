@@ -1,4 +1,5 @@
 // profile_controller.dart
+import 'package:gcoin/utils/custom_snackbar.dart';
 import 'package:get/get.dart';
 
 import '../../../api_service/api_service.dart';
@@ -39,45 +40,51 @@ class ProfileController extends GetxController {
 
   void toggleHideRealName(bool value) {
     hideRealName(value);
-    Get.snackbar(
-      'Success',
-      'Real name visibility updated',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    // Get.snackbar(
+    //   'Success',
+    //   'Real name visibility updated',
+    //   snackPosition: SnackPosition.BOTTOM,
+    // );
+    //
+    CustomSnackBar.success('Soon it will be workable');
   }
 
   void toggleHideBalance(bool value) {
     hideBalance(value);
-    Get.snackbar(
-      'Success',
-      'Balance visibility updated',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    // Get.snackbar(
+    //   'Success',
+    //   'Balance visibility updated',
+    //   snackPosition: SnackPosition.BOTTOM,
+    // );
+    CustomSnackBar.success('Soon it will be workable');
   }
 
   void togglePushNotifications(bool value) {
     pushNotifications(value);
-    Get.snackbar(
-      'Success',
-      'Push notifications updated',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    // Get.snackbar(
+    //   'Success',
+    //   'Push notifications updated',
+    //   snackPosition: SnackPosition.BOTTOM,
+    // );
+    CustomSnackBar.success('Soon it will be workable');
   }
 
   void handleVerificationAction(String type) {
-    Get.snackbar(
-      'Info',
-      '$type verification functionality coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    // Get.snackbar(
+    //   'Info',
+    //   '$type verification functionality coming soon',
+    //   snackPosition: SnackPosition.BOTTOM,
+    // );
+    CustomSnackBar.success('$type verification functionality coming soon');
   }
 
   void handleAccountAction(String type) {
-    Get.snackbar(
-      'Info',
-      '$type functionality coming soon',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    // Get.snackbar(
+    //   'Info',
+    //   '$type functionality coming soon',
+    //   snackPosition: SnackPosition.BOTTOM,
+    // );
+    CustomSnackBar.success('$type functionality coming soon');
   }
 
   Future<void> logout() async {

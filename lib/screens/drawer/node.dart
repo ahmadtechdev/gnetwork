@@ -3,22 +3,21 @@ import 'package:get/get.dart';
 
 import '../../api_service/api_service.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/custom_snackbar.dart';
 import '../homescreen/home_controller.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({super.key});
 
   @override
-  _EmailVerificationScreenState createState() =>
-      _EmailVerificationScreenState();
+  _EmailVerificationScreenState createState() => _EmailVerificationScreenState();
 }
 
 class _EmailVerificationScreenState extends State<EmailVerificationScreen>
     with TickerProviderStateMixin {
   final TextEditingController _otpController = TextEditingController();
   final ApiService _apiService = ApiService();
-  // Add this focus node at the top of your state class
-  FocusNode _otpFocusNode = FocusNode();
+  final FocusNode _otpFocusNode = FocusNode();
 
   late AnimationController _animationController;
   late AnimationController _pulseController;
@@ -29,19 +28,25 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
   int currentIndex = 0;
   bool isLoading = false;
   bool isEmailVerified = false;
+  bool codeSent = false; // New state to track if code was sent
   String? verifiedAt;
   String userEmail = '';
 
   @override
   void initState() {
     super.initState();
+    _initializeUserData();
+    _setupAnimations();
+  }
 
-    // Get user data from controller
+  void _initializeUserData() {
     final homeController = Get.put(HomeController());
     isEmailVerified = homeController.userData['email_verified_at'] != null;
     verifiedAt = homeController.userData['email_verified_at'];
     userEmail = homeController.userData['email'] ?? 'your email';
+  }
 
+  void _setupAnimations() {
     _animationController = AnimationController(
       duration: Duration(milliseconds: 800),
       vsync: this,
@@ -76,11 +81,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
   void _onOtpChanged(String value) {
     setState(() {
       for (int i = 0; i < 4; i++) {
-        if (i < value.length) {
-          otpDigits[i] = value[i];
-        } else {
-          otpDigits[i] = '';
-        }
+        otpDigits[i] = i < value.length ? value[i] : '';
       }
       currentIndex = value.length;
     });
@@ -91,11 +92,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
     try {
       final response = await _apiService.sendEmailVerification();
       if (response?.statusCode == 200) {
-        Get.snackbar(
-          'Success',
-          'Verification code sent to $userEmail',
-          backgroundColor: Color(0xFF7ED321),
-        );
+        setState(() => codeSent = true);
+        CustomSnackBar.success('Verification code sent to $userEmail');
       }
     } finally {
       setState(() => isLoading = false);
@@ -104,33 +102,23 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
 
   Future<void> _verifyEmail() async {
     if (_otpController.text.length != 4) {
-      Get.snackbar(
-        'Error',
-        'Please enter a valid 4-digit code',
-        backgroundColor: Colors.red,
-      );
+      CustomSnackBar.error('Please enter a valid 4-digit code');
       return;
     }
 
     setState(() => isLoading = true);
     try {
-      final response = await _apiService.verifyEmailWithOtp(
-        _otpController.text,
-      );
-
+      final response = await _apiService.verifyEmailWithOtp(_otpController.text);
       final homeController = Get.put(HomeController());
+
       if (response?.statusCode == 200) {
-        // Refresh user data
         await homeController.fetchDashboardData();
         setState(() {
           isEmailVerified = true;
           verifiedAt = homeController.userData['email_verified_at'];
+          codeSent = false;
         });
-        Get.snackbar(
-          'Success',
-          'Email verified successfully!',
-          backgroundColor: Color(0xFF7ED321),
-        );
+        CustomSnackBar.success('Email verified successfully!');
       }
     } finally {
       setState(() => isLoading = false);
@@ -140,7 +128,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-  final homeController = Get.put(HomeController());
+    final homeController = Get.put(HomeController());
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -156,7 +145,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         child: SafeArea(
           child: Column(
             children: [
-              // Custom Header Section
+              // Header Section (unchanged)
               SizedBox(
                 height: screenHeight * 0.25,
                 child: Stack(
@@ -173,9 +162,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: MyColor.getGCoinPrimaryColor().withOpacity(
-                                0.3,
-                              ),
+                              color: MyColor.getGCoinPrimaryColor().withOpacity(0.3),
                               blurRadius: 40,
                             ),
                           ],
@@ -234,8 +221,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                                       ),
                                     ),
                                     child: Text(
-                                      homeController.getBalance() +
-                                          ' G',
+                                      '${homeController.getBalance()} G',
                                       style: TextStyle(
                                         color: MyColor.getTextColor(),
                                         fontWeight: FontWeight.w600,
@@ -340,7 +326,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                     padding: EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        // Progress indicator
                         Container(
                           width: 40,
                           height: 4,
@@ -349,7 +334,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
-
                         SizedBox(height: 32),
 
                         if (isEmailVerified) _buildVerifiedStatus(),
@@ -371,7 +355,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
   Widget _buildVerifiedStatus() {
     return Column(
       children: [
-        // Success icon
         Container(
           width: 100,
           height: 100,
@@ -381,10 +364,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
           ),
           child: Icon(Icons.check, color: Colors.white, size: 50),
         ),
-
         SizedBox(height: 24),
-
-        // Success message
         Text(
           'Email Verified',
           style: TextStyle(
@@ -393,9 +373,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
             color: MyColor.getGCoinSuccessColor(),
           ),
         ),
-
         SizedBox(height: 8),
-
         Text(
           'Your email $userEmail was verified',
           style: TextStyle(
@@ -403,9 +381,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
             color: MyColor.getSecondaryTextColor(),
           ),
         ),
-
         SizedBox(height: 8),
-
         if (verifiedAt != null)
           Text(
             'Verified on ${_formatVerifiedDate(verifiedAt!)}',
@@ -475,10 +451,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
             ],
           ),
         ),
-
         SizedBox(height: 40),
 
-        // OTP input section
+        // OTP input section (always visible but enabled only when codeSent is true)
         Text(
           'Verification Code',
           style: TextStyle(
@@ -487,53 +462,49 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
             color: MyColor.getHeadingTextColor(),
           ),
         ),
-
         SizedBox(height: 20),
 
-        // Custom OTP input boxes
+        // OTP input boxes
         GestureDetector(
-          onTap: () {
-            FocusScope.of(context).requestFocus(_otpFocusNode);
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(4, (index) {
-              return Container(
-                width: 50,
-                height: 60,
-                decoration: BoxDecoration(
-                  gradient:
-                      index < currentIndex
-                          ? MyColor.getGCoinPrimaryGradient()
-                          : null,
-                  color:
-                      index < currentIndex
-                          ? null
-                          : MyColor.getGCoinSurfaceColor(),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color:
-                        index == currentIndex
-                            ? MyColor.getGCoinPrimaryColor()
-                            : MyColor.getGCoinDividerColor(),
-                    width: index == currentIndex ? 2 : 1,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    otpDigits[index],
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color:
-                          index < currentIndex
-                              ? Colors.white
-                              : MyColor.getTextColor(),
+          onTap: codeSent ? () => FocusScope.of(context).requestFocus(_otpFocusNode) : null,
+          child: Opacity(
+            opacity: codeSent ? 1.0 : 0.5,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(4, (index) {
+                return Container(
+                  width: 50,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    gradient: index < currentIndex && codeSent
+                        ? MyColor.getGCoinPrimaryGradient()
+                        : null,
+                    color: index < currentIndex && codeSent
+                        ? null
+                        : MyColor.getGCoinSurfaceColor(),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: index == currentIndex && codeSent
+                          ? MyColor.getGCoinPrimaryColor()
+                          : MyColor.getGCoinDividerColor(),
+                      width: index == currentIndex && codeSent ? 2 : 1,
                     ),
                   ),
-                ),
-              );
-            }),
+                  child: Center(
+                    child: Text(
+                      otpDigits[index],
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: index < currentIndex && codeSent
+                            ? Colors.white
+                            : MyColor.getTextColor(),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
           ),
         ),
 
@@ -549,38 +520,40 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
               focusNode: _otpFocusNode,
               maxLength: 4,
               keyboardType: TextInputType.number,
-              onChanged: _onOtpChanged,
-              style: TextStyle(fontSize: 1), // Make text tiny
+              onChanged: codeSent ? _onOtpChanged : null,
+              style: TextStyle(fontSize: 1),
             ),
           ),
         ),
-
         SizedBox(height: 24),
 
         // Resend code button
-        TextButton(
-          onPressed: isLoading ? null : _sendVerificationEmail,
-          child: Text(
-            'Resend Verification Code',
-            style: TextStyle(
-              color: MyColor.getGCoinPrimaryColor(),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
+        // TextButton(
+        //   onPressed: isLoading ? null : _sendVerificationEmail,
+        //   child: Text(
+        //     'Resend Verification Code',
+        //     style: TextStyle(
+        //       color: MyColor.getGCoinPrimaryColor(),
+        //       fontWeight: FontWeight.w600,
+        //     ),
+        //   ),
+        // ),
+        // SizedBox(height: 32),
 
-        SizedBox(height: 32),
-
-        // Verify button
+        // Main action button - changes based on state
         Container(
           width: double.infinity,
           height: 56,
           decoration: BoxDecoration(
-            gradient: MyColor.getGCoinHeroGradient(),
+            gradient: codeSent
+                ? MyColor.getGCoinSuccessGradient()
+                : MyColor.getGCoinHeroGradient(),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: MyColor.getGCoinPrimaryColor().withOpacity(0.4),
+                color: (codeSent
+                    ? MyColor.getGCoinSuccessColor()
+                    : MyColor.getGCoinPrimaryColor()).withOpacity(0.4),
                 blurRadius: 12,
                 offset: Offset(0, 6),
               ),
@@ -590,24 +563,24 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
-              onTap: isLoading ? null : _verifyEmail,
+              onTap: isLoading
+                  ? null
+                  : codeSent ? _verifyEmail : _sendVerificationEmail,
               child: Center(
-                child:
-                    isLoading
-                        ? CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                          'Verify Email',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                child: isLoading
+                    ? CircularProgressIndicator(color: Colors.white)
+                    : Text(
+                  codeSent ? 'Verify Email' : 'Send Code',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
           ),
         ),
-
         SizedBox(height: 40),
 
         // Security warning

@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'dart:async';
 
 class ResetPasswordScreen extends StatefulWidget {
+  const ResetPasswordScreen({super.key});
+
   @override
   _ResetPasswordScreenState createState() => _ResetPasswordScreenState();
 }

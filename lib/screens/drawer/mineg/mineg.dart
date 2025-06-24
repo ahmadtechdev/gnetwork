@@ -6,7 +6,7 @@ import 'mineg_controller.dart';
 
 
 class MineGScreen extends StatefulWidget {
-  const MineGScreen({Key? key}) : super(key: key);
+  const MineGScreen({super.key});
 
   @override
   State<MineGScreen> createState() => _MineGScreenState();

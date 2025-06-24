@@ -67,6 +67,6 @@ class FAQController extends GetxController {
   }
 
   List<String> get categories {
-    return ['All', ...faqs.map((faq) => faq.category).toSet().toList()];
+    return ['All', ...faqs.map((faq) => faq.category).toSet()];
   }
 }

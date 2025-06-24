@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:gcoin/theme_controller.dart';
 import '../../../utils/app_colors.dart';
 import 'support_controller.dart';
 
 class ModernSupportScreen extends StatelessWidget {
-  ModernSupportScreen({Key? key}) : super(key: key);
+  ModernSupportScreen({super.key});
   final SupportController _controller = Get.put(SupportController());
 
   @override
@@ -154,7 +153,7 @@ class ModernSupportScreen extends StatelessWidget {
                         _buildNoResults(),
                       if (_controller.filteredArticles.isNotEmpty)
                         ..._controller.filteredArticles.map((article) =>
-                            _buildArticleCard(article)).toList(),
+                            _buildArticleCard(article)),
                     ],
                   ),
                 ),
@@ -254,6 +253,8 @@ class ModernSupportScreen extends StatelessWidget {
             ),
           ],
         ),
+        iconColor: MyColor.getGCoinPrimaryColor(),
+        collapsedIconColor: MyColor.getGCoinPrimaryColor(),
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -289,8 +290,6 @@ class ModernSupportScreen extends StatelessWidget {
             ),
           ),
         ],
-        iconColor: MyColor.getGCoinPrimaryColor(),
-        collapsedIconColor: MyColor.getGCoinPrimaryColor(),
       ),
     );
   }

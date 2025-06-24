@@ -1,4 +1,5 @@
 import 'package:gcoin/api_service/api_service.dart';
+import 'package:gcoin/utils/custom_snackbar.dart';
 import 'package:get/get.dart';
 
 class SignUpController extends GetxController {
@@ -26,7 +27,8 @@ class SignUpController extends GetxController {
       );
 
       if (response != null && response.data['success'] == true) {
-        Get.snackbar('Success', response.data['message']);
+        // Get.snackbar('Success', response.data['message']);
+        CustomSnackBar.success(response.data['message']);
         Get.offNamed('/sign_in'); // Navigate to sign in after successful registration
       }
     } finally {

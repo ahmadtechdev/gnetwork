@@ -1,11 +1,120 @@
 import 'package:dio/dio.dart' as dio;
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import '../utils/custom_snackbar.dart';
 import 'local_stroge.dart';
 
 class ApiService {
-  final _dio = dio.Dio();
+  final dio.Dio _dio = dio.Dio();
+  final String _baseUrl = 'https://gnetwork.pro/api';
 
+  // Helper method for handling errors consistently
+  void _handleError(dio.DioException e) {
+    String errorMessage = 'Something went wrong. Please try again.';
+
+    if (e.response != null && e.response!.data != null) {
+      final responseData = e.response!.data;
+
+      // Handle validation errors
+      if (responseData is Map && responseData.containsKey('errors')) {
+        final errors = responseData['errors'] as Map<String, dynamic>;
+        if (errors.isNotEmpty) {
+          final firstErrorKey = errors.keys.first;
+          final firstErrorList = errors[firstErrorKey] as List;
+          if (firstErrorList.isNotEmpty) {
+            errorMessage = firstErrorList.first.toString();
+          }
+        }
+      }
+      // Handle general error message
+      else if (responseData is Map && responseData.containsKey('message')) {
+        errorMessage = responseData['message'];
+      }
+    }
+
+    // Get.snackbar(
+    //   'Error',
+    //   errorMessage,
+    //   backgroundColor: const Color(0xFFE53935),
+    //   colorText: Colors.white,
+    //   duration: const Duration(seconds: 4),
+    // );
+    CustomSnackBar.error(errorMessage, title: 'Error');
+  }
+
+  // Helper method for authenticated requests
+  Future<dio.Response?> _authenticatedRequest({
+    required String method,
+    required String endpoint,
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      final token = LocalStorage.getToken();
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      return await _dio.request(
+        '$_baseUrl/$endpoint',
+        data: data,
+        queryParameters: queryParameters,
+        options: dio.Options(
+          method: method,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+    } on dio.DioException catch (e) {
+      _handleError(e);
+      return null;
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'An unexpected error occurred',
+        backgroundColor: const Color(0xFFE53935),
+        colorText: Colors.white,
+      );
+      return null;
+    }
+  }
+
+  // Helper method for unauthenticated requests
+  Future<dio.Response?> _unauthenticatedRequest({
+    required String method,
+    required String endpoint,
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      return await _dio.request(
+        '$_baseUrl/$endpoint',
+        data: data,
+        queryParameters: queryParameters,
+        options: dio.Options(
+          method: method,
+          headers: {
+            'Accept': 'application/json',
+          },
+        ),
+      );
+    } on dio.DioException catch (e) {
+      _handleError(e);
+      return null;
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'An unexpected error occurred',
+        backgroundColor: const Color(0xFFE53935),
+        colorText: Colors.white,
+      );
+      return null;
+    }
+  }
+
+  // Authentication endpoints
   Future<dio.Response?> registerUser({
     required String name,
     required String email,
@@ -14,369 +123,142 @@ class ApiService {
     required String passwordConfirmation,
     String? referBy,
   }) async {
-    try {
-      var data = dio.FormData.fromMap({
-        'name': name,
-        'email': email,
-        'username': username,
-        'password': password,
-        'password_confirmation': passwordConfirmation,
-        if (referBy != null && referBy.isNotEmpty) 'refer_by': referBy,
-      });
+    final data = {
+      'name': name,
+      'email': email,
+      'username': username,
+      'password': password,
+      'password_confirmation': passwordConfirmation,
+      if (referBy != null && referBy.isNotEmpty) 'refer_by': referBy,
+    };
 
-      final response = await _dio.post(
-        'https://lightyellow-ape-562667.hostingersite.com/api/register',
-        data: data,
-      );
-
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Registration failed',
-      );
-      return null;
-    }
+    return await _unauthenticatedRequest(
+      method: 'POST',
+      endpoint: 'register',
+      data: dio.FormData.fromMap(data),
+    );
   }
 
   Future<dio.Response?> loginUser({
     required String emailOrUsername,
     required String password,
   }) async {
-    try {
-      var data = dio.FormData.fromMap({
+    return await _unauthenticatedRequest(
+      method: 'POST',
+      endpoint: 'login',
+      data: dio.FormData.fromMap({
         'emailorusername': emailOrUsername,
         'password': password,
-      });
-
-      final response = await _dio.post(
-        'https://lightyellow-ape-562667.hostingersite.com/api/login',
-        data: data,
-      );
-
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar('Error', e.response?.data['message'] ?? 'Login failed');
-      return null;
-    }
+      }),
+    );
   }
 
-  // 1. Forgot Password - Send OTP to email
+  Future<dio.Response?> logoutUser() async {
+    final response = await _authenticatedRequest(
+      method: 'POST',
+      endpoint: 'logout',
+    );
+
+    if (response != null && response.statusCode == 200) {
+      await LocalStorage.clear();
+      await LocalStorage.clearAllMiningData();
+    }
+    return response;
+  }
+
+  // Password recovery endpoints
   Future<dio.Response?> forgotPassword({required String email}) async {
-    try {
-      var data = dio.FormData.fromMap({'email': email});
-
-      final response = await _dio.post(
-        'https://lightyellow-ape-562667.hostingersite.com/api/forgot-password',
-        data: data,
-      );
-
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Failed to send OTP',
-      );
-      return null;
-    }
+    return await _unauthenticatedRequest(
+      method: 'POST',
+      endpoint: 'forgot-password',
+      data: dio.FormData.fromMap({'email': email}),
+    );
   }
 
-  // 2. Reset Password - Verify OTP and set new password
   Future<dio.Response?> resetPassword({
     required String email,
     required String password,
     required String passwordConfirmation,
     required String otp,
   }) async {
-    try {
-      var data = dio.FormData.fromMap({
+    return await _unauthenticatedRequest(
+      method: 'POST',
+      endpoint: 'reset-password',
+      data: dio.FormData.fromMap({
         'email': email,
         'password': password,
         'password_confirmation': passwordConfirmation,
         'otp': otp,
-      });
-
-      final response = await _dio.post(
-        'https://lightyellow-ape-562667.hostingersite.com/api/reset-password',
-        data: data,
-      );
-
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Password reset failed',
-      );
-      return null;
-    }
+      }),
+    );
   }
 
-  // 3. Resend OTP - Send OTP again to email
   Future<dio.Response?> resendOtp({required String email}) async {
-    try {
-      var data = dio.FormData.fromMap({'email': email});
-
-      final response = await _dio.post(
-        'https://lightyellow-ape-562667.hostingersite.com/api/resend-otp',
-        data: data,
-      );
-
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Failed to resend OTP',
-      );
-      return null;
-    }
+    return await _unauthenticatedRequest(
+      method: 'POST',
+      endpoint: 'resend-otp',
+      data: dio.FormData.fromMap({'email': email}),
+    );
   }
 
-  // Add this method to ApiService class
-  Future<dio.Response?> logoutUser() async {
-    try {
-      final token = LocalStorage.getToken();
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
-
-      final response = await _dio.post(
-        'https://lightyellow-ape-562667.hostingersite.com/api/logout',
-        options: dio.Options(
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-      if (response.statusCode == 200) {
-        await LocalStorage.clear();
-        await LocalStorage.clearAllMiningData(); // Add this line
-      }
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Logout failed',
-      );
-      return null;
-    }
-  }
-
-  // Add to api_service.dart
-  Future<dio.Response?> getFAQs() async {
-    try {
-      final token = LocalStorage.getToken();
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
-
-      final response = await _dio.get(
-        'https://lightyellow-ape-562667.hostingersite.com/api/faqs',
-        options: dio.Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Failed to fetch FAQs',
-      );
-      return null;
-    }
-  }
-
-
-  // Add to api_service.dart
-  Future<dio.Response?> startMining() async {
-    try {
-      final token = LocalStorage.getToken();
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
-
-      final response = await _dio.post(
-        'https://lightyellow-ape-562667.hostingersite.com/api/start-mining',
-        options: dio.Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Failed to start mining',
-      );
-      return null;
-    }
-  }
-
-
-  // Add to api_service.dart
+  // Email verification
   Future<dio.Response?> sendEmailVerification() async {
-    try {
-      final token = LocalStorage.getToken();
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
-
-      final response = await _dio.post(
-        'https://lightyellow-ape-562667.hostingersite.com/api/verify-email',
-        options: dio.Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Failed to send verification email',
-      );
-      return null;
-    }
+    return await _authenticatedRequest(
+      method: 'POST',
+      endpoint: 'verify-email',
+    );
   }
 
   Future<dio.Response?> verifyEmailWithOtp(String otp) async {
-    try {
-      final token = LocalStorage.getToken();
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
-
-      final response = await _dio.post(
-        'https://lightyellow-ape-562667.hostingersite.com/api/verify-email',
-        options: dio.Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-        data: {'otp': otp},
-      );
-
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Failed to verify email',
-      );
-      return null;
-    }
+    return await _authenticatedRequest(
+      method: 'POST',
+      endpoint: 'verify-otp',
+      data: {'otp': otp},
+    );
   }
 
-  // Add to api_service.dart
-  Future<dio.Response?> getSupportArticles() async {
-    try {
-      final token = LocalStorage.getToken();
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
-
-      final response = await _dio.get(
-        'https://lightyellow-ape-562667.hostingersite.com/api/support-article',
-        options: dio.Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Failed to fetch support articles',
-      );
-      return null;
-    }
+  // Mining endpoints
+  Future<dio.Response?> startMining() async {
+    return await _authenticatedRequest(
+      method: 'POST',
+      endpoint: 'start-mining',
+    );
   }
 
-  // Add to api_service.dart
-  Future<dio.Response?> getProfile() async {
-    try {
-      final token = LocalStorage.getToken();
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
-
-      final response = await _dio.get(
-        'https://lightyellow-ape-562667.hostingersite.com/api/profile',
-        options: dio.Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Failed to fetch profile',
-      );
-      return null;
-    }
-  }
-
-  // Add to api_service.dart
   Future<dio.Response?> mineG() async {
-    try {
-      final token = LocalStorage.getToken();
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
-
-      final response = await _dio.get(
-        'https://lightyellow-ape-562667.hostingersite.com/api/mine-g',
-        options: dio.Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Failed to mine G',
-      );
-      return null;
-    }
+    return await _authenticatedRequest(
+      method: 'GET',
+      endpoint: 'mine-g',
+    );
   }
 
-  // Add to api_service.dart
+  // User data endpoints
+  Future<dio.Response?> getProfile() async {
+    return await _authenticatedRequest(
+      method: 'GET',
+      endpoint: 'profile',
+    );
+  }
+
   Future<dio.Response?> getReferrals() async {
-    try {
-      final token = LocalStorage.getToken();
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
+    return await _authenticatedRequest(
+      method: 'GET',
+      endpoint: 'referals',
+    );
+  }
 
-      final response = await _dio.get(
-        'https://lightyellow-ape-562667.hostingersite.com/api/referals',
-        options: dio.Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
+  // Support endpoints
+  Future<dio.Response?> getFAQs() async {
+    return await _authenticatedRequest(
+      method: 'GET',
+      endpoint: 'faqs',
+    );
+  }
 
-      return response;
-    } on dio.DioException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.response?.data['message'] ?? 'Failed to fetch referrals',
-      );
-      return null;
-    }
+  Future<dio.Response?> getSupportArticles() async {
+    return await _authenticatedRequest(
+      method: 'GET',
+      endpoint: 'support-article',
+    );
   }
 }

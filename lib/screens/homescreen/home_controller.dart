@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:gcoin/utils/custom_snackbar.dart';
 import 'package:get/get.dart';
 
 import '../../api_service/api_service.dart';
@@ -80,6 +81,7 @@ class HomeController extends GetxController {
           'You are already mining. Please wait until completion.',
           backgroundColor: Colors.orange,
         );
+        CustomSnackBar.error("You are already mining. Please wait until completion.", title: "Already Mining" );
         return;
       }
 
@@ -107,13 +109,15 @@ class HomeController extends GetxController {
           'Mining started! Reward: ${miningReward.value} π',
           backgroundColor: Color(0xFF7ED321),
         );
+        CustomSnackBar.success("Mining started! Reward: ${miningReward.value} G");
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to start mining: ${e.toString()}',
-        backgroundColor: Colors.red,
-      );
+      // Get.snackbar(
+      //   'Error',
+      //   'Failed to start mining: ${e.toString()}',
+      //   backgroundColor: Colors.red,
+      // );
+      CustomSnackBar.error("Failed to start mining: ${e.toString()}");
     } finally {
       isLoading(false);
     }
@@ -137,7 +141,7 @@ class HomeController extends GetxController {
       // Clear mining data if user changed
       final currentUser = LocalStorage.getUser();
       final response = await _dio.get(
-        'https://lightyellow-ape-562667.hostingersite.com/api/dashboard',
+        'https://gnetwork.pro/api/dashboard',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -166,7 +170,8 @@ class HomeController extends GetxController {
         throw Exception('Failed to load dashboard data');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to fetch dashboard data: ${e.toString()}');
+      // Get.snackbar('Error', 'Failed to fetch dashboard data: ${e.toString()}');
+      CustomSnackBar.error('Failed to fetch dashboard data: ${e.toString()}', title: "Er1ror");
     } finally {
       isLoading(false);
     }

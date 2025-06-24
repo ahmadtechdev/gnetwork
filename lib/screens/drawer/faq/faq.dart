@@ -6,7 +6,7 @@ import 'faq_controller.dart';
 import 'faq_model.dart';
 
 class FAQPage extends StatefulWidget {
-  const FAQPage({Key? key}) : super(key: key);
+  const FAQPage({super.key});
 
   @override
   State<FAQPage> createState() => _FAQPageState();
@@ -412,7 +412,7 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
   }
 
   Widget _buildEmptyState() {
-    return Container( // Fixed: Wrap in Container with proper height
+    return SizedBox( // Fixed: Wrap in Container with proper height
       height: MediaQuery.of(context).size.height * 0.5,
       child: Center(
         child: Column(

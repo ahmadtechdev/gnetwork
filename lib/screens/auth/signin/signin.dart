@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:gcoin/screens/auth/signin/signin_controller.dart';
-import 'package:gcoin/screens/homescreen/homescreen.dart';
 import 'package:gcoin/utils/app_colors.dart';
 import 'package:get/get.dart';
 
@@ -23,9 +22,9 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
 
-  bool _rememberMe = false;
+  // bool _rememberMe = false;
   bool _obscurePassword = true;
-  bool _isLoading = false;
+  // bool _isLoading = false;
 
   late AnimationController _mainAnimationController;
   late AnimationController _floatingAnimationController;
@@ -663,12 +662,7 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
           TextButton(
             onPressed: () {
               Get.toNamed(RouteHelper.signup);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Navigate to Sign Up screen'),
-                  backgroundColor: MyColor.gCoinPrimary,
-                ),
-              );
+
             },
             child: Text(
               'Sign Up',

@@ -8,8 +8,8 @@ class LocalStorage {
   static const _userKey = 'user_data';
   static const _rememberMeKey = 'remember_me';
   static const _credentialsKey = 'user_credentials';
-  static const _miningEndTimeKey = 'mining_end_time';
-  static const _miningRewardKey = 'mining_reward';
+  // static const _miningEndTimeKey = 'mining_end_time';
+  // static const _miningRewardKey = 'mining_reward';
 
   static Future<void> saveToken(String token) async {
     await _storage.write(_tokenKey, token);

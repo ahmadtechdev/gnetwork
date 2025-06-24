@@ -7,13 +7,17 @@ import 'dart:math';
 
 import 'package:gcoin/screens/drawer/refferal/refferal_team.dart';
 import 'package:gcoin/screens/drawer/support/support.dart';
+import 'package:gcoin/utils/custom_snackbar.dart';
 import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../api_service/api_service.dart';
 import '../../api_service/local_stroge.dart';
 import 'home_controller.dart';
 
 class PiNetworkHomeScreen extends StatefulWidget {
+  const PiNetworkHomeScreen({super.key});
+
   @override
   _PiNetworkHomeScreenState createState() => _PiNetworkHomeScreenState();
 }
@@ -112,44 +116,43 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
         return Scaffold(
           backgroundColor: Color(0xFF0D1F0F),
           body: Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFF7ED321),
-            ),
+            child: CircularProgressIndicator(color: Color(0xFF7ED321)),
           ),
         );
       }
 
-    return Scaffold(
-      backgroundColor: Color(0xFF0D1F0F),
-      drawer: GNetworkDrawer(),
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: Color(0xFF7ED321),
-          backgroundColor: Color(0xFF0D1F0F),
-          onRefresh: () async {
-            await _homeController.fetchDashboardData();
-          },
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                // Enhanced Header with gradient background
-                _buildEnhancedHeader(),
-          
-                // Stats Cards Section
-                _buildStatsCardsSection(),
-          
-                // Enhanced Game Apps Section
-                _buildEnhancedGameAppsSection(),
-          
-                // Pioneer Posts Section
-                _buildPioneerPostsSection(),
-              ],
+      return Scaffold(
+        backgroundColor: Color(0xFF0D1F0F),
+        drawer: GNetworkDrawer(),
+        body: SafeArea(
+          child: RefreshIndicator(
+            color: Color(0xFF7ED321),
+            backgroundColor: Color(0xFF0D1F0F),
+            onRefresh: () async {
+              await _homeController.fetchDashboardData();
+            },
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Enhanced Header with gradient background
+                  _buildEnhancedHeader(),
+
+                  // Stats Cards Section
+                  _buildStatsCardsSection(),
+
+                  // Enhanced Game Apps Section
+                  _buildEnhancedGameAppsSection(),
+
+                  // Pioneer Posts Section
+                  _buildPioneerPostsSection(),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-      floatingActionButton: _buildFloatingActionButtons(),
-    ); });
+        floatingActionButton: _buildFloatingActionButtons(),
+      );
+    });
   }
 
   Widget _buildEnhancedHeader() {
@@ -183,11 +186,15 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                         duration: Duration(milliseconds: 200),
                         curve: Curves.easeInOut,
                         child: TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0.0, end: double.parse(_homeController.getBalance())),
+                          tween: Tween(
+                            begin: 0.0,
+                            end: double.parse(_homeController.getBalance()),
+                          ),
                           duration: Duration(seconds: 2),
                           builder: (context, value, child) {
                             return IconButton(
-                              onPressed: () => Scaffold.of(context).openDrawer(),
+                              onPressed:
+                                  () => Scaffold.of(context).openDrawer(),
                               icon: Icon(
                                 Icons.menu_rounded,
                                 color: Color(0xFFE8F5E8),
@@ -282,7 +289,12 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                             textBaseline: TextBaseline.alphabetic,
                             children: [
                               TweenAnimationBuilder<double>(
-                                tween: Tween(begin: 0.0, end: double.parse(_homeController.userData['balance'])),
+                                tween: Tween(
+                                  begin: 0.0,
+                                  end: double.parse(
+                                    _homeController.userData['balance'] ?? "0",
+                                  ),
+                                ),
                                 duration: Duration(seconds: 2),
                                 builder: (context, value, child) {
                                   return Text(
@@ -723,7 +735,13 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
         _buildMiningFAB(),
         SizedBox(height: 12),
         GestureDetector(
-          onTap: ()=> Get.snackbar("G Network", "Soon Available", backgroundColor: Colors.green, colorText: Colors.white),
+          onTap:
+              () => Get.snackbar(
+                "G Network",
+                "Soon Available",
+                backgroundColor: Colors.green,
+                colorText: Colors.white,
+              ),
           child: _buildAnimatedFAB(
             icon: Icons.send_rounded,
             backgroundColor: Color(0xFF7ED321),
@@ -756,21 +774,25 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     'Mining in Progress',
                     'Please wait until current mining completes',
                     backgroundColor: Colors.orange,
+                    colorText: Colors.white,
                   );
+                  // CustomSnackBar.error("Please wait until current mining completes", title: "Mining in Progress");
                 }
               },
               child: Container(
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _homeController.isMining.value
-                      ? Colors.orange
-                      : Color(0xFF7ED321),
+                  color:
+                      _homeController.isMining.value
+                          ? Colors.orange
+                          : Color(0xFF7ED321),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
                       color: (_homeController.isMining.value
-                          ? Colors.orange
-                          : Color(0xFF7ED321)).withOpacity(0.3),
+                              ? Colors.orange
+                              : Color(0xFF7ED321))
+                          .withOpacity(0.3),
                       blurRadius: 12,
                       offset: Offset(0, 6),
                     ),
@@ -778,22 +800,22 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                 ),
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.flash_on_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                    Icon(Icons.flash_on_rounded, color: Colors.white, size: 18),
                     SizedBox(height: 4),
-                    Obx(() => Text(
-                      _homeController.isMining.value
-                          ? _homeController.formatTime(_homeController.miningTimeLeft.value)
-                          : '${_homeController.getMiningRate()} G/h',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
+                    Obx(
+                      () => Text(
+                        _homeController.isMining.value
+                            ? _homeController.formatTime(
+                              _homeController.miningTimeLeft.value,
+                            )
+                            : '${_homeController.getMiningRate()} G/h',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    )),
+                    ),
                   ],
                 ),
               ),
@@ -803,6 +825,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
       },
     );
   }
+
   Widget _buildAnimatedFAB({
     required IconData icon,
     required Color backgroundColor,
@@ -987,7 +1010,6 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                   //     ],
                   //   ),
                   // ),
-
                   SizedBox(height: 20),
 
                   // Enhanced interaction buttons with wave animation
@@ -1049,18 +1071,21 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
           SizedBox(height: 16),
 
           Column(
-            children: _homeController.posts.map((post) => _buildPioneerPostCard(
-              username: '@${_homeController.userData['username']}',
-              tag: '#GMining',
-              date: 'Today',
-              title: post['title'],
-              subtitle: 'GCoin',
-              description: post['content'],
-              likes: int.tryParse(post['like'] ?? '0') ?? 0,
-              comments: int.tryParse(post['share'] ?? '0') ?? 0,
-              backgroundColor: Colors.lightBlue[200]!,
-              imageUrl: post['image'], // Pass the image URL from API response
-            )).toList(),
+            children:
+                _homeController.posts
+                    .map(
+                      (post) => _buildPioneerPostCard(
+                        title: post['title'],
+
+                        description: post['content'],
+                        likes: int.tryParse(post['like'] ?? '0') ?? 0,
+                        imageUrl: post['image'],
+                        shares:
+                            int.tryParse(post['share'] ?? '0') ??
+                            0, // Pass the image URL from API response
+                      ),
+                    )
+                    .toList(),
           ),
         ],
       ),
@@ -1068,240 +1093,258 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
   }
 
   Widget _buildPioneerPostCard({
-    required String username,
-    required String tag,
-    required String date,
     required String title,
-    required String subtitle,
     required String description,
     required int likes,
-    required int comments,
-    required Color backgroundColor,
-    String? imageUrl, // Added imageUrl parameter
-    bool isVPSCard = false,
+    required int shares,
+    required String imageUrl,
   }) {
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      padding: EdgeInsets.all(20),
+      margin: EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: Color(0xFF1B2E1C),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFF7ED321).withOpacity(0.2), width: 1),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Color(0xFF7ED321).withOpacity(0.1),
-            blurRadius: 12,
-            offset: Offset(0, 4),
+            color: Color(0xFF7ED321).withOpacity(0.2),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: Offset(0, 10),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 5,
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // User info
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF7ED321), Color(0xFF4CAF50)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  username[1].toUpperCase(),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
+          // Image Container with Gradient Background
+          Container(
+            height: 220,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF7ED321).withOpacity(0.3),
+                  Color(0xFF4CAF50).withOpacity(0.1),
+                ],
               ),
-              SizedBox(width: 12),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              child: Stack(
+                children: [
+                  // Image with shimmer loading effect
+                  if (imageUrl.isNotEmpty)
+                    Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Shimmer.fromColors(
+                          baseColor: Color(0xFF1B2E1C),
+                          highlightColor: Color(0xFF7ED321).withOpacity(0.2),
+                          child: Container(color: Colors.white),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Icon(
+                            Icons.broken_image,
+                            color: Color(0xFF7ED321).withOpacity(0.3),
+                            size: 50,
+                          ),
+                        );
+                      },
+                    ),
 
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Color(0xFF7ED321).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  tag,
-                  style: TextStyle(
-                    color: Color(0xFF7ED321),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
+                  // Gradient overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.3),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+
+                  // Floating tag
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF7ED321),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        'G Network',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Spacer(),
-              Text(
-                date,
-                style: TextStyle(color: Color(0xFFCED9CE), fontSize: 12),
-              ),
-            ],
+            ),
           ),
 
-          SizedBox(height: 16),
-
-          // Content Card with Image
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
+          // Content Section
+          Padding(
+            padding: EdgeInsets.all(20),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Title
                 Text(
                   title,
                   style: TextStyle(
-                    color: Colors.black,
+                    color: Color(0xFFE8F5E8),
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    height: 1.3,
                   ),
-                  textAlign: TextAlign.center,
                 ),
 
-                SizedBox(height: 16),
+                SizedBox(height: 12),
 
-                // Image
-                if (imageUrl != null && imageUrl.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      imageUrl,
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 200,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
+                // Description (only if not "none")
+                if (description.isNotEmpty && description != "none")
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: Color(0xFFCED9CE),
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+
+                SizedBox(height: 20),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    // Like Button
+                    Expanded(
+                      child: Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Color(0xFF7ED321).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Color(0xFF7ED321).withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
                             borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.image_not_supported,
-                            color: Colors.grey[600],
-                            size: 50,
-                          ),
-                        );
-                      },
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          height: 200,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                                  : null,
+                            onTap: () {
+                              // Handle like action
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 12),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.favorite_border,
+                                    color: Color(0xFF7ED321),
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    '$likes',
+                                    style: TextStyle(
+                                      color: Color(0xFFE8F5E8),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
-                  ),
 
-                SizedBox(height: 16),
+                    SizedBox(width: 12),
 
-                // Description
-                Text(
-                  description,
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 14,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: 16),
-          Text(
-            'Join the future and boost the\necosystem 🚀🚀🚀',
-            style: TextStyle(color: Color(0xFFE8F5E8), fontSize: 14),
-          ),
-
-          SizedBox(height: 16),
-
-          // Actions with updated colors
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Color(0xFF7ED321).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '−',
-                  style: TextStyle(
-                    color: Color(0xFF7ED321),
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              SizedBox(width: 10),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.local_fire_department,
-                      color: Colors.orange,
-                      size: 16,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      likes.toString(),
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
+                    // Share Button
+                    Expanded(
+                      child: Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Color(0xFF7ED321).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Color(0xFF7ED321).withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              // Handle share action
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 12),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.share,
+                                    color: Color(0xFF7ED321),
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    '$shares',
+                                    style: TextStyle(
+                                      color: Color(0xFFE8F5E8),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              SizedBox(width: 10),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Color(0xFF7ED321).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '+',
-                  style: TextStyle(
-                    color: Color(0xFF7ED321),
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Spacer(),
-              Text(
-                '$comments 💬',
-                style: TextStyle(color: Color(0xFFCED9CE), fontSize: 12),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -1779,74 +1822,76 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     ],
                   ),
                   SizedBox(height: 16),
-                  ..._homeController.logs.map((log) => Container(
-                    margin: EdgeInsets.only(bottom: 12),
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Color(0xFF7ED321).withOpacity(0.05),
-                          Color(0xFF4CAF50).withOpacity(0.03),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Color(0xFF7ED321).withOpacity(0.1),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(8),
+                  ..._homeController.logs
+                      .map(
+                        (log) => Container(
+                          margin: EdgeInsets.only(bottom: 12),
+                          padding: EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Color(0xFF7ED321).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(0xFF7ED321).withOpacity(0.05),
+                                Color(0xFF4CAF50).withOpacity(0.03),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Color(0xFF7ED321).withOpacity(0.1),
+                              width: 1,
+                            ),
                           ),
-                          child: Icon(
-                            Icons.notifications_rounded,
-                            color: Color(0xFF7ED321),
-                            size: 16,
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
                             children: [
-                              RichText(
-                                text: TextSpan(
-                                  style: TextStyle(
-                                    color: Color(0xFFE8F5E8),
-                                    fontSize: 14,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: log['name'],
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF7ED321),
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: ' ${log['action']}',
-                                    ),
-                                  ],
+                              Container(
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF7ED321).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.notifications_rounded,
+                                  color: Color(0xFF7ED321),
+                                  size: 16,
                                 ),
                               ),
-                              Text(
-                                log['created_at'],
-                                style: TextStyle(
-                                  color: Color(0xFFCED9CE),
-                                  fontSize: 12,
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    RichText(
+                                      text: TextSpan(
+                                        style: TextStyle(
+                                          color: Color(0xFFE8F5E8),
+                                          fontSize: 14,
+                                        ),
+                                        children: [
+                                          TextSpan(
+                                            text: log['name'],
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF7ED321),
+                                            ),
+                                          ),
+                                          TextSpan(text: ' ${log['action']}'),
+                                        ],
+                                      ),
+                                    ),
+                                    Text(
+                                      log['created_at'],
+                                      style: TextStyle(
+                                        color: Color(0xFFCED9CE),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  )).toList(),
+                      )
+                      .toList(),
                 ],
               ),
             ),
@@ -1954,31 +1999,32 @@ class GNetworkDrawer extends StatelessWidget {
                   ),
                   _buildDrawerItem(
                     context,
-                    Icons.military_tech, // for "Mine g" - implies mining or achievement
+                    Icons
+                        .military_tech, // for "Mine g" - implies mining or achievement
                     'Mine g',
                     false,
-                        () => Get.to(() => MineGScreen()),
+                    () => Get.to(() => MineGScreen()),
                   ),
                   _buildDrawerItem(
                     context,
                     Icons.verified_user, // for "Node" - verification/security
                     'Node',
                     false,
-                        () => Get.to(() => EmailVerificationScreen()),
+                    () => Get.to(() => EmailVerificationScreen()),
                   ),
                   _buildDrawerItem(
                     context,
                     Icons.support_agent, // for "Support"
                     'Support',
                     false,
-                        () => Get.to(() => ModernSupportScreen()),
+                    () => Get.to(() => ModernSupportScreen()),
                   ),
                   _buildDrawerItem(
                     context,
                     Icons.account_circle, // for "Profile"
                     'Profile',
                     false,
-                        () => Get.to(() => ModernProfileScreen()),
+                    () => Get.to(() => ModernProfileScreen()),
                   ),
 
                   // _buildDrawerItem(
@@ -2002,13 +2048,15 @@ class GNetworkDrawer extends StatelessWidget {
                     Icons.logout_rounded,
                     'Logout',
                     false,
-                        () async {
+                    () async {
                       final apiService = ApiService();
                       final response = await apiService.logoutUser();
                       if (response != null && response.statusCode == 200) {
                         await LocalStorage.clear();
                         // Navigate to login screen or wherever appropriate
-                        Get.offAllNamed('/sign_in'); // Adjust this based on your navigation setup
+                        Get.offAllNamed(
+                          '/sign_in',
+                        ); // Adjust this based on your navigation setup
                       }
                     },
                   ),
