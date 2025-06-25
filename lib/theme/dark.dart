@@ -28,7 +28,7 @@ ThemeData dark = ThemeData(
     )
   ),
     checkboxTheme: CheckboxThemeData(
-      checkColor: MaterialStateProperty.all(MyColor.colorWhite),
-      fillColor: MaterialStateProperty.all(MyColor.colorWhite),
-      overlayColor: MaterialStateProperty.all(MyColor.transparentColor),
+      checkColor: WidgetStateProperty.all(MyColor.colorWhite),
+      fillColor: WidgetStateProperty.all(MyColor.colorWhite),
+      overlayColor: WidgetStateProperty.all(MyColor.transparentColor),
     ));

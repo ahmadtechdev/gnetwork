@@ -11,12 +11,24 @@ class LocalStorage {
   // static const _miningEndTimeKey = 'mining_end_time';
   // static const _miningRewardKey = 'mining_reward';
 
+  static const _tokenExpiryKey = 'token_expiry';
+
+
+
+  // Save token with expiry (30 days from now)
   static Future<void> saveToken(String token) async {
     await _storage.write(_tokenKey, token);
+
   }
 
+  // Get token if it's not expired
   static String? getToken() {
-    return _storage.read(_tokenKey);
+    final token = _storage.read(_tokenKey);
+    if (token == null) return null;
+
+
+
+    return token;
   }
 
   static Future<void> saveUser(Map<String, dynamic> user) async {
@@ -51,7 +63,11 @@ class LocalStorage {
   }
 
   static Future<void> clear() async {
-    await _storage.erase();
+    await _storage.remove(_tokenKey);
+    await _storage.remove(_tokenExpiryKey);
+    await _storage.remove(_userKey);
+    await _storage.remove(_rememberMeKey);
+    await _storage.remove(_credentialsKey);
   }
 
   // Update local_stroge.dart

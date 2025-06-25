@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../api_service/api_service.dart';
+import '../../../api_service/local_stroge.dart';
 import '../../../utils/app_colors.dart';
 import 'profile_controller.dart';
 
@@ -266,50 +268,50 @@ class ModernProfileScreen extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Warning Message
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: MyColor.gCoinWarning.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: MyColor.gCoinWarning.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.warning_amber_rounded,
-                  color: MyColor.gCoinWarning,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Correct spelling is needed to claim G.',
-                        style: TextStyle(
-                          color: MyColor.getTextColor(),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Text(
-                        'You have 4 days and 07:39:27 to correct name.',
-                        style: TextStyle(
-                          color: MyColor.getSecondaryTextColor(),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
+          // Container(
+          //   padding: const EdgeInsets.all(16),
+          //   decoration: BoxDecoration(
+          //     color: MyColor.gCoinWarning.withOpacity(0.05),
+          //     borderRadius: BorderRadius.circular(12),
+          //     border: Border.all(
+          //       color: MyColor.gCoinWarning.withOpacity(0.2),
+          //       width: 1,
+          //     ),
+          //   ),
+          //   child: Row(
+          //     children: [
+          //       Icon(
+          //         Icons.warning_amber_rounded,
+          //         color: MyColor.gCoinWarning,
+          //         size: 20,
+          //       ),
+          //       const SizedBox(width: 12),
+          //       Expanded(
+          //         child: Column(
+          //           crossAxisAlignment: CrossAxisAlignment.start,
+          //           children: [
+          //             Text(
+          //               'Correct spelling is needed to claim G.',
+          //               style: TextStyle(
+          //                 color: MyColor.getTextColor(),
+          //                 fontSize: 14,
+          //                 fontWeight: FontWeight.w500,
+          //               ),
+          //             ),
+          //             Text(
+          //               'You have 4 days and 07:39:27 to correct name.',
+          //               style: TextStyle(
+          //                 color: MyColor.getSecondaryTextColor(),
+          //                 fontSize: 12,
+          //               ),
+          //             ),
+          //           ],
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
+          // const SizedBox(height: 20),
 
           // Username Section
           _buildInfoItem(
@@ -853,9 +855,16 @@ class ModernProfileScreen extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            HapticFeedback.lightImpact();
-            _controller.logout();
+          onTap: () async {
+            final apiService = ApiService();
+            final response = await apiService.logoutUser();
+            if (response != null && response.statusCode == 200) {
+              await LocalStorage.clear();
+              // Navigate to login screen or wherever appropriate
+              Get.offAllNamed(
+                '/sign_in',
+              ); // Adjust this based on your navigation setup
+            }
           },
           child: Container(
             padding: const EdgeInsets.all(16),

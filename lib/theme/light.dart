@@ -22,7 +22,7 @@ ThemeData light = ThemeData(
         )
     ),
     checkboxTheme: CheckboxThemeData(
-     checkColor: MaterialStateProperty.all(MyColor.colorBlack),
-     fillColor: MaterialStateProperty.all(MyColor.primaryColor),
+     checkColor: WidgetStateProperty.all(MyColor.colorBlack),
+     fillColor: WidgetStateProperty.all(MyColor.primaryColor),
 
 ));

@@ -10,6 +10,7 @@ import 'package:gcoin/screens/drawer/support/support.dart';
 import 'package:gcoin/utils/custom_snackbar.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../api_service/api_service.dart';
 import '../../api_service/local_stroge.dart';
@@ -314,7 +315,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                                 builder: (context, child) {
                                   return Transform.rotate(
                                     angle:
-                                        _rotationAnimation.value * 2 * 3.14159,
+                                    _rotationAnimation.value * 2 * 3.14159,
                                     child: Text(
                                       'G',
                                       style: TextStyle(
@@ -630,7 +631,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     ),
                   ),
                   Text(
-                    'Play the new FruityPi Game!',
+                    'Play the new FruityG Game!',
                     style: TextStyle(
                       color: Color(0xFFE8F5E8),
                       fontSize: 16,
@@ -644,7 +645,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildModernButton('Learn More', false),
-                      _buildModernButton('FruityPi', true),
+                      _buildModernButton('FruityG', true),
                     ],
                   ),
                 ],
@@ -715,6 +716,56 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
 
   // Update _buildFloatingActionButtons in homescreen.dart
   Widget _buildFloatingActionButtons() {
+
+    Future<void> shareReferralCode() async {
+      try {
+        final userName = _homeController.userData['name'] ?? 'Your Friend';
+        final referralCode = _homeController.userData['username'] ?? '';
+
+
+        // Create beautiful WhatsApp message
+        final message = '''
+🌟 *Join G Network & Start Mining G Coins!* 🌟
+
+Hey! I'm $userName inviting you to join the revolutionary G Network! 
+
+💰 *Earn G Coins daily* by mining & inviting friends
+🚀 *Free to start* - No investment required
+🔗 *Global community* of miners earning together
+📱 *Simple mobile mining* - Just tap to mine!
+
+*Your Referral Code:* `$referralCode`
+
+📲 *Download G Network App:*
+https://play.google.com/store/apps/details?id=com.gnetwork.gcoin
+
+Join thousands of users already earning G Coins! 
+Don't miss out on this opportunity! 🎯
+
+#GNetwork #GCoin #CryptoMining #EarnDaily
+      '''.trim();
+
+        // // Create WhatsApp URL
+        // final whatsappUrl = 'https://wa.me/$senderNumber?text=${Uri.encodeComponent(message)}';
+
+
+        // Fallback to general share
+        final generalShareUrl = 'https://api.whatsapp.com/send?text=${Uri.encodeComponent(message)}';
+        if (await canLaunchUrl(Uri.parse(generalShareUrl))) {
+          await launchUrl(
+            Uri.parse(generalShareUrl),
+            mode: LaunchMode.externalApplication,
+          );
+        } else {
+          CustomSnackBar.error('Unable to open WhatsApp. Please install WhatsApp first.');
+        }
+
+      } catch (e) {
+        CustomSnackBar.error('Error sharing referral code: ${e.toString()}');
+      }
+    }
+
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -736,12 +787,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
         SizedBox(height: 12),
         GestureDetector(
           onTap:
-              () => Get.snackbar(
-                "G Network",
-                "Soon Available",
-                backgroundColor: Colors.green,
-                colorText: Colors.white,
-              ),
+              () => shareReferralCode(),
           child: _buildAnimatedFAB(
             icon: Icons.send_rounded,
             backgroundColor: Color(0xFF7ED321),
@@ -1351,93 +1397,13 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
     );
   }
 
-  Widget _buildInteractionButton({
-    required IconData icon,
-    required String count,
-    required String label,
-    required Color color,
-    int delay = 0,
-  }) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 800),
-      // delay: Duration(milliseconds: delay),
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: 0.3 + (0.7 * value),
-          child: GestureDetector(
-            onTap: () {
-              // Add haptic feedback
-            },
-            child: AnimatedContainer(
-              duration: Duration(milliseconds: 200),
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: color.withOpacity(0.3), width: 1),
-              ),
-              child: Column(
-                children: [
-                  AnimatedBuilder(
-                    animation: _rotationController,
-                    builder: (context, child) {
-                      return Transform.rotate(
-                        angle: sin(_rotationController.value * 2 * pi) * 0.1,
-                        child: Icon(icon, color: color, size: 20),
-                      );
-                    },
-                  ),
-                  SizedBox(height: 4),
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(
-                      begin: 0.0,
-                      end: double.parse(
-                        count.replaceAll('K', '000').replaceAll('.', ''),
-                      ),
-                    ),
-                    duration: Duration(seconds: 2),
-                    builder: (context, animatedCount, child) {
-                      String displayCount = count;
-                      if (count.contains('K')) {
-                        displayCount =
-                            '${(animatedCount / 1000).toStringAsFixed(1)}K';
-                      } else {
-                        displayCount = animatedCount.toInt().toString();
-                      }
-                      return Text(
-                        displayCount,
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      );
-                    },
-                  ),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Color(0xFFCED9CE),
-                      fontSize: 8,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   Widget _buildTrendingTopicsSection() {
     final topics = [
-      '#PiNetwork',
+      '#GNetwork',
       '#Blockchain',
       '#Cryptocurrency',
-      '#FruityPi',
+      '#FruityG',
       '#Mining',
     ];
 
@@ -1633,7 +1599,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildAnimatedStat(
-                        '47M+',
+                        '7K+',
                         'Pioneers',
                         Icons.people_rounded,
                         Color(0xFF7ED321),
@@ -1645,7 +1611,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                         Color(0xFF4CAF50),
                       ),
                       _buildAnimatedStat(
-                        '15K+',
+                        '5K+',
                         'Apps',
                         Icons.apps_rounded,
                         Color(0xFF66BB6A),
@@ -1739,32 +1705,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
   }
 
   Widget _buildRecentActivitiesSection() {
-    final activities = [
-      {
-        'user': 'Alex',
-        'action': 'started mining',
-        'time': '2m ago',
-        'icon': Icons.flash_on_rounded,
-      },
-      {
-        'user': 'Maria',
-        'action': 'joined security circle',
-        'time': '5m ago',
-        'icon': Icons.security_rounded,
-      },
-      {
-        'user': 'John',
-        'action': 'played FruityPi',
-        'time': '12m ago',
-        'icon': Icons.sports_esports_rounded,
-      },
-      {
-        'user': 'Sarah',
-        'action': 'invited 3 friends',
-        'time': '1h ago',
-        'icon': Icons.person_add_rounded,
-      },
-    ];
+
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),

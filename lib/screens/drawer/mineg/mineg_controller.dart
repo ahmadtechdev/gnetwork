@@ -93,7 +93,7 @@ class MineGController extends GetxController {
   }
 
   String getPerHourRate() {
-    return miningData['per_hour_rate']?.toString() ?? '0.00';
+    return miningData['per_hour_rate']?.toStringAsFixed(2) ?? '0.00';
   }
 
   bool isMiningActive() {

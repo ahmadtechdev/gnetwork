@@ -378,11 +378,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                Get.snackbar(
-                  'Info',
-                  'Feature coming soon',
-                  snackPosition: SnackPosition.BOTTOM,
-                );
+
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: MyColor.getGCoinPrimaryColor(),
@@ -571,11 +567,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
         Expanded(
           child: OutlinedButton(
             onPressed: () {
-              Get.snackbar(
-                'Info',
-                'Feature coming soon',
-                snackPosition: SnackPosition.BOTTOM,
-              );
+
             },
             style: OutlinedButton.styleFrom(
               side: BorderSide(
@@ -588,7 +580,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
               ),
             ),
             child: Text(
-              'Referral Team Chat',
+              'Referral Team',
               style: TextStyle(
                 color: MyColor.getGCoinPrimaryColor(),
                 fontSize: 16,
@@ -601,11 +593,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
         Expanded(
           child: ElevatedButton(
             onPressed: () {
-              Get.snackbar(
-                'Info',
-                'Feature coming soon',
-                snackPosition: SnackPosition.BOTTOM,
-              );
+              _controller.shareReferralCode();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: MyColor.getGCoinPrimaryColor(),

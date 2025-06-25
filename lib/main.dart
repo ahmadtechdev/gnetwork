@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'api_service/local_stroge.dart';
 import 'routes/route.dart';
 import 'theme_controller.dart';
 import 'utils/my_strings.dart';
@@ -19,24 +21,34 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  // Initialize GetStorage
+  await GetStorage.init();
+
+
   // Initialize SharedPreferences
   final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
 
   // Initialize ThemeController
   Get.put(ThemeController(sharedPreferences: sharedPreferences));
 
-  runApp(const MainApp());
+  // Check if user has a valid token
+  final hasValidToken = LocalStorage.getToken() != null;
+
+
+  runApp(MainApp(initialRoute: hasValidToken ? RouteHelper.homeScreen : RouteHelper.onboardScreen));
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
 
+  final String initialRoute;
+
+  const MainApp({super.key, required this.initialRoute});
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ThemeController>(builder: (theme) {
       return GetMaterialApp(
         title: MyStrings.appName,
-        initialRoute: RouteHelper.onboardScreen,
+        initialRoute: initialRoute,
         defaultTransition: Transition.fadeIn,
         transitionDuration: const Duration(milliseconds: 300),
         getPages: RouteHelper.routes,
