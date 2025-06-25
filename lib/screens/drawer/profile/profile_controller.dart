@@ -82,7 +82,7 @@ Hey! I'm ${hideRealName.value ? '' : userName} inviting you to join the revoluti
 *Your Referral Code:* `$referralCode`
 
 📲 *Download G Network App:*
-https://play.google.com/store/apps/details?id=com.gnetwork.gcoin
+https://play.google.com/store/apps/details?id=pro.gnetwork.gnewtwork&hl=en
 
 Join thousands of users already earning G Coins! 
 Don't miss out on this opportunity! 🎯

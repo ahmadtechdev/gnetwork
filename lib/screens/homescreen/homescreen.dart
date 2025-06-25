@@ -737,7 +737,7 @@ Hey! I'm $userName inviting you to join the revolutionary G Network!
 *Your Referral Code:* `$referralCode`
 
 📲 *Download G Network App:*
-https://play.google.com/store/apps/details?id=com.gnetwork.gcoin
+https://play.google.com/store/apps/details?id=pro.gnetwork.gnewtwork&hl=en
 
 Join thousands of users already earning G Coins! 
 Don't miss out on this opportunity! 🎯
