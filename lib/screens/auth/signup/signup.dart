@@ -723,7 +723,9 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
               if (value == null || value.isEmpty) {
                 return 'Please enter your user name';
               }
-
+              if (value.contains(' ')) {
+                return 'Username should not contain spaces';
+              }
               return null;
             },
           ),
