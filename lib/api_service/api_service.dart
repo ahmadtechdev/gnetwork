@@ -161,7 +161,7 @@ class ApiService {
 
     if (response != null && response.statusCode == 200) {
       await LocalStorage.clear();
-      await LocalStorage.clearAllMiningData();
+      // await LocalStorage.clearAllMiningData();
     }
     return response;
   }

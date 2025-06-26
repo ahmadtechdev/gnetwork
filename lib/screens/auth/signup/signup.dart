@@ -25,7 +25,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
   final _passwordFocusNode = FocusNode();
   final _confirmPasswordFocusNode = FocusNode();
 
-  bool _acceptTerms = false;
+  bool _acceptTerms = true;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   // bool _isLoading = false;

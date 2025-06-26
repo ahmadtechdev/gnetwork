@@ -111,11 +111,11 @@ class LocalStorage {
 
 // Add this method to clear all mining data when user logs out
   static Future<void> clearAllMiningData() async {
-    final keys = _storage.getKeys();
-    for (var key in keys) {
-      if (key.startsWith('mining_')) {
-        await _storage.remove(key);
-      }
-    }
+    // final keys = _storage.getKeys();
+    // for (var key in keys) {
+    //   if (key.startsWith('mining_')) {
+    //     await _storage.remove(key);
+    //   }
+    // }
   }
 }

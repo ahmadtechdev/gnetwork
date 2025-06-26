@@ -10,7 +10,6 @@ import 'package:gcoin/screens/drawer/support/support.dart';
 import 'package:gcoin/utils/custom_snackbar.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../api_service/api_service.dart';
 import '../../api_service/local_stroge.dart';
@@ -315,7 +314,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                                 builder: (context, child) {
                                   return Transform.rotate(
                                     angle:
-                                    _rotationAnimation.value * 2 * 3.14159,
+                                        _rotationAnimation.value * 2 * 3.14159,
                                     child: Text(
                                       'G',
                                       style: TextStyle(
@@ -716,56 +715,6 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
 
   // Update _buildFloatingActionButtons in homescreen.dart
   Widget _buildFloatingActionButtons() {
-
-    Future<void> shareReferralCode() async {
-      try {
-        final userName = _homeController.userData['name'] ?? 'Your Friend';
-        final referralCode = _homeController.userData['username'] ?? '';
-
-
-        // Create beautiful WhatsApp message
-        final message = '''
-🌟 *Join G Network & Start Mining G Coins!* 🌟
-
-Hey! I'm $userName inviting you to join the revolutionary G Network! 
-
-💰 *Earn G Coins daily* by mining & inviting friends
-🚀 *Free to start* - No investment required
-🔗 *Global community* of miners earning together
-📱 *Simple mobile mining* - Just tap to mine!
-
-*Your Referral Code:* `$referralCode`
-
-📲 *Download G Network App:*
-https://play.google.com/store/apps/details?id=pro.gnetwork.gnewtwork&hl=en
-
-Join thousands of users already earning G Coins! 
-Don't miss out on this opportunity! 🎯
-
-#GNetwork #GCoin #CryptoMining #EarnDaily
-      '''.trim();
-
-        // // Create WhatsApp URL
-        // final whatsappUrl = 'https://wa.me/$senderNumber?text=${Uri.encodeComponent(message)}';
-
-
-        // Fallback to general share
-        final generalShareUrl = 'https://api.whatsapp.com/send?text=${Uri.encodeComponent(message)}';
-        if (await canLaunchUrl(Uri.parse(generalShareUrl))) {
-          await launchUrl(
-            Uri.parse(generalShareUrl),
-            mode: LaunchMode.externalApplication,
-          );
-        } else {
-          CustomSnackBar.error('Unable to open WhatsApp. Please install WhatsApp first.');
-        }
-
-      } catch (e) {
-        CustomSnackBar.error('Error sharing referral code: ${e.toString()}');
-      }
-    }
-
-
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -785,17 +734,16 @@ Don't miss out on this opportunity! 🎯
         SizedBox(height: 12),
         _buildMiningFAB(),
         SizedBox(height: 12),
-        GestureDetector(
-          onTap:
-              () => shareReferralCode(),
-          child: _buildAnimatedFAB(
-            icon: Icons.send_rounded,
-            backgroundColor: Color(0xFF7ED321),
-            iconColor: Colors.white,
-            heroTag: "invite",
-            label: 'Invite',
-            delay: 800,
-          ),
+        _buildAnimatedFAB(
+          icon: Icons.send_rounded,
+          backgroundColor: Color(0xFF7ED321),
+          iconColor: Colors.white,
+          heroTag: "invite",
+          label: 'Invite',
+          delay: 800,
+          onPressed: () {
+            _homeController.shareReferralCode();
+          },
         ),
       ],
     );
@@ -879,11 +827,11 @@ Don't miss out on this opportunity! 🎯
     required String heroTag,
     String? label,
     int delay = 0,
+    VoidCallback? onPressed, // Add this parameter
   }) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: Duration(milliseconds: 600),
-      // delay: Duration(milliseconds: delay),
       builder: (context, value, child) {
         return Transform.translate(
           offset: Offset(100 * (1 - value), 0),
@@ -901,7 +849,7 @@ Don't miss out on this opportunity! 🎯
                 ],
               ),
               child: FloatingActionButton(
-                onPressed: () {},
+                onPressed: onPressed, // Use the passed callback
                 backgroundColor: backgroundColor,
                 elevation: 0,
                 mini: true,
@@ -909,23 +857,22 @@ Don't miss out on this opportunity! 🎯
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child:
-                    label != null
-                        ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(icon, color: iconColor, size: 16),
-                            Text(
-                              label,
-                              style: TextStyle(
-                                color: iconColor,
-                                fontSize: 8,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        )
-                        : Icon(icon, color: iconColor, size: 20),
+                child: label != null
+                    ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, color: iconColor, size: 16),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: iconColor,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                )
+                    : Icon(icon, color: iconColor, size: 20),
               ),
             ),
           ),
@@ -1397,7 +1344,6 @@ Don't miss out on this opportunity! 🎯
     );
   }
 
-
   Widget _buildTrendingTopicsSection() {
     final topics = [
       '#GNetwork',
@@ -1705,8 +1651,6 @@ Don't miss out on this opportunity! 🎯
   }
 
   Widget _buildRecentActivitiesSection() {
-
-
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: Duration(milliseconds: 1000),
@@ -1994,6 +1938,7 @@ class GNetworkDrawer extends StatelessWidget {
                       final response = await apiService.logoutUser();
                       if (response != null && response.statusCode == 200) {
                         await LocalStorage.clear();
+                        CustomSnackBar.success("Logout Successfully");
                         // Navigate to login screen or wherever appropriate
                         Get.offAllNamed(
                           '/sign_in',

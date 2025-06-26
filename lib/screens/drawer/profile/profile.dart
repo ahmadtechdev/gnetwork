@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../api_service/api_service.dart';
 import '../../../api_service/local_stroge.dart';
 import '../../../utils/app_colors.dart';
+import '../../../utils/custom_snackbar.dart';
 import 'profile_controller.dart';
 
 
@@ -860,6 +861,7 @@ class ModernProfileScreen extends StatelessWidget {
             final response = await apiService.logoutUser();
             if (response != null && response.statusCode == 200) {
               await LocalStorage.clear();
+              CustomSnackBar.success("Logout Successfully");
               // Navigate to login screen or wherever appropriate
               Get.offAllNamed(
                 '/sign_in',
