@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gcoin/screens/homescreen/home_controller.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,6 +35,7 @@ Future<void> main() async {
   // Check if user has a valid token
   final hasValidToken = LocalStorage.getToken() != null;
 
+  Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
 
   runApp(MainApp(initialRoute: hasValidToken ? RouteHelper.homeScreen : RouteHelper.onboardScreen));
 }

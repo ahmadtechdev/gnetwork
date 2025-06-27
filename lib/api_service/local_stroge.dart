@@ -70,44 +70,6 @@ class LocalStorage {
     await _storage.remove(_credentialsKey);
   }
 
-  // Update local_stroge.dart
-  static String _getMiningKey(String suffix) {
-    final userId = getUser()?['id']?.toString() ?? 'unknown';
-    return 'mining_${userId}_$suffix';
-  }
-
-  static Future<void> saveMiningData(DateTime endTime, {String? reward}) async {
-    final userId = getUser()?['id']?.toString();
-    if (userId == null) return;
-
-    await _storage.write(_getMiningKey('end_time'), endTime.toIso8601String());
-    if (reward != null) {
-      await _storage.write(_getMiningKey('reward'), reward);
-    }
-  }
-
-  static DateTime? getMiningEndTime() {
-    final userId = getUser()?['id']?.toString();
-    if (userId == null) return null;
-
-    final timeString = _storage.read(_getMiningKey('end_time'));
-    return timeString != null ? DateTime.parse(timeString) : null;
-  }
-
-  static String? getMiningReward() {
-    final userId = getUser()?['id']?.toString();
-    if (userId == null) return null;
-
-    return _storage.read(_getMiningKey('reward'));
-  }
-
-  static Future<void> clearMiningData() async {
-    final userId = getUser()?['id']?.toString();
-    if (userId == null) return;
-
-    await _storage.remove(_getMiningKey('end_time'));
-    await _storage.remove(_getMiningKey('reward'));
-  }
 
 // Add this method to clear all mining data when user logs out
   static Future<void> clearAllMiningData() async {

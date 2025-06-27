@@ -13,6 +13,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../api_service/api_service.dart';
 import '../../api_service/local_stroge.dart';
+import 'animation.dart';
 import 'home_controller.dart';
 
 class PiNetworkHomeScreen extends StatefulWidget {
@@ -24,7 +25,7 @@ class PiNetworkHomeScreen extends StatefulWidget {
 
 class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
     with TickerProviderStateMixin {
-  final HomeController _homeController = Get.put(HomeController());
+  final HomeController _homeController = Get.find<HomeController>();
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _scaleController;
@@ -155,6 +156,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
     });
   }
 
+// Updated _buildEnhancedHeader method
   Widget _buildEnhancedHeader() {
     return FadeTransition(
       opacity: _fadeAnimation,
@@ -185,23 +187,13 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                       return AnimatedContainer(
                         duration: Duration(milliseconds: 200),
                         curve: Curves.easeInOut,
-                        child: TweenAnimationBuilder<double>(
-                          tween: Tween(
-                            begin: 0.0,
-                            end: double.parse(_homeController.getBalance()),
+                        child: IconButton(
+                          onPressed: () => Scaffold.of(context).openDrawer(),
+                          icon: Icon(
+                            Icons.menu_rounded,
+                            color: Color(0xFFE8F5E8),
+                            size: 32,
                           ),
-                          duration: Duration(seconds: 2),
-                          builder: (context, value, child) {
-                            return IconButton(
-                              onPressed:
-                                  () => Scaffold.of(context).openDrawer(),
-                              icon: Icon(
-                                Icons.menu_rounded,
-                                color: Color(0xFFE8F5E8),
-                                size: 32,
-                              ),
-                            );
-                          },
                         ),
                       );
                     },
@@ -249,7 +241,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
 
             SizedBox(height: 32),
 
-            // G Balance Section with scale animation
+            // G Balance Section with digit animation
             ScaleTransition(
               scale: _scaleAnimation,
               child: AnimatedBuilder(
@@ -283,44 +275,55 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                       ),
                       child: Column(
                         children: [
+                          // Animated Balance Display with Digit Animation
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.baseline,
                             textBaseline: TextBaseline.alphabetic,
                             children: [
-                              TweenAnimationBuilder<double>(
-                                tween: Tween(
-                                  begin: 0.0,
-                                  end: double.parse(
-                                    _homeController.userData['balance'] ?? "0",
+                              // Use Obx to watch the animated balance changes
+                              Obx(() {
+                                final displayValue = _homeController.isMining.value
+                                    ? _homeController.getAnimatedBalance()
+                                    : double.parse(_homeController.getBalance()).toStringAsFixed(3);
+
+                                return AnimatedDigitDisplay(
+                                  value: displayValue,
+                                  duration: Duration(milliseconds: 600),
+                                  textStyle: TextStyle(
+                                    color: Color(0xFFE8F5E8),
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: -0.5,
+                                    shadows: [
+                                      Shadow(
+                                        color: Color(0xFF7ED321).withOpacity(0.3),
+                                        offset: Offset(0, 2),
+                                        blurRadius: 4,
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                duration: Duration(seconds: 2),
-                                builder: (context, value, child) {
-                                  return Text(
-                                    value.toStringAsFixed(3),
-                                    style: TextStyle(
-                                      color: Color(0xFFE8F5E8),
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: -0.5,
-                                    ),
-                                  );
-                                },
-                              ),
+                                );
+                              }),
                               SizedBox(width: 8),
                               AnimatedBuilder(
                                 animation: _rotationController,
                                 builder: (context, child) {
                                   return Transform.rotate(
-                                    angle:
-                                        _rotationAnimation.value * 2 * 3.14159,
+                                    angle: _rotationAnimation.value * 2 * 3.14159,
                                     child: Text(
                                       'G',
                                       style: TextStyle(
                                         color: Color(0xFF7ED321),
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold,
+                                        shadows: [
+                                          Shadow(
+                                            color: Color(0xFF7ED321).withOpacity(0.5),
+                                            offset: Offset(0, 2),
+                                            blurRadius: 8,
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   );
@@ -328,15 +331,84 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                               ),
                             ],
                           ),
+
                           SizedBox(height: 8),
-                          Text(
-                            'Available Balance',
-                            style: TextStyle(
-                              color: Color(0xFFCED9CE),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+
+                          // Balance Label with Mining Status
+                          Obx(() {
+                            return Column(
+                              children: [
+                                Text(
+                                  _homeController.isMining.value
+                                      ? 'Mining Balance'
+                                      : 'Available Balance',
+                                  style: TextStyle(
+                                    color: Color(0xFFCED9CE),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+
+                                // Mining Progress Indicator
+                                if (_homeController.isMining.value) ...[
+                                  SizedBox(height: 12),
+                                  Container(
+                                    width: double.infinity,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFF1B2E1C),
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                    child: FractionallySizedBox(
+                                      alignment: Alignment.centerLeft,
+                                      widthFactor: _homeController.getMiningProgress(),
+                                      child: AnimatedContainer(
+                                        duration: Duration(milliseconds: 500),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Color(0xFF7ED321),
+                                              Color(0xFF4CAF50),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(2),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Color(0xFF7ED321).withOpacity(0.4),
+                                              blurRadius: 4,
+                                              offset: Offset(0, 1),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Earned: ${_homeController.getEstimatedReward()} G',
+                                        style: TextStyle(
+                                          color: Color(0xFF7ED321),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Rate: ${_homeController.getMiningRate()} G/h',
+                                        style: TextStyle(
+                                          color: Color(0xFFCED9CE),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            );
+                          }),
                         ],
                       ),
                     ),
@@ -349,7 +421,6 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
       ),
     );
   }
-
   Widget _buildStatsCardsSection() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20),
@@ -750,6 +821,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
   }
 
   // Update _buildMiningFAB to include onTap
+  // Update _buildMiningFAB in homescreen.dart
   Widget _buildMiningFAB() {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
@@ -770,22 +842,20 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     backgroundColor: Colors.orange,
                     colorText: Colors.white,
                   );
-                  // CustomSnackBar.error("Please wait until current mining completes", title: "Mining in Progress");
                 }
               },
               child: Container(
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color:
-                      _homeController.isMining.value
-                          ? Colors.orange
-                          : Color(0xFF7ED321),
+                  color: _homeController.isMining.value
+                      ? Colors.orange
+                      : Color(0xFF7ED321),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
                       color: (_homeController.isMining.value
-                              ? Colors.orange
-                              : Color(0xFF7ED321))
+                          ? Colors.orange
+                          : Color(0xFF7ED321))
                           .withOpacity(0.3),
                       blurRadius: 12,
                       offset: Offset(0, 6),
@@ -797,11 +867,11 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     Icon(Icons.flash_on_rounded, color: Colors.white, size: 18),
                     SizedBox(height: 4),
                     Obx(
-                      () => Text(
+                          () => Text(
                         _homeController.isMining.value
                             ? _homeController.formatTime(
-                              _homeController.miningTimeLeft.value,
-                            )
+                          _homeController.miningTimeLeft.value,
+                        )
                             : '${_homeController.getMiningRate()} G/h',
                         style: TextStyle(
                           color: Colors.white,

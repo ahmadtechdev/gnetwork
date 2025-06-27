@@ -261,4 +261,11 @@ class ApiService {
       endpoint: 'support-article',
     );
   }
+
+  Future<dio.Response?> checkTokenValidity() async {
+    return await _authenticatedRequest(
+      method: 'GET',
+      endpoint: 'user',
+    );
+  }
 }

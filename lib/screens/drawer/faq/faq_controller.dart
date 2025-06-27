@@ -11,6 +11,7 @@ class FAQController extends GetxController {
   var filteredFAQs = <FAQItem>[].obs;
   var expandedIndex = (-1).obs; // Changed: Only one item can be expanded at a time
   var selectedCategory = 'All'.obs;
+  var currentSearchQuery = ''.obs; // Added: Track current search query
 
   @override
   void onInit() {
@@ -34,7 +35,18 @@ class FAQController extends GetxController {
   }
 
   void filterFAQs(String query) {
-    List<FAQItem> filtered = faqs;
+    currentSearchQuery.value = query; // Store the current search query
+    _applyFilters();
+  }
+
+  void filterByCategory(String category) {
+    selectedCategory.value = category;
+    selectedCategory.refresh(); // Force UI update immediately
+    _applyFilters(); // Apply filters with current search query
+  }
+
+  void _applyFilters() {
+    List<FAQItem> filtered = faqs.toList();
 
     // Apply category filter first
     if (selectedCategory.value != 'All') {
@@ -42,20 +54,15 @@ class FAQController extends GetxController {
     }
 
     // Apply search filter
-    if (query.isNotEmpty) {
+    if (currentSearchQuery.value.isNotEmpty) {
       filtered = filtered.where((faq) =>
-      faq.question.toLowerCase().contains(query.toLowerCase()) ||
-          faq.answer.toLowerCase().contains(query.toLowerCase()) ||
-          faq.category.toLowerCase().contains(query.toLowerCase())).toList();
+      faq.question.toLowerCase().contains(currentSearchQuery.value.toLowerCase()) ||
+          faq.answer.toLowerCase().contains(currentSearchQuery.value.toLowerCase()) ||
+          faq.category.toLowerCase().contains(currentSearchQuery.value.toLowerCase())).toList();
     }
 
     filteredFAQs.assignAll(filtered);
     expandedIndex.value = -1; // Close any expanded item when filtering
-  }
-
-  void filterByCategory(String category) {
-    selectedCategory.value = category;
-    filterFAQs(''); // Reapply current search with new category
   }
 
   void toggleExpansion(int index) {
@@ -64,6 +71,13 @@ class FAQController extends GetxController {
     } else {
       expandedIndex.value = index; // Open new one, close others
     }
+  }
+
+  void clearSearch() {
+    currentSearchQuery.value = '';
+    selectedCategory.value = 'All';
+    filteredFAQs.assignAll(faqs);
+    expandedIndex.value = -1;
   }
 
   List<String> get categories {

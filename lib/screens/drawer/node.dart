@@ -6,129 +6,174 @@ import '../../utils/app_colors.dart';
 import '../../utils/custom_snackbar.dart';
 import '../homescreen/home_controller.dart';
 
-class EmailVerificationScreen extends StatefulWidget {
-  const EmailVerificationScreen({super.key});
-
-  @override
-  _EmailVerificationScreenState createState() => _EmailVerificationScreenState();
-}
-
-class _EmailVerificationScreenState extends State<EmailVerificationScreen>
-    with TickerProviderStateMixin {
-  final TextEditingController _otpController = TextEditingController();
+class EmailVerificationController extends GetxController
+    with GetTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
-  final FocusNode _otpFocusNode = FocusNode();
+  final TextEditingController otpController = TextEditingController();
+  final FocusNode otpFocusNode = FocusNode();
 
-  late AnimationController _animationController;
-  late AnimationController _pulseController;
-  late Animation<double> _slideAnimation;
-  late Animation<double> _pulseAnimation;
+  late AnimationController animationController;
+  late AnimationController pulseController;
+  late Animation<double> slideAnimation;
+  late Animation<double> pulseAnimation;
 
-  List<String> otpDigits = ['', '', '', ''];
-  int currentIndex = 0;
-  bool isLoading = false;
-  bool isEmailVerified = false;
-  bool codeSent = false; // New state to track if code was sent
-  String? verifiedAt;
-  String userEmail = '';
+  var otpDigits = ['', '', '', ''].obs;
+  var currentIndex = 0.obs;
+  var isLoading = false.obs;
+  var isEmailVerified = false.obs;
+  var codeSent = false.obs;
+  var verifiedAt = ''.obs;
+  var userEmail = ''.obs;
 
   @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
     _initializeUserData();
     _setupAnimations();
+    // Remove the focus listener that was preventing keyboard from opening
   }
 
   void _initializeUserData() {
-    final homeController = Get.put(HomeController());
-    isEmailVerified = homeController.userData['email_verified_at'] != null;
-    verifiedAt = homeController.userData['email_verified_at'];
-    userEmail = homeController.userData['email'] ?? 'your email';
+    final homeController = Get.find<HomeController>();
+    isEmailVerified.value = homeController.userData['email_verified_at'] != null;
+    verifiedAt.value = homeController.userData['email_verified_at'] ?? '';
+    userEmail.value = homeController.userData['email'] ?? 'your email';
   }
 
   void _setupAnimations() {
-    _animationController = AnimationController(
+    animationController = AnimationController(
       duration: Duration(milliseconds: 800),
       vsync: this,
     );
 
-    _pulseController = AnimationController(
+    pulseController = AnimationController(
       duration: Duration(milliseconds: 2000),
       vsync: this,
     );
 
-    _slideAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
+    slideAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: animationController, curve: Curves.easeOutBack),
     );
 
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    pulseAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: pulseController, curve: Curves.easeInOut),
     );
 
-    _animationController.forward();
-    _pulseController.repeat(reverse: true);
+    animationController.forward();
+    pulseController.repeat(reverse: true);
   }
 
-  @override
-  void dispose() {
-    _otpFocusNode.dispose();
-    _animationController.dispose();
-    _pulseController.dispose();
-    _otpController.dispose();
-    super.dispose();
-  }
-
-  void _onOtpChanged(String value) {
-    setState(() {
-      for (int i = 0; i < 4; i++) {
-        otpDigits[i] = i < value.length ? value[i] : '';
-      }
-      currentIndex = value.length;
-    });
-  }
-
-  Future<void> _sendVerificationEmail() async {
-    setState(() => isLoading = true);
-    try {
-      final response = await _apiService.sendEmailVerification();
-      if (response?.statusCode == 200) {
-        setState(() => codeSent = true);
-        CustomSnackBar.success('Verification code sent to $userEmail');
-      }
-    } finally {
-      setState(() => isLoading = false);
+  void onOtpChanged(String value) {
+    // Ensure we only process digits and limit to 4 characters
+    String filteredValue = value.replaceAll(RegExp(r'[^0-9]'), '');
+    if (filteredValue.length > 4) {
+      filteredValue = filteredValue.substring(0, 4);
+      otpController.text = filteredValue;
+      otpController.selection = TextSelection.fromPosition(
+        TextPosition(offset: filteredValue.length),
+      );
     }
+
+    for (int i = 0; i < 4; i++) {
+      otpDigits[i] = i < filteredValue.length ? filteredValue[i] : '';
+    }
+    currentIndex.value = filteredValue.length;
   }
 
-  Future<void> _verifyEmail() async {
-    if (_otpController.text.length != 4) {
-      CustomSnackBar.error('Please enter a valid 4-digit code');
+  void focusOtpField() {
+    if (!codeSent.value) {
+      CustomSnackBar.error('Please request a verification code first');
       return;
     }
 
-    setState(() => isLoading = true);
+    // Always request focus when tapping on OTP boxes
+    Future.delayed(Duration(milliseconds: 100), () {
+      otpFocusNode.requestFocus();
+    });
+  }
+
+  Future<void> sendVerificationEmail() async {
+    isLoading.value = true;
     try {
-      final response = await _apiService.verifyEmailWithOtp(_otpController.text);
-      final homeController = Get.put(HomeController());
+      final response = await _apiService.sendEmailVerification();
+      if (response?.statusCode == 200) {
+        codeSent.value = true;
+        CustomSnackBar.success('Verification code sent to ${userEmail.value}');
+        // Clear any previous OTP
+        _clearOtpFields();
+        // Focus on OTP field after code is sent
+        await Future.delayed(Duration(milliseconds: 300));
+        otpFocusNode.requestFocus();
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> verifyEmail() async {
+    if (otpController.text.length != 4) {
+      CustomSnackBar.error('Please enter a valid 4-digit code');
+      focusOtpField();
+      return;
+    }
+
+    isLoading.value = true;
+    try {
+      final response = await _apiService.verifyEmailWithOtp(otpController.text);
+      final homeController = Get.find<HomeController>();
 
       if (response?.statusCode == 200) {
         await homeController.fetchDashboardData();
-        setState(() {
-          isEmailVerified = true;
-          verifiedAt = homeController.userData['email_verified_at'];
-          codeSent = false;
-        });
+        isEmailVerified.value = true;
+        verifiedAt.value = homeController.userData['email_verified_at'] ?? '';
+        codeSent.value = false;
         CustomSnackBar.success('Email verified successfully!');
+      } else {
+        // Clear OTP and refocus on invalid code
+        _clearOtpFields();
+        CustomSnackBar.error('Invalid verification code. Please try again.');
+        // Delay focus to ensure error message is shown first
+        await Future.delayed(Duration(milliseconds: 500));
+        focusOtpField();
       }
+    } catch (e) {
+      CustomSnackBar.error('An error occurred. Please try again.');
+      // Focus back on error
+      await Future.delayed(Duration(milliseconds: 500));
+      focusOtpField();
     } finally {
-      setState(() => isLoading = false);
+      isLoading.value = false;
     }
   }
+
+  void _clearOtpFields() {
+    otpController.clear();
+    otpDigits.value = ['', '', '', ''];
+    currentIndex.value = 0;
+  }
+
+  void clearOtp() {
+    _clearOtpFields();
+    focusOtpField();
+  }
+
+  @override
+  void onClose() {
+    otpFocusNode.dispose();
+    animationController.dispose();
+    pulseController.dispose();
+    otpController.dispose();
+    super.onClose();
+  }
+}
+
+class EmailVerificationScreen extends StatelessWidget {
+  final EmailVerificationController controller =
+  Get.put(EmailVerificationController());
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final homeController = Get.put(HomeController());
 
     return Scaffold(
       body: Container(
@@ -145,7 +190,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         child: SafeArea(
           child: Column(
             children: [
-              // Header Section (unchanged)
+              // Header Section
               SizedBox(
                 height: screenHeight * 0.25,
                 child: Stack(
@@ -182,7 +227,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                             children: [
                               // Back button
                               ScaleTransition(
-                                scale: _pulseAnimation,
+                                scale: controller.pulseAnimation,
                                 child: Container(
                                   width: 44,
                                   height: 44,
@@ -220,14 +265,17 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                                         color: Colors.white.withOpacity(0.2),
                                       ),
                                     ),
-                                    child: Text(
-                                      '${homeController.getBalance()} G',
-                                      style: TextStyle(
-                                        color: MyColor.getTextColor(),
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                      ),
-                                    ),
+                                    child: Obx(() {
+                                      final homeController = Get.find<HomeController>();
+                                      return Text(
+                                        '${homeController.getBalance()} G',
+                                        style: TextStyle(
+                                          color: MyColor.getTextColor(),
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                      );
+                                    }),
                                   ),
                                   SizedBox(width: 12),
                                   Container(
@@ -272,9 +320,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                           // Title section
                           SlideTransition(
                             position: Tween<Offset>(
-                              begin: Offset(_slideAnimation.value, 0),
+                              begin: Offset(controller.slideAnimation.value, 0),
                               end: Offset.zero,
-                            ).animate(_animationController),
+                            ).animate(controller.animationController),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -336,8 +384,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                         ),
                         SizedBox(height: 32),
 
-                        if (isEmailVerified) _buildVerifiedStatus(),
-                        if (!isEmailVerified) _buildVerificationForm(),
+                        Obx(() => controller.isEmailVerified.value
+                            ? _buildVerifiedStatus()
+                            : _buildVerificationForm()),
 
                         SizedBox(height: 40),
                       ],
@@ -374,22 +423,23 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
           ),
         ),
         SizedBox(height: 8),
-        Text(
-          'Your email $userEmail was verified',
+        Obx(() => Text(
+          'Your email ${controller.userEmail.value} was verified',
           style: TextStyle(
             fontSize: 16,
             color: MyColor.getSecondaryTextColor(),
           ),
-        ),
+        )),
         SizedBox(height: 8),
-        if (verifiedAt != null)
-          Text(
-            'Verified on ${_formatVerifiedDate(verifiedAt!)}',
-            style: TextStyle(
-              fontSize: 14,
-              color: MyColor.getSecondaryTextColor(),
-            ),
+        Obx(() => controller.verifiedAt.value.isNotEmpty
+            ? Text(
+          'Verified on ${_formatVerifiedDate(controller.verifiedAt.value)}',
+          style: TextStyle(
+            fontSize: 14,
+            color: MyColor.getSecondaryTextColor(),
           ),
+        )
+            : SizedBox()),
       ],
     );
   }
@@ -437,14 +487,14 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                       ),
                     ),
                     SizedBox(height: 8),
-                    Text(
-                      'We sent a verification code to $userEmail. Enter the code below to verify your email.',
+                    Obx(() => Text(
+                      'We sent a verification code to ${controller.userEmail.value}. Enter the code below to verify your email.',
                       style: TextStyle(
                         fontSize: 14,
                         color: MyColor.getTextColor(),
                         height: 1.4,
                       ),
-                    ),
+                    )),
                   ],
                 ),
               ),
@@ -453,7 +503,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         ),
         SizedBox(height: 40),
 
-        // OTP input section (always visible but enabled only when codeSent is true)
+        // OTP input section
         Text(
           'Verification Code',
           style: TextStyle(
@@ -464,94 +514,135 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         ),
         SizedBox(height: 20),
 
-        // OTP input boxes
-        GestureDetector(
-          onTap: codeSent ? () => FocusScope.of(context).requestFocus(_otpFocusNode) : null,
-          child: Opacity(
-            opacity: codeSent ? 1.0 : 0.5,
-            child: Row(
+        // OTP input boxes - Made properly tappable
+        Stack(
+          children: [
+            // Visual OTP boxes
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: List.generate(4, (index) {
-                return Container(
-                  width: 50,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    gradient: index < currentIndex && codeSent
-                        ? MyColor.getGCoinPrimaryGradient()
-                        : null,
-                    color: index < currentIndex && codeSent
-                        ? null
-                        : MyColor.getGCoinSurfaceColor(),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: index == currentIndex && codeSent
-                          ? MyColor.getGCoinPrimaryColor()
-                          : MyColor.getGCoinDividerColor(),
-                      width: index == currentIndex && codeSent ? 2 : 1,
+                return GestureDetector(
+                  onTap: controller.focusOtpField,
+                  child: Obx(() => AnimatedContainer(
+                    duration: Duration(milliseconds: 200),
+                    width: 60,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      gradient: index < controller.currentIndex.value &&
+                          controller.codeSent.value
+                          ? MyColor.getGCoinPrimaryGradient()
+                          : null,
+                      color: index < controller.currentIndex.value &&
+                          controller.codeSent.value
+                          ? null
+                          : MyColor.getGCoinSurfaceColor(),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: index == controller.currentIndex.value &&
+                            controller.codeSent.value
+                            ? MyColor.getGCoinPrimaryColor()
+                            : MyColor.getGCoinDividerColor(),
+                        width: index == controller.currentIndex.value &&
+                            controller.codeSent.value ? 2 : 1,
+                      ),
+                      boxShadow: index == controller.currentIndex.value &&
+                          controller.codeSent.value
+                          ? [
+                        BoxShadow(
+                          color: MyColor.getGCoinPrimaryColor().withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ]
+                          : null,
                     ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      otpDigits[index],
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: index < currentIndex && codeSent
-                            ? Colors.white
-                            : MyColor.getTextColor(),
+                    child: Center(
+                      child: Text(
+                        controller.otpDigits[index],
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: index < controller.currentIndex.value &&
+                              controller.codeSent.value
+                              ? Colors.white
+                              : MyColor.getTextColor(),
+                        ),
                       ),
                     ),
-                  ),
+                  )),
                 );
               }),
             ),
-          ),
+
+            // Invisible text field for input - positioned to cover the boxes
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: controller.focusOtpField,
+                child: Container(
+                  color: Colors.transparent,
+                  child: TextField(
+                    controller: controller.otpController,
+                    focusNode: controller.otpFocusNode,
+                    maxLength: 4,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.transparent,
+                      fontSize: 24,
+                    ),
+                    cursorColor: Colors.transparent,
+                    decoration: InputDecoration(
+                      counterText: '',
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                    ),
+                    onChanged: controller.onOtpChanged,
+                    onTap: () {
+                      if (!controller.codeSent.value) {
+                        controller.otpFocusNode.unfocus();
+                        CustomSnackBar.error('Please request a verification code first');
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
 
-        // Hidden text field for input
-        Positioned(
-          left: 0,
-          top: 0,
-          child: SizedBox(
-            width: 1,
-            height: 1,
-            child: TextField(
-              controller: _otpController,
-              focusNode: _otpFocusNode,
-              maxLength: 4,
-              keyboardType: TextInputType.number,
-              onChanged: codeSent ? _onOtpChanged : null,
-              style: TextStyle(fontSize: 1),
-            ),
-          ),
-        ),
         SizedBox(height: 24),
 
-        // Resend code button
-        // TextButton(
-        //   onPressed: isLoading ? null : _sendVerificationEmail,
-        //   child: Text(
-        //     'Resend Verification Code',
-        //     style: TextStyle(
-        //       color: MyColor.getGCoinPrimaryColor(),
-        //       fontWeight: FontWeight.w600,
-        //     ),
-        //   ),
-        // ),
-        // SizedBox(height: 32),
+        // Clear button when there's input
+        Obx(() => controller.codeSent.value &&
+            controller.otpController.text.isNotEmpty
+            ? Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: TextButton(
+            onPressed: controller.clearOtp,
+            child: Text(
+              'Clear Code',
+              style: TextStyle(
+                color: MyColor.getGCoinPrimaryColor(),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        )
+            : SizedBox()),
 
-        // Main action button - changes based on state
-        Container(
+        // Main action button
+        Obx(() => Container(
           width: double.infinity,
           height: 56,
           decoration: BoxDecoration(
-            gradient: codeSent
+            gradient: controller.codeSent.value
                 ? MyColor.getGCoinSuccessGradient()
                 : MyColor.getGCoinHeroGradient(),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: (codeSent
+                color: (controller.codeSent.value
                     ? MyColor.getGCoinSuccessColor()
                     : MyColor.getGCoinPrimaryColor()).withOpacity(0.4),
                 blurRadius: 12,
@@ -563,14 +654,18 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
-              onTap: isLoading
+              onTap: controller.isLoading.value
                   ? null
-                  : codeSent ? _verifyEmail : _sendVerificationEmail,
+                  : controller.codeSent.value
+                  ? controller.verifyEmail
+                  : controller.sendVerificationEmail,
               child: Center(
-                child: isLoading
+                child: controller.isLoading.value
                     ? CircularProgressIndicator(color: Colors.white)
                     : Text(
-                  codeSent ? 'Verify Email' : 'Send Code',
+                  controller.codeSent.value
+                      ? 'Verify Email'
+                      : 'Send Code',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -580,7 +675,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
               ),
             ),
           ),
-        ),
+        )),
         SizedBox(height: 40),
 
         // Security warning

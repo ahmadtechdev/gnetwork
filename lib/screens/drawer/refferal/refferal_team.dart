@@ -1,8 +1,9 @@
+
+// referral_team.dart (updated version)
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../utils/app_colors.dart';
 import 'refferal_controller.dart';
-
 
 class ReferralTeamPage extends StatefulWidget {
   const ReferralTeamPage({super.key});
@@ -11,40 +12,9 @@ class ReferralTeamPage extends StatefulWidget {
   _ReferralTeamPageState createState() => _ReferralTeamPageState();
 }
 
-class _ReferralTeamPageState extends State<ReferralTeamPage>
-    with TickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+class _ReferralTeamPageState extends State<ReferralTeamPage> {
   final ReferralTeamController _controller = Get.put(ReferralTeamController());
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-
-    _slideAnimation = Tween<Offset>(
-      begin: Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
-    );
-
-    _animationController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+  final Map<int, bool> _expandedStates = {}; // Track expansion states by ID
 
   @override
   Widget build(BuildContext context) {
@@ -55,42 +25,174 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
         if (_controller.isLoading.value) {
           return Center(child: CircularProgressIndicator());
         }
-        return AnimatedBuilder(
-          animation: _fadeAnimation,
-          builder: (context, child) {
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildReferralStatsCard(),
-                      SizedBox(height: 20),
-                      if (_controller.referrals.isEmpty) _buildEmptyState(),
-                      if (_controller.referrals.isNotEmpty) ...[
-                        _buildWarningCard(),
-                        SizedBox(height: 24),
-                        _buildMembersSection(),
-                        SizedBox(height: 16),
-                        _buildMembersList(),
-                        SizedBox(height: 20),
-                      ],
-                      _buildActionButtons(),
-                      SizedBox(height: 100), // Extra space for bottom navigation
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildReferralStatsCard(),
+              SizedBox(height: 20),
+              if (_controller.referrals.isEmpty) _buildEmptyState(),
+              if (_controller.referrals.isNotEmpty) ...[
+                // _buildWarningCard(),
+                // SizedBox(height: 24),
+                _buildMembersSection(),
+                SizedBox(height: 16),
+                _buildReferralList(),
+                SizedBox(height: 20),
+              ],
+              _buildActionButtons(),
+              SizedBox(height: 100),
+            ],
+          ),
         );
       }),
     );
   }
 
+  Widget _buildReferralList() {
+    return Column(
+      children: _controller.referrals.map((referral) =>
+          _buildReferralCardWithChildren(referral)
+      ).toList(),
+    );
+  }
+
+  Widget _buildReferralCardWithChildren(Map<String, dynamic> referral) {
+    final hasChildren = (referral['referrals'] as List).isNotEmpty;
+    final isExpanded = _expandedStates[referral['id']] ?? false;
+
+    return Column(
+      children: [
+        Card(
+          margin: EdgeInsets.only(bottom: 8),
+          elevation: 2,
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: hasChildren ? () {
+              setState(() {
+                _expandedStates[referral['id']] = !isExpanded;
+              });
+            } : null,
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _buildMemberRow(referral),
+                  if (hasChildren) SizedBox(height: 8),
+                  if (hasChildren) Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${referral['referrals'].length} ${referral['referrals'].length == 1 ? 'member' : 'members'}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: MyColor.getSecondaryTextColor(),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(
+                        isExpanded ? Icons.expand_less : Icons.expand_more,
+                        color: MyColor.getGCoinPrimaryColor(),
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (hasChildren && isExpanded)
+          Padding(
+            padding: EdgeInsets.only(left: 16),
+            child: Column(
+              children: (referral['referrals'] as List).map((child) =>
+                  _buildReferralCardWithChildren(child)
+              ).toList(),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMemberRow(Map<String, dynamic> referral) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: MyColor.getGCoinPrimaryColor().withOpacity(0.1),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: MyColor.getGCoinPrimaryColor(),
+              width: 1.5,
+            ),
+          ),
+          child: Icon(
+            Icons.person_rounded,
+            color: MyColor.getGCoinPrimaryColor(),
+            size: 20,
+          ),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                referral['name'] ?? 'Unknown',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: MyColor.getHeadingTextColor(),
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                '@${referral['username'] ?? 'username'} • Joined ${referral['created_at'] ?? 'recently'}',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: MyColor.getSecondaryTextColor(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: _controller.getStatusColor(referral['mine_status'] ?? 0).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _controller.getStatusIcon(referral['mine_status'] ?? 0),
+                color: _controller.getStatusColor(referral['mine_status'] ?? 0),
+                size: 14,
+              ),
+              SizedBox(width: 4),
+              Text(
+                _controller.getStatusText(referral['mine_status'] ?? 0),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: _controller.getStatusColor(referral['mine_status'] ?? 0),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: MyColor.getAppbarBgColor(),
@@ -377,9 +479,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-
-              },
+              onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: MyColor.getGCoinPrimaryColor(),
                 foregroundColor: Colors.white,
@@ -459,116 +559,12 @@ class _ReferralTeamPageState extends State<ReferralTeamPage>
     );
   }
 
-  Widget _buildMembersList() {
-    return Obx(() => Column(
-      children: _controller.referrals.map((referral) => _buildMemberCard(referral)).toList(),
-    ));
-  }
-
-  Widget _buildMemberCard(Map<String, dynamic> referral) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: MyColor.getCardBg(),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: MyColor.getGCoinDividerColor(), width: 0.5),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: MyColor.getGCoinPrimaryColor().withOpacity(0.1),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: MyColor.getGCoinPrimaryColor(),
-                width: 2,
-              ),
-            ),
-            child: Icon(
-              Icons.person_rounded,
-              color: MyColor.getGCoinPrimaryColor(),
-              size: 24,
-            ),
-          ),
-          SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  referral['name'] ?? 'Unknown',
-                  style: TextStyle(
-                    color: MyColor.getHeadingTextColor(),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  '@${referral['username'] ?? 'username'}',
-                  style: TextStyle(
-                    color: MyColor.getTextColor1(),
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _controller.getStatusColor(referral['mine_status'] ?? 0).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _controller.getStatusIcon(referral['mine_status'] ?? 0),
-                      color: _controller.getStatusColor(referral['mine_status'] ?? 0),
-                      size: 16,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      _controller.getStatusText(referral['mine_status'] ?? 0),
-                      style: TextStyle(
-                        color: _controller.getStatusColor(referral['mine_status'] ?? 0),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Joined ${referral['created_at'] ?? 'recently'}',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildActionButtons() {
     return Row(
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed: () {
-
-            },
+            onPressed: () {},
             style: OutlinedButton.styleFrom(
               side: BorderSide(
                 color: MyColor.getGCoinPrimaryColor(),

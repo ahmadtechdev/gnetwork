@@ -57,7 +57,7 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
           opacity: _fadeAnimation,
           child: _faqController.isLoading.value
               ? _buildLoadingIndicator()
-              : SingleChildScrollView( // Fixed: Wrap in SingleChildScrollView to prevent keyboard overflow
+              : SingleChildScrollView(
             child: Column(
               children: [
                 _buildSearchSection(),
@@ -146,7 +146,7 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
                 ),
               ],
             ),
-            child: TextField( // Fixed: Wrapped in Obx to reactively update suffix icon
+            child: Obx(() => TextField(
               controller: _searchController,
               onChanged: _filterFAQs,
               style: TextStyle(color: MyColor.getTextColor()),
@@ -157,7 +157,7 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
                   Icons.search_rounded,
                   color: MyColor.getGCoinPrimaryColor(),
                 ),
-                suffixIcon: _searchController.text.isNotEmpty
+                suffixIcon: _faqController.currentSearchQuery.value.isNotEmpty
                     ? IconButton(
                   icon: Icon(
                     Icons.clear_rounded,
@@ -175,7 +175,7 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
                   vertical: 16,
                 ),
               ),
-            ),
+            )),
           ),
         ],
       ),
@@ -186,46 +186,64 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
     return Container(
       height: 50,
       margin: const EdgeInsets.only(bottom: 16),
-      child: Obx(() => ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: _faqController.categories.length,
-        itemBuilder: (context, index) {
-          final category = _faqController.categories[index];
-          final isSelected = _faqController.selectedCategory.value == category;
-          return _buildCategoryChip(category, isSelected);
-        },
-      )),
+      child: Obx(() {
+        // Force rebuild when selectedCategory changes
+        final selectedCat = _faqController.selectedCategory.value;
+        return ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          itemCount: _faqController.categories.length,
+          itemBuilder: (context, index) {
+            final category = _faqController.categories[index];
+            final isSelected = selectedCat == category;
+            return _buildCategoryChip(category, isSelected);
+          },
+        );
+      }),
     );
   }
 
   Widget _buildCategoryChip(String category, bool isSelected) {
     return Container(
       margin: const EdgeInsets.only(right: 12),
-      child: FilterChip(
-        label: Text(
-          category,
-          style: TextStyle(
-            color: isSelected
-                ? MyColor.colorWhite
-                : MyColor.getTextColor(),
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          ),
-        ),
-        selected: isSelected,
-        onSelected: (selected) {
-          _faqController.filterByCategory(category); // Fixed: Properly handle category filtering
+      child: GestureDetector(
+        onTap: () {
+          // Force immediate update
+          _faqController.filterByCategory(category);
         },
-        backgroundColor: MyColor.getGCoinCardColor(),
-        selectedColor: MyColor.getGCoinPrimaryColor(),
-        checkmarkColor: MyColor.colorWhite,
-        side: BorderSide(
-          color: isSelected
-              ? MyColor.getGCoinPrimaryColor()
-              : MyColor.getGCoinDividerColor(),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150), // Reduced duration for faster response
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? MyColor.getGCoinPrimaryColor()
+                : MyColor.getGCoinCardColor(),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected
+                  ? MyColor.getGCoinPrimaryColor()
+                  : MyColor.getGCoinDividerColor(),
+              width: 1,
+            ),
+            boxShadow: isSelected ? [
+              BoxShadow(
+                color: MyColor.getGCoinPrimaryColor().withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ] : [],
+          ),
+          child: Text(
+            category,
+            style: TextStyle(
+              color: isSelected
+                  ? MyColor.colorWhite
+                  : MyColor.getTextColor(),
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
         ),
       ),
     );
@@ -237,11 +255,11 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
         return _buildEmptyState();
       }
 
-      return Padding( // Fixed: Changed from Expanded to Padding since we're now in SingleChildScrollView
-        padding: EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
         child: ListView.builder(
-          shrinkWrap: true, // Fixed: Added shrinkWrap for proper scrolling
-          physics: const NeverScrollableScrollPhysics(), // Fixed: Disable ListView scrolling since parent ScrollView handles it
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20),
           itemCount: _faqController.filteredFAQs.length,
           itemBuilder: (context, index) {
@@ -254,7 +272,7 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
 
   Widget _buildFAQItem(FAQItem faq, int index) {
     return Obx(() {
-      final isExpanded = _faqController.expandedIndex.value == index; // Fixed: Use single expansion logic
+      final isExpanded = _faqController.expandedIndex.value == index;
 
       return Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -332,7 +350,7 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
               height: isExpanded ? null : 0,
               child: isExpanded
                   ? Container(
-                width: double.infinity, // Fixed: Ensure full width
+                width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                 decoration: BoxDecoration(
                   border: Border(
@@ -412,7 +430,7 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
   }
 
   Widget _buildEmptyState() {
-    return SizedBox( // Fixed: Wrap in Container with proper height
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.5,
       child: Center(
         child: Column(
@@ -451,7 +469,7 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
             ElevatedButton(
               onPressed: () {
                 _searchController.clear();
-                _faqController.filterByCategory('All'); // Fixed: Reset both search and category
+                _faqController.clearSearch();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: MyColor.getGCoinPrimaryColor(),

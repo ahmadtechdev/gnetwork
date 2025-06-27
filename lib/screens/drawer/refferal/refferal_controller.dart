@@ -16,7 +16,7 @@ class ReferralTeamController extends GetxController {
   var referrals = <dynamic>[].obs;
   var totalMining = 0.obs;
 
-  final HomeController _homeController = Get.put(HomeController());
+  final HomeController _homeController = Get.find<HomeController>();
 
   @override
   void onInit() {

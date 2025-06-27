@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:gcoin/screens/auth/signin/signin.dart';
 import 'package:gcoin/utils/custom_snackbar.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -9,8 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../api_service/api_service.dart';
 import '../../api_service/local_stroge.dart';
 
-
-class HomeController extends GetxController {
+class HomeController extends GetxController with GetTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   final Dio _dio = Dio();
 
@@ -19,43 +20,207 @@ class HomeController extends GetxController {
   var posts = [].obs;
   var logs = [].obs;
   var isMining = false.obs;
-  var miningTimeLeft = 0.obs; // in seconds
   var miningReward = "0.00".obs;
+  var miningTimeLeft = 0.obs; // in seconds
   Timer? miningTimer;
+
+  // Animation properties
+  var animatedBalance = 0.0.obs;
+  var baseBalance = 0.0.obs; // The balance from API without mining rewards
+  late AnimationController balanceAnimationController;
+  late Animation<double> balanceAnimation;
+  Timer? balanceUpdateTimer;
+
+  // Mining calculation properties
+  double miningStartTime = 0;
+  double totalMiningDuration = 3600; // 1 hour in seconds
+  double currentMiningRate = 0;
+
+  // Fast initial animation properties
+  bool isInitialAnimation = false;
+  double targetInitialBalance = 0.0;
+  Timer? initialAnimationTimer;
 
   @override
   void onInit() {
     super.onInit();
-    fetchDashboardData();
-    _loadMiningState();
+    _initializeAnimations();
+    _checkTokenAndFetchData();
+  }
+
+  void _initializeAnimations() {
+    balanceAnimationController = AnimationController(
+      duration: Duration(milliseconds: 500),
+      vsync: this,
+    );
+
+    balanceAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: balanceAnimationController,
+      curve: Curves.easeOutCubic,
+    ));
+  }
+
+  Future<void> _checkTokenAndFetchData() async {
+    try {
+      isLoading(true);
+      final token = LocalStorage.getToken();
+
+      if (token == null) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await _apiService.checkTokenValidity();
+
+      if (response == null) {
+        throw Exception('Invalid token');
+      }
+
+      await fetchDashboardData();
+      _loadMiningState();
+    } catch (e) {
+      CustomSnackBar.error('Session expired. Please login again.');
+      await LocalStorage.clear();
+      Get.offAllNamed('/sign_in');
+    } finally {
+      isLoading(false);
+    }
   }
 
   @override
   void onClose() {
     miningTimer?.cancel();
+    balanceUpdateTimer?.cancel();
+    initialAnimationTimer?.cancel();
+    balanceAnimationController.dispose();
     super.onClose();
   }
 
-// Update _loadMiningState in HomeController
   void _loadMiningState() {
-    final miningEndTime = LocalStorage.getMiningEndTime();
-    if (miningEndTime != null) {
-      // Verify the mining data belongs to current user
-      final currentUser = LocalStorage.getUser();
-      if (currentUser?['mine_status'] == 1) {
-        final remaining = miningEndTime.difference(DateTime.now()).inSeconds;
-        if (remaining > 0) {
-          isMining.value = true;
-          miningTimeLeft.value = remaining;
-          _startMiningTimer();
-        } else {
-          LocalStorage.clearMiningData();
-        }
+    if (userData['mine_status'] == 1) {
+      final remainingMinutes = userData['remaining_time'] ?? 0;
+      if (remainingMinutes > 0) {
+        isMining.value = true;
+        miningTimeLeft.value = remainingMinutes * 60;
+
+        // Calculate mining progress and setup animated balance
+        _setupMiningBalance();
+        _startMiningTimer();
+        _startFastInitialAnimation(); // Start with fast animation
       } else {
-        // Clear if mining data doesn't belong to current user
-        LocalStorage.clearMiningData();
+        isMining.value = false;
+        _stopBalanceAnimation();
       }
+    } else {
+      isMining.value = false;
+      _stopBalanceAnimation();
     }
+  }
+
+  void _setupMiningBalance() {
+    // Get base balance and mining rate
+    baseBalance.value = double.parse(userData['balance']?.toString() ?? '0');
+    currentMiningRate = double.parse(userData['mine_rate']?.toString() ?? '0');
+
+    // Calculate how much time has passed in current mining session
+    final remainingSeconds = miningTimeLeft.value;
+    final elapsedSeconds = totalMiningDuration - remainingSeconds;
+
+    // Calculate the reward that should have been earned so far
+    final elapsedReward = (elapsedSeconds / totalMiningDuration) * currentMiningRate;
+
+    // Set initial animated balance (base balance - already earned rewards)
+    animatedBalance.value = max(0, baseBalance.value + elapsedReward);
+
+    // Calculate target balance for fast initial animation
+    targetInitialBalance = baseBalance.value;
+  }
+
+  void _startFastInitialAnimation() {
+    isInitialAnimation = true;
+    initialAnimationTimer?.cancel();
+
+    final startBalance = animatedBalance.value;
+    final targetBalance = targetInitialBalance;
+    final difference = targetBalance - startBalance;
+
+    if (difference <= 0) {
+      // No need for initial animation
+      isInitialAnimation = false;
+      _startNormalBalanceAnimation();
+      return;
+    }
+
+    // Fast animation over 2-3 seconds (30 steps over 2.5 seconds)
+    const animationDuration = 2500; // 2.5 seconds
+    const steps = 30;
+    const stepDuration = animationDuration ~/ steps;
+
+    int currentStep = 0;
+
+    initialAnimationTimer = Timer.periodic(Duration(milliseconds: stepDuration), (timer) {
+      currentStep++;
+
+      // Use easeOut curve for smooth fast animation
+      final progress = currentStep / steps;
+      final easedProgress = 1 - pow(1 - progress, 3); // Cubic ease-out
+
+      animatedBalance.value = startBalance + (difference * easedProgress);
+
+      if (currentStep >= steps) {
+        timer.cancel();
+        isInitialAnimation = false;
+        animatedBalance.value = targetBalance; // Ensure exact target
+        _startNormalBalanceAnimation(); // Start normal animation
+      }
+    });
+  }
+
+  void _startNormalBalanceAnimation() {
+    _startBalanceAnimation();
+  }
+
+  void _startBalanceAnimation() {
+    balanceUpdateTimer?.cancel();
+    balanceUpdateTimer = Timer.periodic(Duration(milliseconds: 100), (timer) {
+      if (isMining.value && miningTimeLeft.value > 0 && !isInitialAnimation) {
+        _updateAnimatedBalance();
+      } else if (!isMining.value || miningTimeLeft.value <= 0) {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _stopBalanceAnimation() {
+    balanceUpdateTimer?.cancel();
+    initialAnimationTimer?.cancel();
+    isInitialAnimation = false;
+    // Set animated balance to actual balance when not mining
+    animatedBalance.value = double.parse(userData['balance']?.toString() ?? '0');
+  }
+
+  void _updateAnimatedBalance() {
+    if (!isMining.value || currentMiningRate == 0 || isInitialAnimation) return;
+
+    final remainingSeconds = miningTimeLeft.value;
+    final elapsedSeconds = totalMiningDuration - remainingSeconds;
+
+    // Calculate progress (0 to 1)
+    final progress = elapsedSeconds / totalMiningDuration;
+
+    // Calculate expected balance based on mining progress
+    final earnedReward = progress * currentMiningRate;
+    final expectedBalance = baseBalance.value + earnedReward;
+
+    // Smooth interpolation to expected balance
+    final currentAnimated = animatedBalance.value;
+    final difference = expectedBalance - currentAnimated;
+
+    // Use exponential smoothing for natural animation
+    final smoothingFactor = 0.02; // Adjust for animation speed
+    animatedBalance.value = currentAnimated + (difference * smoothingFactor);
   }
 
   void _startMiningTimer() {
@@ -63,26 +228,28 @@ class HomeController extends GetxController {
     miningTimer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (miningTimeLeft.value > 0) {
         miningTimeLeft.value--;
+
+        // Sync with server every minute
+        if (miningTimeLeft.value % 60 == 0) {
+          fetchDashboardData();
+        }
       } else {
         timer.cancel();
         isMining.value = false;
-        LocalStorage.clearMiningData();
-        fetchDashboardData(); // Refresh data when mining completes
+        _stopBalanceAnimation();
+        fetchDashboardData();
       }
     });
   }
 
-  // Update startMining in HomeController
   Future<void> startMining() async {
     try {
-      // Check if user can mine based on API data
       if (userData['mine_status'] == 1) {
         Get.snackbar(
           'Already Mining',
           'You are already mining. Please wait until completion.',
           backgroundColor: Colors.orange,
         );
-        // CustomSnackBar.error("You are already mining. Please wait until completion.", title: "Already Mining" );
         return;
       }
 
@@ -91,45 +258,26 @@ class HomeController extends GetxController {
 
       if (response?.statusCode == 200) {
         final data = response?.data;
-        final hours = int.tryParse(data['mining_after_hours'] ?? '1') ?? 1;
         miningReward.value = data['mining_reward'] ?? '0.00';
-
-        // Save mining end time
-        final endTime = DateTime.now().add(Duration(hours: hours));
-        LocalStorage.saveMiningData(endTime, reward: miningReward.value);
-
-        // Update user data
-        userData.update('mine_status', (value) => 1);
-
-        isMining.value = true;
-        miningTimeLeft.value = hours * 3600; // Convert hours to seconds
-        _startMiningTimer();
-
-        // Get.snackbar(
-        //   'Success',
-        //   'Mining started! Reward: ${miningReward.value} π',
-        //   backgroundColor: Color(0xFF7ED321),
-        // );
-        CustomSnackBar.success("Mining started! Reward: ${miningReward.value} G");
+        await fetchDashboardData();
       }
     } catch (e) {
-      // Get.snackbar(
-      //   'Error',
-      //   'Failed to start mining: ${e.toString()}',
-      //   backgroundColor: Colors.red,
-      // );
       CustomSnackBar.error("Failed to start mining: ${e.toString()}");
     } finally {
       isLoading(false);
     }
   }
+
   String formatTime(int seconds) {
     final hours = seconds ~/ 3600;
     final minutes = (seconds % 3600) ~/ 60;
     final remainingSeconds = seconds % 60;
-    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+
+    return '${hours.toString().padLeft(2, '0')}:'
+        '${minutes.toString().padLeft(2, '0')}:'
+        '${remainingSeconds.toString().padLeft(2, '0')}';
   }
-  // Update home_controller.dart
+
   Future<void> fetchDashboardData() async {
     try {
       isLoading(true);
@@ -139,8 +287,6 @@ class HomeController extends GetxController {
         throw Exception('No authentication token found');
       }
 
-      // Clear mining data if user changed
-      final currentUser = LocalStorage.getUser();
       final response = await _dio.get(
         'https://gnetwork.pro/api/dashboard',
         options: Options(
@@ -151,34 +297,59 @@ class HomeController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        final newUser = response.data['user'];
-        // If user changed, clear mining data
-        if (currentUser?['id'] != newUser['id']) {
-          miningTimer?.cancel();
-          isMining.value = false;
-          miningTimeLeft.value = 0;
-        }
-
-        userData.value = newUser;
+        userData.value = response.data['user'];
         posts.value = response.data['posts'];
         logs.value = response.data['logs'];
 
-        // Check if user is already mining from API
-        if (newUser['mine_status'] == 1) {
-          _loadMiningState();
+        // Handle mining state based on API response
+        if (userData['mine_status'] == 1) {
+          final remainingMinutes = userData['remaining_time'] ?? 0;
+          if (remainingMinutes > 0) {
+            final wasAlreadyMining = isMining.value;
+            isMining.value = true;
+
+            if ((miningTimeLeft.value ~/ 60) != remainingMinutes) {
+              miningTimeLeft.value = remainingMinutes * 60;
+              _setupMiningBalance(); // Recalculate balance animation
+
+              // Only start fast animation if we weren't already mining
+              if (!wasAlreadyMining) {
+                _startFastInitialAnimation();
+              }
+            }
+
+            _startMiningTimer();
+            if (!wasAlreadyMining || balanceUpdateTimer == null || !balanceUpdateTimer!.isActive) {
+              if (!isInitialAnimation) {
+                _startNormalBalanceAnimation();
+              }
+            }
+          } else {
+            isMining.value = false;
+            miningTimer?.cancel();
+            _stopBalanceAnimation();
+          }
+        } else {
+          isMining.value = false;
+          miningTimer?.cancel();
+          _stopBalanceAnimation();
         }
       } else {
         throw Exception('Failed to load dashboard data');
       }
     } catch (e) {
-      // Get.snackbar('Error', 'Failed to fetch dashboard data: ${e.toString()}');
-      CustomSnackBar.error('Failed to fetch dashboard data: ${e.toString()}', title: "Er1ror");
+      CustomSnackBar.error('Failed to fetch dashboard data: ${e.toString()}', title: "Error");
     } finally {
       isLoading(false);
     }
   }
+
   String getBalance() {
     return userData['balance']?.toString() ?? '0.00';
+  }
+
+  String getAnimatedBalance() {
+    return animatedBalance.value.toStringAsFixed(3);
   }
 
   String getMiningRate() {
@@ -189,15 +360,27 @@ class HomeController extends GetxController {
     return '${userData['direct_refer_count'] ?? 0}/${userData['whole_team_count'] ?? 0}';
   }
 
+  // Get mining progress as percentage
+  double getMiningProgress() {
+    if (!isMining.value) return 0.0;
+    final elapsedSeconds = totalMiningDuration - miningTimeLeft.value;
+    return (elapsedSeconds / totalMiningDuration).clamp(0.0, 1.0);
+  }
+
+  // Get estimated reward based on current progress
+  String getEstimatedReward() {
+    if (!isMining.value) return '0.00';
+    final progress = getMiningProgress();
+    final estimatedReward = progress * currentMiningRate;
+    return estimatedReward.toStringAsFixed(3);
+  }
+
   Future<void> shareReferralCode() async {
-    print("Ahmad");
     try {
       final userName = userData['name'] ?? 'Your Friend';
       final referralCode = userData['username'] ?? '';
 
-      // Create beautiful WhatsApp message
-      final message =
-      '''
+      final message = '''
 🌟 *Join G Network & Start Mining G Coins!* 🌟
 
 Hey! I'm $userName inviting you to join the revolutionary G Network! 
@@ -218,10 +401,6 @@ Don't miss out on this opportunity! 🎯
 #GNetwork #GCoin #CryptoMining #EarnDaily
       '''.trim();
 
-      // // Create WhatsApp URL
-      // final whatsappUrl = 'https://wa.me/$senderNumber?text=${Uri.encodeComponent(message)}';
-
-      // Fallback to general share
       final generalShareUrl =
           'https://api.whatsapp.com/send?text=${Uri.encodeComponent(message)}';
       if (await canLaunchUrl(Uri.parse(generalShareUrl))) {

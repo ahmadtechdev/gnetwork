@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../utils/app_colors.dart';
+import '../../homescreen/home_controller.dart';
 import 'mineg_controller.dart';
-
 
 class MineGScreen extends StatefulWidget {
   const MineGScreen({super.key});
@@ -16,6 +16,7 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   final MineGController _controller = Get.put(MineGController());
+  final HomeController _homeController = Get.find<HomeController>();
 
   @override
   void initState() {
@@ -148,7 +149,7 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        _controller.isMiningActive()
+                        _homeController.isMining.value
                             ? 'Mining Session Ends'
                             : 'No Active Mining Session',
                         style: TextStyle(
@@ -158,15 +159,17 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        _controller.remainingTime.value,
+                      Obx(() => Text(
+                        _homeController.isMining.value
+                            ? _homeController.formatTime(_homeController.miningTimeLeft.value)
+                            : '00:00:00',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 2,
                         ),
-                      ),
+                      )),
                     ],
                   ),
                 ),
