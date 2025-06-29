@@ -268,4 +268,11 @@ class ApiService {
       endpoint: 'user',
     );
   }
+  // Add this to your ApiService class in api_service.dart
+  Future<dio.Response?> getDownlineTree(int userId) async {
+    return await _authenticatedRequest(
+      method: 'GET',
+      endpoint: 'downline/$userId',
+    );
+  }
 }

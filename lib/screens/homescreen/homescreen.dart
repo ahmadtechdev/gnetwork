@@ -13,6 +13,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../api_service/api_service.dart';
 import '../../api_service/local_stroge.dart';
+import '../drawer/tree/tree.dart';
 import 'animation.dart';
 import 'home_controller.dart';
 
@@ -1951,6 +1952,13 @@ class GNetworkDrawer extends StatelessWidget {
                     'Referral Team',
                     false,
                     () => Get.to(() => ReferralTeamPage()),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.store_rounded,
+                    'Team Tree',
+                    false,
+                    () => Get.to(() => NetworkTreeScreen()),
                   ),
                   _buildDrawerItem(
                     context,
