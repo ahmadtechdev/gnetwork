@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gcoin/screens/drawer/tree/tree.dart';
 import 'package:get/get.dart';
 import '../../../api_service/api_service.dart';
 import '../../../utils/custom_snackbar.dart';
@@ -20,11 +21,16 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
   late Animation<Offset> slideAnimation;
   late Animation<double> fadeAnimation;
 
+  var isSearching = false.obs;
+  var searchResult = Rxn<Map<String, dynamic>>();
+  var searchError = RxString('');
+
   @override
-  void onInit() {
+  Future<void> onInit() async {
     super.onInit();
     _initializeAnimations();
     _loadInitialTree();
+    await _homeController.fetchDashboardData();
   }
 
   void _initializeAnimations() {
@@ -102,6 +108,55 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
       isLoading.value = false;
     }
   }
+
+  Future<void> searchUser(String username) async {
+    try {
+      isSearching.value = true;
+      searchError.value = '';
+      searchResult.value = null;
+
+      if (username.isEmpty) {
+        searchError.value = 'Please enter a username';
+        return;
+      }
+
+      final response = await _apiService.searchUserByUsername(username);
+
+      if (response == null) {
+        searchError.value = 'User Not Found!';
+        return;
+      }
+
+      // Handle different status codes
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['success'] == true) {
+          searchResult.value = data;
+        } else {
+          searchError.value = data['message'] ?? 'User not found';
+        }
+      }
+      else if (response.statusCode == 403) {
+        searchError.value = response.data['message'] ?? 'User is not in your network';
+      }
+      else if (response.statusCode == 404) {
+        searchError.value = response.data['message'] ?? 'User not found';
+      }
+      else {
+        searchError.value = 'Failed to search user (Error ${response.statusCode})';
+      }
+    } catch (e) {
+      searchError.value = 'Error searching user: ${e.toString()}';
+    } finally {
+      isSearching.value = false;
+    }
+  }
+
+  void clearSearch() {
+    searchResult.value = null;
+    searchError.value = '';
+  }
+
 
   void navigateToNode(TreeNode node) {
     if (currentNode.value != null) {

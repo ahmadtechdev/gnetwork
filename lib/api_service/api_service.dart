@@ -275,4 +275,12 @@ class ApiService {
       endpoint: 'downline/$userId',
     );
   }
+
+  // Add this to api_service.dart
+  Future<dio.Response?> searchUserByUsername(String username) async {
+    return await _authenticatedRequest(
+      method: 'GET',
+      endpoint: 'search-user/$username',
+    );
+  }
 }
