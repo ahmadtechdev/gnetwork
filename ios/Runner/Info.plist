@@ -29,6 +29,8 @@
 		<string>sms</string>
 		<string>tel</string>
 	</array>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-5588063718705121~8489420955</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:gcoin/screens/homescreen/home_controller.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_service/local_stroge.dart';
@@ -15,7 +16,7 @@ import 'theme/light.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+MobileAds.instance.initialize();
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

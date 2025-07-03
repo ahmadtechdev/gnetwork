@@ -7,8 +7,10 @@ import 'dart:math';
 
 import 'package:gcoin/screens/drawer/refferal/refferal_team.dart';
 import 'package:gcoin/screens/drawer/support/support.dart';
+import 'package:gcoin/utils/ad_helper.dart';
 import 'package:gcoin/utils/custom_snackbar.dart';
 import 'package:get/get.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../api_service/api_service.dart';
@@ -39,9 +41,29 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
   late Animation<double> _rotationAnimation;
   late Animation<double> _pulseAnimation;
 
+  BannerAd? _bannerAd;
+
   @override
   void initState() {
     super.initState();
+
+    BannerAd(
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad){
+          setState(() {
+            _bannerAd =ad as BannerAd;
+          });
+        },
+        onAdFailedToLoad: (ad, err){
+          print("Failed to load a banner add: ${err.message}");
+          ad.dispose();
+        }
+      ),
+    ).load();
+
 
     // Initialize animation controllers
     _fadeController = AnimationController(
@@ -139,8 +161,21 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                   // Enhanced Header with gradient background
                   _buildEnhancedHeader(),
 
+
+
                   // Stats Cards Section
                   _buildStatsCardsSection(),
+
+                  if(_bannerAd != null)
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: SizedBox(
+                        width: _bannerAd!.size.width.toDouble(),
+                        height: _bannerAd!.size.height.toDouble(),
+                        child: AdWidget(ad: _bannerAd!,),
+                      ),
+                    ),
+
 
                   // Enhanced Game Apps Section
                   _buildEnhancedGameAppsSection(),
