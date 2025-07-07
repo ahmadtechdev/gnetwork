@@ -1,6 +1,7 @@
 // signin_controller.dart
 import 'package:gcoin/api_service/api_service.dart';
 import 'package:gcoin/api_service/local_stroge.dart';
+import 'package:gcoin/screens/game/game.dart';
 import 'package:get/get.dart';
 
 import '../../../routes/route.dart';
@@ -39,7 +40,9 @@ class SignInController extends GetxController {
           await LocalStorage.saveCredentials('', ''); // Clear credentials
         }
 
-        Get.offAllNamed(RouteHelper.homeScreen);
+        // Get.offAllNamed(RouteHelper.homeScreen);
+        // Navigate to Earn Game Screen first, then to dashboard
+        Get.offAll(() => const EarnGameScreen());
       }
     } finally {
       isLoading(false);
