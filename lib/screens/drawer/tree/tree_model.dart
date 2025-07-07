@@ -38,11 +38,17 @@ class TreeResponse {
   final bool success;
   final String message;
   final List<TreeNode> tree;
+  final TreeNode? left;
+  final TreeNode? middle;
+  final TreeNode? right;
 
   TreeResponse({
     required this.success,
     required this.message,
     required this.tree,
+    this.left,
+    this.middle,
+    this.right,
   });
 
   factory TreeResponse.fromJson(Map<String, dynamic> json) {
@@ -52,6 +58,9 @@ class TreeResponse {
       tree: (json['tree'] as List?)
           ?.map((item) => TreeNode.fromJson(item))
           .toList() ?? [],
+      left: json['left'] != null ? TreeNode.fromJson(json['left']) : null,
+      middle: json['middle'] != null ? TreeNode.fromJson(json['middle']) : null,
+      right: json['right'] != null ? TreeNode.fromJson(json['right']) : null,
     );
   }
 }

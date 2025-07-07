@@ -229,10 +229,10 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       if (miningTimeLeft.value > 0) {
         miningTimeLeft.value--;
 
-        // Sync with server every minute
-        if (miningTimeLeft.value % 60 == 0) {
-          fetchDashboardData();
-        }
+        // // Sync with server every minute
+        // if (miningTimeLeft.value % 60 == 0) {
+        //   fetchDashboardData();
+        // }
       } else {
         timer.cancel();
         isMining.value = false;
@@ -288,7 +288,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       }
 
       final response = await _dio.get(
-        'https://clone.gnetwork.pro/api/dashboard',
+        'https://gnetwork.pro/api/dashboard',
+        // 'https://clone.gnetwork.pro/api/dashboard',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -351,7 +352,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         throw Exception('Failed to load dashboard data');
       }
     } catch (e) {
-      CustomSnackBar.error('Failed to fetch dashboard data: ${e.toString()}', title: "Error123");
+      CustomSnackBar.error('Failed to fetch dashboard data: ${e.toString()}', title: "Error");
     } finally {
       isLoading(false);
     }

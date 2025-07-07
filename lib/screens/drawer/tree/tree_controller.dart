@@ -89,7 +89,12 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
 
         if (treeResponse.success) {
           treeNodes.clear();
-          treeNodes.addAll(treeResponse.tree);
+          // Use the individual left/middle/right nodes if available, otherwise fall back to the tree list
+          if (treeResponse.left != null && treeResponse.middle != null && treeResponse.right != null) {
+            treeNodes.addAll([treeResponse.left!, treeResponse.middle!, treeResponse.right!]);
+          } else {
+            treeNodes.addAll(treeResponse.tree);
+          }
 
           // Start animations
           fadeAnimationController.reset();

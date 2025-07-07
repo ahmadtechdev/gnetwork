@@ -493,12 +493,14 @@ class NetworkTreeScreen extends StatelessWidget {
           SizedBox(height: 20),
           // Child Nodes
           _buildChildNodes(),
+          SizedBox(height: 20),
+          // Business Matrix
+          _buildBusinessMatrix(),
           SizedBox(height: 8),
         ],
       ),
     );
   }
-
   Widget _buildCurrentNode() {
     return Obx(() {
       final current = controller.currentNode.value;
@@ -725,6 +727,8 @@ class NetworkTreeScreen extends StatelessWidget {
             ),
             SizedBox(height: 4),
             // Username
+
+          ],
             Text(
               '@${node.username}',
               style: TextStyle(
@@ -738,7 +742,6 @@ class NetworkTreeScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 8),
-          ],
 
             // Position Badge
             Container(
@@ -860,6 +863,115 @@ class NetworkTreeScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildBusinessMatrix() {
+    return Obx(() {
+      if (controller.treeNodes.isEmpty) return SizedBox();
+
+      return Column(
+        children: [
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: MyColor.getCardBg(),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: MyColor.getPrimaryColor().withOpacity(0.2),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: MyColor.getGCoinShadowColor(),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Business Matrix',
+                  style: TextStyle(
+                    color: MyColor.getPrimaryColor(),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16),
+                Column(
+                  children: [
+                    _buildMatrixRow('Left', controller.treeNodes.firstWhereOrNull((node) => node.position == 'left')?.downlineCount ?? 0),
+                    SizedBox(height: 12),
+                    _buildMatrixRow('Middle', controller.treeNodes.firstWhereOrNull((node) => node.position == 'middle')?.downlineCount ?? 0),
+                    SizedBox(height: 12),
+                    _buildMatrixRow('Right', controller.treeNodes.firstWhereOrNull((node) => node.position == 'right')?.downlineCount ?? 0),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 16),
+          // Add your image below the matrix card
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 16),
+            child: Image.asset(
+              'assets/images/img.PNG', // Replace with your actual asset path
+              fit: BoxFit.cover,
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildMatrixRow(String position, int count) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'Position ',
+                style: TextStyle(
+                  color: MyColor.getTextColor().withOpacity(0.7),
+                  fontSize: 14,
+                ),
+              ),
+              TextSpan(
+                text: '($position)',
+                style: TextStyle(
+                  color: MyColor.getPrimaryColor(),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+          decoration: BoxDecoration(
+            color: MyColor.getPrimaryColor().withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: MyColor.getPrimaryColor().withOpacity(0.3),
+            ),
+          ),
+          child: Text(
+            count.toString(),
+            style: TextStyle(
+              color: MyColor.getPrimaryColor(),
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class TreeConnectionPainter extends CustomPainter {
@@ -907,6 +1019,7 @@ class TreeConnectionPainter extends CustomPainter {
       }
     }
   }
+
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
