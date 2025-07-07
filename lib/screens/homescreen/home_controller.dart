@@ -288,7 +288,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       }
 
       final response = await _dio.get(
-        'https://gnetwork.pro/api/dashboard',
+        'https://clone.gnetwork.pro/api/dashboard',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -301,30 +301,43 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         posts.value = response.data['posts'];
         logs.value = response.data['logs'];
 
+
         // Handle mining state based on API response
         if (userData['mine_status'] == 1) {
+
           final remainingMinutes = userData['remaining_time'] ?? 0;
+
           if (remainingMinutes > 0) {
+
             final wasAlreadyMining = isMining.value;
             isMining.value = true;
 
             if ((miningTimeLeft.value ~/ 60) != remainingMinutes) {
               miningTimeLeft.value = remainingMinutes * 60;
+
               _setupMiningBalance(); // Recalculate balance animation
 
               // Only start fast animation if we weren't already mining
               if (!wasAlreadyMining) {
+
                 _startFastInitialAnimation();
+
               }
             }
 
             _startMiningTimer();
+
             if (!wasAlreadyMining || balanceUpdateTimer == null || !balanceUpdateTimer!.isActive) {
+
               if (!isInitialAnimation) {
+
                 _startNormalBalanceAnimation();
+
               }
+
             }
           } else {
+
             isMining.value = false;
             miningTimer?.cancel();
             _stopBalanceAnimation();
@@ -338,7 +351,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         throw Exception('Failed to load dashboard data');
       }
     } catch (e) {
-      CustomSnackBar.error('Failed to fetch dashboard data: ${e.toString()}', title: "Error");
+      CustomSnackBar.error('Failed to fetch dashboard data: ${e.toString()}', title: "Error123");
     } finally {
       isLoading(false);
     }
