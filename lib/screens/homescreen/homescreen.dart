@@ -1673,8 +1673,8 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildAnimatedStat(
-                        '7K+',
-                        'Pioneers',
+                        '20K+',
+                        'App installation',
                         Icons.people_rounded,
                         Color(0xFF7ED321),
                       ),
@@ -1685,8 +1685,8 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                         Color(0xFF4CAF50),
                       ),
                       _buildAnimatedStat(
-                        '5K+',
-                        'Apps',
+                        '19K+',
+                        'App User',
                         Icons.apps_rounded,
                         Color(0xFF66BB6A),
                       ),
