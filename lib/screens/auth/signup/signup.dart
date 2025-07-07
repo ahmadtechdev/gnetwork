@@ -538,11 +538,30 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
                   width: 2,
                 ),
               ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: Color(0xFFE53935), // colorRed
+                  width: 2,
+                ),
+              ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 16,
               ),
             ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter an Referral code';
+              }
+              // if (value.length < 8) {
+              //   return 'Password must be at least 8 characters';
+              // }
+              // if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)) {
+              //   return 'Password must contain uppercase, lowercase and number';
+              // }
+              return null;
+            },
           ),
         ),
       ],
