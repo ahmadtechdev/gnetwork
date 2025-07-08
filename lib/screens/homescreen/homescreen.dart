@@ -49,6 +49,17 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
   void initState() {
     super.initState();
     // Initialize animation controllers
+    _initializeAnimations();
+
+    // Start animations
+    _startAnimations();
+
+    // Load banner ad after a small delay to let UI appear first
+    Future.delayed(Duration(milliseconds: 500), _loadBannerAd);
+  }
+
+  void _initializeAnimations() {
+    // Initialize animation controllers
     _fadeController = AnimationController(
       duration: Duration(milliseconds: 1000),
       vsync: this,
@@ -97,24 +108,20 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+  }
 
-    // Start animations
+  void _startAnimations() {
     _fadeController.forward();
     _slideController.forward();
     _scaleController.forward();
     _rotationController.repeat();
     _pulseController.repeat(reverse: true);
-
-    // Load banner ad after animations are initialized
-    _loadBannerAd();
   }
 
   Future<void> _loadBannerAd() async {
-    // Don't load ads in debug mode
-    // if (kDebugMode) {
-    //   print('Debug mode - skipping ad load');
-    //   return;
-    // }
+    if (_bannerAd != null) {
+      _bannerAd?.dispose();
+    }
 
     try {
       final banner = BannerAd(
@@ -123,6 +130,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
         size: AdSize.banner,
         listener: BannerAdListener(
           onAdLoaded: (ad) {
+            if (!mounted) return;
             setState(() {
               _bannerAd = ad as BannerAd;
             });
@@ -130,16 +138,13 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
           onAdFailedToLoad: (ad, error) {
             ad.dispose();
             print('BannerAd failed to load: $error');
-            // Optionally retry after delay
-            Future.delayed(const Duration(seconds: 30), _loadBannerAd);
+            // No need to retry immediately - will retry on next refresh
           },
-          onAdOpened: (ad) => print('BannerAd opened.'),
-          onAdClosed: (ad) => print('BannerAd closed.'),
-          onAdImpression: (ad) => print('BannerAd impression occurred.'),
         ),
       );
 
-      await banner.load();
+      // Load without waiting for completion
+      banner.load();
     } catch (e) {
       print('Failed to load banner ad: $e');
     }
@@ -177,6 +182,8 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
             backgroundColor: Color(0xFF0D1F0F),
             onRefresh: () async {
               await _homeController.fetchDashboardData();
+              // Reload ad on refresh
+              _loadBannerAd();
             },
             child: SingleChildScrollView(
               child: Column(
@@ -184,20 +191,18 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                   // Enhanced Header with gradient background
                   _buildEnhancedHeader(),
 
-
-
                   // Stats Cards Section
                   _buildStatsCardsSection(),
 
-// Replace your current banner ad widget with this:
+                  // Replace your current banner ad widget with this:
                   if (_bannerAd != null)
                     Container(
                       width: _bannerAd!.size.width.toDouble(),
                       height: _bannerAd!.size.height.toDouble(),
                       alignment: Alignment.center,
+                      margin: EdgeInsets.only(bottom: 8),
                       child: AdWidget(ad: _bannerAd!),
                     ),
-
 
                   // Enhanced Game Apps Section
                   _buildEnhancedGameAppsSection(),
@@ -214,7 +219,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
     });
   }
 
-// Updated _buildEnhancedHeader method
+  // Updated _buildEnhancedHeader method
   Widget _buildEnhancedHeader() {
     return FadeTransition(
       opacity: _fadeAnimation,
@@ -341,9 +346,12 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                             children: [
                               // Use Obx to watch the animated balance changes
                               Obx(() {
-                                final displayValue = _homeController.isMining.value
-                                    ? _homeController.getAnimatedBalance()
-                                    : double.parse(_homeController.getBalance()).toStringAsFixed(3);
+                                final displayValue =
+                                    _homeController.isMining.value
+                                        ? _homeController.getAnimatedBalance()
+                                        : double.parse(
+                                          _homeController.getBalance(),
+                                        ).toStringAsFixed(3);
 
                                 return AnimatedDigitDisplay(
                                   value: displayValue,
@@ -355,7 +363,9 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                                     letterSpacing: -0.5,
                                     shadows: [
                                       Shadow(
-                                        color: Color(0xFF7ED321).withOpacity(0.3),
+                                        color: Color(
+                                          0xFF7ED321,
+                                        ).withOpacity(0.3),
                                         offset: Offset(0, 2),
                                         blurRadius: 4,
                                       ),
@@ -368,7 +378,8 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                                 animation: _rotationController,
                                 builder: (context, child) {
                                   return Transform.rotate(
-                                    angle: _rotationAnimation.value * 2 * 3.14159,
+                                    angle:
+                                        _rotationAnimation.value * 2 * 3.14159,
                                     child: Text(
                                       'G',
                                       style: TextStyle(
@@ -377,7 +388,9 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                                         fontWeight: FontWeight.bold,
                                         shadows: [
                                           Shadow(
-                                            color: Color(0xFF7ED321).withOpacity(0.5),
+                                            color: Color(
+                                              0xFF7ED321,
+                                            ).withOpacity(0.5),
                                             offset: Offset(0, 2),
                                             blurRadius: 8,
                                           ),
@@ -419,7 +432,8 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                                     ),
                                     child: FractionallySizedBox(
                                       alignment: Alignment.centerLeft,
-                                      widthFactor: _homeController.getMiningProgress(),
+                                      widthFactor:
+                                          _homeController.getMiningProgress(),
                                       child: AnimatedContainer(
                                         duration: Duration(milliseconds: 500),
                                         decoration: BoxDecoration(
@@ -429,10 +443,14 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                                               Color(0xFF4CAF50),
                                             ],
                                           ),
-                                          borderRadius: BorderRadius.circular(2),
+                                          borderRadius: BorderRadius.circular(
+                                            2,
+                                          ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Color(0xFF7ED321).withOpacity(0.4),
+                                              color: Color(
+                                                0xFF7ED321,
+                                              ).withOpacity(0.4),
                                               blurRadius: 4,
                                               offset: Offset(0, 1),
                                             ),
@@ -443,7 +461,8 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                                   ),
                                   SizedBox(height: 8),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         'Earned: ${_homeController.getEstimatedReward()} G',
@@ -479,6 +498,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
       ),
     );
   }
+
   Widget _buildStatsCardsSection() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20),
@@ -905,15 +925,16 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
               child: Container(
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _homeController.isMining.value
-                      ? Colors.orange
-                      : Color(0xFF7ED321),
+                  color:
+                      _homeController.isMining.value
+                          ? Colors.orange
+                          : Color(0xFF7ED321),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
                       color: (_homeController.isMining.value
-                          ? Colors.orange
-                          : Color(0xFF7ED321))
+                              ? Colors.orange
+                              : Color(0xFF7ED321))
                           .withOpacity(0.3),
                       blurRadius: 12,
                       offset: Offset(0, 6),
@@ -925,11 +946,11 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     Icon(Icons.flash_on_rounded, color: Colors.white, size: 18),
                     SizedBox(height: 4),
                     Obx(
-                          () => Text(
+                      () => Text(
                         _homeController.isMining.value
                             ? _homeController.formatTime(
-                          _homeController.miningTimeLeft.value,
-                        )
+                              _homeController.miningTimeLeft.value,
+                            )
                             : '${_homeController.getMiningRate()} G/h',
                         style: TextStyle(
                           color: Colors.white,
@@ -985,22 +1006,23 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: label != null
-                    ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(icon, color: iconColor, size: 16),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: iconColor,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                )
-                    : Icon(icon, color: iconColor, size: 20),
+                child:
+                    label != null
+                        ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(icon, color: iconColor, size: 16),
+                            Text(
+                              label,
+                              style: TextStyle(
+                                color: iconColor,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        )
+                        : Icon(icon, color: iconColor, size: 20),
               ),
             ),
           ),
@@ -1914,4 +1936,3 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
     );
   }
 }
-
