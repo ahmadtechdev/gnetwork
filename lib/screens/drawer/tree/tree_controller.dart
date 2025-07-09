@@ -14,6 +14,7 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
   var currentNode = Rxn<TreeNode>();
   var treeNodes = <TreeNode>[].obs;
   var navigationHistory = <TreeNode>[].obs;
+  var treeResponse = Rxn<TreeResponse>(); // Add this to store the full response
 
   // Animation controllers
   late AnimationController slideAnimationController;
@@ -81,20 +82,17 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
   Future<void> fetchTreeData(int userId) async {
     try {
       isLoading.value = true;
+      treeResponse.value = null; // Clear previous response
 
       final response = await _apiService.getDownlineTree(userId);
 
       if (response?.statusCode == 200) {
-        final treeResponse = TreeResponse.fromJson(response!.data);
+        final treeData = TreeResponse.fromJson(response!.data);
+        treeResponse.value = treeData; // Store the full response
 
-        if (treeResponse.success) {
+        if (treeData.success) {
           treeNodes.clear();
-          // Use the individual left/middle/right nodes if available, otherwise fall back to the tree list
-          if (treeResponse.left != null && treeResponse.middle != null && treeResponse.right != null) {
-            treeNodes.addAll([treeResponse.left!, treeResponse.middle!, treeResponse.right!]);
-          } else {
-            treeNodes.addAll(treeResponse.tree);
-          }
+          treeNodes.addAll(treeData.tree);
 
           // Start animations
           fadeAnimationController.reset();
@@ -102,7 +100,7 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
           fadeAnimationController.forward();
           slideAnimationController.forward();
         } else {
-          CustomSnackBar.error(treeResponse.message);
+          CustomSnackBar.error(treeData.message);
         }
       } else {
         CustomSnackBar.error('Failed to load tree data');
@@ -114,6 +112,7 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
+  // Rest of the methods remain the same...
   Future<void> searchUser(String username) async {
     try {
       isSearching.value = true;
@@ -161,7 +160,6 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
     searchResult.value = null;
     searchError.value = '';
   }
-
 
   void navigateToNode(TreeNode node) {
     if (currentNode.value != null) {

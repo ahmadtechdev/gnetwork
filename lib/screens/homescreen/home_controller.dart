@@ -288,8 +288,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       }
 
       final response = await _dio.get(
-        'https://gnetwork.pro/api/dashboard',
-        // 'https://clone.gnetwork.pro/api/dashboard',
+        // 'https://gnetwork.pro/api/dashboard',
+        'https://clone.gnetwork.pro/api/dashboard',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',

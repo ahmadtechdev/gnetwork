@@ -646,8 +646,8 @@ class NetworkTreeScreen extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     return GestureDetector(
-      // onTap: onTap,
-      onTap: () {},
+      onTap: onTap,
+      // onTap: () {},
       child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
         padding: EdgeInsets.all(16),
@@ -863,7 +863,6 @@ class NetworkTreeScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildBusinessMatrix() {
     return Obx(() {
       if (controller.treeNodes.isEmpty) return SizedBox();
@@ -902,11 +901,11 @@ class NetworkTreeScreen extends StatelessWidget {
                 SizedBox(height: 16),
                 Column(
                   children: [
-                    _buildMatrixRow('Left', controller.treeNodes.firstWhereOrNull((node) => node.position == 'left')?.downlineCount ?? 0),
+                    _buildMatrixRow('Left', controller.treeResponse.value?.left ?? 0),
                     SizedBox(height: 12),
-                    _buildMatrixRow('Middle', controller.treeNodes.firstWhereOrNull((node) => node.position == 'middle')?.downlineCount ?? 0),
+                    _buildMatrixRow('Middle', controller.treeResponse.value?.middle ?? 0),
                     SizedBox(height: 12),
-                    _buildMatrixRow('Right', controller.treeNodes.firstWhereOrNull((node) => node.position == 'right')?.downlineCount ?? 0),
+                    _buildMatrixRow('Right', controller.treeResponse.value?.right ?? 0),
                   ],
                 ),
               ],
@@ -925,7 +924,6 @@ class NetworkTreeScreen extends StatelessWidget {
       );
     });
   }
-
   Widget _buildMatrixRow(String position, int count) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

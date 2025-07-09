@@ -38,9 +38,9 @@ class TreeResponse {
   final bool success;
   final String message;
   final List<TreeNode> tree;
-  final TreeNode? left;
-  final TreeNode? middle;
-  final TreeNode? right;
+  final int? left;
+  final int? middle;
+  final int? right;
 
   TreeResponse({
     required this.success,
@@ -58,9 +58,9 @@ class TreeResponse {
       tree: (json['tree'] as List?)
           ?.map((item) => TreeNode.fromJson(item))
           .toList() ?? [],
-      left: json['left'] != null ? TreeNode.fromJson(json['left']) : null,
-      middle: json['middle'] != null ? TreeNode.fromJson(json['middle']) : null,
-      right: json['right'] != null ? TreeNode.fromJson(json['right']) : null,
+      left: json['left'] != null ? json['left'] as int : null,
+      middle: json['middle'] != null ? json['middle'] as int : null,
+      right: json['right'] != null ? json['right'] as int : null,
     );
   }
 }
