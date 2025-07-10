@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gcoin/screens/homescreen/homescreen.dart';
 import 'package:get/get.dart';
 import '../../../utils/app_colors.dart';
 import 'tree_controller.dart';
@@ -6,6 +7,8 @@ import 'tree_model.dart';
 
 class NetworkTreeScreen extends StatelessWidget {
   final TreeController controller = Get.put(TreeController());
+
+  NetworkTreeScreen({super.key});
   // final ScrollController scrollController = ScrollController();
 
 
@@ -24,7 +27,7 @@ class NetworkTreeScreen extends StatelessWidget {
       elevation: 0,
       leading: IconButton(
         icon: Icon(Icons.arrow_back_ios, color: MyColor.getAppbarTitleColor()),
-        onPressed: () => Get.back(),
+        onPressed: () => Get.off(PiNetworkHomeScreen()),
       ),
       title: Obx(
         () => Column(
@@ -410,75 +413,6 @@ class NetworkTreeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNavigationBar() {
-    return Container(
-      margin: EdgeInsets.all(16),
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: MyColor.getCardBg(),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: MyColor.getGCoinDividerColor(), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: MyColor.getGCoinShadowColor(),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Obx(
-            () =>
-                controller.canNavigateBack()
-                    ? GestureDetector(
-                      onTap: controller.navigateBack,
-                      child: Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: MyColor.getPrimaryColor().withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.arrow_back,
-                          color: MyColor.getPrimaryColor(),
-                          size: 20,
-                        ),
-                      ),
-                    )
-                    : SizedBox(),
-          ),
-          SizedBox(width: controller.canNavigateBack() ? 12 : 0),
-          Expanded(
-            child: Obx(
-              () => Text(
-                controller.getCurrentNodeTitle(),
-                style: TextStyle(
-                  color: MyColor.getTextColor(),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-          Obx(
-            () =>
-                controller.navigationHistory.isNotEmpty
-                    ? Text(
-                      'Level ${controller.navigationHistory.length + 1}',
-                      style: TextStyle(
-                        color: MyColor.getPrimaryColor(),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    )
-                    : SizedBox(),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildTreeStructure() {
     return SingleChildScrollView(
@@ -506,7 +440,7 @@ class NetworkTreeScreen extends StatelessWidget {
       final current = controller.currentNode.value;
       if (current == null) return SizedBox();
 
-      return Container(
+      return SizedBox(
         width: double.infinity,
         child: Column(
           children: [
@@ -542,7 +476,7 @@ class NetworkTreeScreen extends StatelessWidget {
         return _buildEmptyState();
       }
 
-      return Container(
+      return SizedBox(
         height: 60,
         child: CustomPaint(
           painter: TreeConnectionPainter(

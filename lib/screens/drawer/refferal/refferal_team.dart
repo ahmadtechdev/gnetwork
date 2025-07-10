@@ -438,67 +438,6 @@ class _ReferralTeamPageState extends State<ReferralTeamPage> {
     );
   }
 
-  Widget _buildWarningCard() {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red.withOpacity(0.3), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                Icon(Icons.warning_rounded, color: Colors.red, size: 24),
-                SizedBox(width: 8),
-                Text(
-                  'You are at risk of losing G Coin!',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 12),
-          Text(
-            'If your Referral and Security Team members don\'t finish the Mainnet Checklist by the Grace Period deadline, you will lose some bonus G Network attributed to their contributions.',
-            style: TextStyle(
-              color: MyColor.getTextColor(),
-              fontSize: 14,
-              height: 1.5,
-            ),
-          ),
-          SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: MyColor.getGCoinPrimaryColor(),
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                'See Team Members',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildMembersSection() {
     return Column(

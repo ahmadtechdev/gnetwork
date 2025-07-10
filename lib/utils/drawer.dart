@@ -13,6 +13,8 @@ import '../screens/drawer/tree/tree.dart';
 import 'custom_snackbar.dart';
 
 class GNetworkDrawer extends StatelessWidget {
+  const GNetworkDrawer({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Drawer(

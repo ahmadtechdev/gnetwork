@@ -9,17 +9,17 @@ class AnimatedDigitDisplay extends StatefulWidget {
   final Duration duration;
 
   const AnimatedDigitDisplay({
-    Key? key,
+    super.key,
     required this.value,
     required this.textStyle,
     this.duration = const Duration(milliseconds: 800),
-  }) : super(key: key);
+  });
 
   @override
-  _AnimatedDigitDisplayState createState() => _AnimatedDigitDisplayState();
+  AnimatedDigitDisplayState createState() => AnimatedDigitDisplayState();
 }
 
-class _AnimatedDigitDisplayState extends State<AnimatedDigitDisplay>
+class AnimatedDigitDisplayState extends State<AnimatedDigitDisplay>
     with TickerProviderStateMixin {
   late String _previousValue;
   late String _currentValue;
@@ -110,10 +110,10 @@ class _AnimatedDigitDisplayState extends State<AnimatedDigitDisplay>
         keysToRemove.add(key);
       }
     });
-    keysToRemove.forEach((key) {
+    for (var key in keysToRemove) {
       _controllers.remove(key);
       _animations.remove(key);
-    });
+    }
   }
 
   @override

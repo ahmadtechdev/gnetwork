@@ -1,23 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:gcoin/screens/drawer/faq/faq.dart';
-import 'package:gcoin/screens/drawer/mineg/mineg.dart';
-import 'package:gcoin/screens/drawer/node.dart';
-import 'package:gcoin/screens/drawer/profile/profile.dart';
 import 'dart:math';
 
-import 'package:gcoin/screens/drawer/refferal/refferal_team.dart';
-import 'package:gcoin/screens/drawer/support/support.dart';
 import 'package:gcoin/utils/ad_helper.dart';
-import 'package:gcoin/utils/custom_snackbar.dart';
 import 'package:get/get.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../api_service/api_service.dart';
-import '../../api_service/local_stroge.dart';
 import '../../utils/drawer.dart';
-import '../drawer/tree/tree.dart';
 import 'animation.dart';
 import 'home_controller.dart';
 
@@ -25,10 +15,10 @@ class PiNetworkHomeScreen extends StatefulWidget {
   const PiNetworkHomeScreen({super.key});
 
   @override
-  _PiNetworkHomeScreenState createState() => _PiNetworkHomeScreenState();
+  PiNetworkHomeScreenState createState() => PiNetworkHomeScreenState();
 }
 
-class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
+class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
     with TickerProviderStateMixin {
   final HomeController _homeController = Get.find<HomeController>();
   late AnimationController _fadeController;
@@ -137,7 +127,9 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
           },
           onAdFailedToLoad: (ad, error) {
             ad.dispose();
-            print('BannerAd failed to load: $error');
+            if (kDebugMode) {
+              print('BannerAd failed to load: $error');
+            }
             // No need to retry immediately - will retry on next refresh
           },
         ),
@@ -146,7 +138,9 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
       // Load without waiting for completion
       banner.load();
     } catch (e) {
-      print('Failed to load banner ad: $e');
+      if (kDebugMode) {
+        print('Failed to load banner ad: $e');
+      }
     }
   }
 
@@ -899,7 +893,6 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
   }
 
   // Update _buildMiningFAB to include onTap
-  // Update _buildMiningFAB in homescreen.dart
   Widget _buildMiningFAB() {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
@@ -912,7 +905,8 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
             child: GestureDetector(
               onTap: () {
                 if (!_homeController.isMining.value) {
-                  _homeController.startMining();
+                  // Changed from startMining() to startMiningWithGame()
+                  _homeController.startMiningWithGame(context);
                 } else {
                   Get.snackbar(
                     'Mining in Progress',
@@ -925,16 +919,15 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
               child: Container(
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color:
-                      _homeController.isMining.value
-                          ? Colors.orange
-                          : Color(0xFF7ED321),
+                  color: _homeController.isMining.value
+                      ? Colors.orange
+                      : Color(0xFF7ED321),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
                       color: (_homeController.isMining.value
-                              ? Colors.orange
-                              : Color(0xFF7ED321))
+                          ? Colors.orange
+                          : Color(0xFF7ED321))
                           .withOpacity(0.3),
                       blurRadius: 12,
                       offset: Offset(0, 6),
@@ -943,14 +936,16 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.flash_on_rounded, color: Colors.white, size: 18),
+                    Icon(Icons.flash_on_rounded,
+                        color: Colors.white,
+                        size: 18),
                     SizedBox(height: 4),
                     Obx(
-                      () => Text(
+                          () => Text(
                         _homeController.isMining.value
                             ? _homeController.formatTime(
-                              _homeController.miningTimeLeft.value,
-                            )
+                          _homeController.miningTimeLeft.value,
+                        )
                             : '${_homeController.getMiningRate()} G/h',
                         style: TextStyle(
                           color: Colors.white,
@@ -1926,7 +1921,7 @@ class _PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                           ),
                         ),
                       )
-                      .toList(),
+                      ,
                 ],
               ),
             ),

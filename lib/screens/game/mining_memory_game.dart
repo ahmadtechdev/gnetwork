@@ -165,9 +165,9 @@ class MiningMemoryGame extends StatefulWidget {
   final Function()? onGameCompleted;
 
   const MiningMemoryGame({
-    Key? key,
+    super.key,
     this.onGameCompleted,
-  }) : super(key: key);
+  });
 
   @override
   State<MiningMemoryGame> createState() => _MiningMemoryGameState();
@@ -315,18 +315,18 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
                 ],
                 const SizedBox(height: 16),
                 // Restart button
-                ElevatedButton(
-                  onPressed: controller.restartGame,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: MyColor.getGCoinSecondaryColor(),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text('Restart', style: TextStyle(fontSize: 12)),
-                ),
+                // ElevatedButton(
+                //   onPressed: controller.restartGame,
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: MyColor.getGCoinSecondaryColor(),
+                //     foregroundColor: Colors.white,
+                //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(8),
+                //     ),
+                //   ),
+                //   child: const Text('Restart', style: TextStyle(fontSize: 12)),
+                // ),
               ],
             ),
           ),
@@ -473,7 +473,7 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
                     'Completed in ${controller.formatTime()}',
                     style: TextStyle(
                       fontSize: 14,
-                      color: MyColor.getTextColor(),
+                      color: MyColor.headingTextColor,
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -490,7 +490,7 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
                     'Starting mining...',
                     style: TextStyle(
                       fontSize: 12,
-                      color: MyColor.getTextColor().withOpacity(0.7),
+                      color: MyColor.headingTextColor.withOpacity(0.7),
                     ),
                   ),
                 ],

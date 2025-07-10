@@ -3,13 +3,13 @@ import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:gcoin/screens/auth/signin/signin.dart';
 import 'package:gcoin/utils/custom_snackbar.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../api_service/api_service.dart';
 import '../../api_service/local_stroge.dart';
+import '../game/mining_memory_game.dart';
 
 class HomeController extends GetxController with GetTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
@@ -266,6 +266,35 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     } finally {
       isLoading(false);
     }
+  }
+
+  // Add this method to HomeController
+  void startMiningWithGame(BuildContext context) {
+    if (isMining.value) {
+      Get.snackbar(
+        'Already Mining',
+        'You are already mining. Please wait until completion.',
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
+    // Show the mining game dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.all(20),
+        child: MiningMemoryGame(
+          onGameCompleted: () {
+            // When game completes, close the dialog and start mining
+            Navigator.of(context).pop();
+            startMining();
+          },
+        ),
+      ),
+    );
   }
 
   String formatTime(int seconds) {

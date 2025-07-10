@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'dart:math';
 import 'dart:async';
 
-import 'package:gcoin/theme_controller.dart';
 import '../../routes/route.dart';
 import '../../utils/app_colors.dart';
 
@@ -167,7 +166,7 @@ class EarnGameController extends GetxController {
 }
 
 class EarnGameScreen extends StatefulWidget {
-  const EarnGameScreen({Key? key}) : super(key: key);
+  const EarnGameScreen({super.key});
 
   @override
   State<EarnGameScreen> createState() => _EarnGameScreenState();
