@@ -33,7 +33,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
   // Mining calculation properties
   double miningStartTime = 0;
-  double totalMiningDuration = 3600; // 1 hour in seconds
+  double totalMiningDuration = 0; // Now dynamic from API
   double currentMiningRate = 0;
 
   // Fast initial animation properties
@@ -100,15 +100,17 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
   void _loadMiningState() {
     if (userData['mine_status'] == 1) {
-      final remainingMinutes = userData['remaining_time'] ?? 0;
-      if (remainingMinutes > 0) {
+      final remainingSeconds = userData['remaining_time'] ?? 0;
+      totalMiningDuration = double.parse(userData['total_mine_time'] ?? '180'); // Get from API
+
+      if (remainingSeconds > 0) {
         isMining.value = true;
-        miningTimeLeft.value = remainingMinutes * 60;
+        miningTimeLeft.value = remainingSeconds; // Already in seconds
 
         // Calculate mining progress and setup animated balance
         _setupMiningBalance();
         _startMiningTimer();
-        _startFastInitialAnimation(); // Start with fast animation
+        _startFastInitialAnimation();
       } else {
         isMining.value = false;
         _stopBalanceAnimation();
@@ -131,7 +133,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     // Calculate the reward that should have been earned so far
     final elapsedReward = (elapsedSeconds / totalMiningDuration) * currentMiningRate;
 
-    // Set initial animated balance (base balance - already earned rewards)
+    // Set initial animated balance (base balance + already earned rewards)
     animatedBalance.value = max(0, baseBalance.value + elapsedReward);
 
     // Calculate target balance for fast initial animation
@@ -229,10 +231,10 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       if (miningTimeLeft.value > 0) {
         miningTimeLeft.value--;
 
-        // // Sync with server every minute
-        // if (miningTimeLeft.value % 60 == 0) {
-        //   fetchDashboardData();
-        // }
+        // Sync with server every minute
+        if (miningTimeLeft.value % 60 == 0) {
+          fetchDashboardData();
+        }
       } else {
         timer.cancel();
         isMining.value = false;
@@ -268,7 +270,6 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  // Add this method to HomeController
   void startMiningWithGame(BuildContext context) {
     if (isMining.value) {
       Get.snackbar(
@@ -317,8 +318,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       }
 
       final response = await _dio.get(
-        'https://gnetwork.pro/api/dashboard',
-        // 'https://clone.gnetwork.pro/api/dashboard',
+        'https://clone.gnetwork.pro/api/dashboard',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -331,43 +331,32 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         posts.value = response.data['posts'];
         logs.value = response.data['logs'];
 
-
         // Handle mining state based on API response
         if (userData['mine_status'] == 1) {
+          final remainingSeconds = userData['remaining_time'] ?? 0;
+          totalMiningDuration = double.parse(userData['total_mine_time'] ?? '180');
 
-          final remainingMinutes = userData['remaining_time'] ?? 0;
-
-          if (remainingMinutes > 0) {
-
+          if (remainingSeconds > 0) {
             final wasAlreadyMining = isMining.value;
             isMining.value = true;
 
-            if ((miningTimeLeft.value ~/ 60) != remainingMinutes) {
-              miningTimeLeft.value = remainingMinutes * 60;
+            if (miningTimeLeft.value != remainingSeconds) {
+              miningTimeLeft.value = remainingSeconds;
+              _setupMiningBalance();
 
-              _setupMiningBalance(); // Recalculate balance animation
-
-              // Only start fast animation if we weren't already mining
               if (!wasAlreadyMining) {
-
                 _startFastInitialAnimation();
-
               }
             }
 
             _startMiningTimer();
 
             if (!wasAlreadyMining || balanceUpdateTimer == null || !balanceUpdateTimer!.isActive) {
-
               if (!isInitialAnimation) {
-
                 _startNormalBalanceAnimation();
-
               }
-
             }
           } else {
-
             isMining.value = false;
             miningTimer?.cancel();
             _stopBalanceAnimation();
