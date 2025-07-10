@@ -157,7 +157,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
     // Fast animation over 2-3 seconds (30 steps over 2.5 seconds)
     const animationDuration = 2500; // 2.5 seconds
-    const steps = 30;
+    const steps = 15;
     const stepDuration = animationDuration ~/ steps;
 
     int currentStep = 0;
@@ -231,10 +231,10 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       if (miningTimeLeft.value > 0) {
         miningTimeLeft.value--;
 
-        // Sync with server every minute
-        if (miningTimeLeft.value % 60 == 0) {
-          fetchDashboardData();
-        }
+        // // Sync with server every minute
+        // if (miningTimeLeft.value % 60 == 0) {
+        //   fetchDashboardData();
+        // }
       } else {
         timer.cancel();
         isMining.value = false;
@@ -318,7 +318,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       }
 
       final response = await _dio.get(
-        'https://clone.gnetwork.pro/api/dashboard',
+        'https://gnetwork.pro/api/dashboard',
+        // 'https://clone.gnetwork.pro/api/dashboard',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',

@@ -267,12 +267,15 @@ class _EarnGameScreenState extends State<EarnGameScreen>
       ),
       child: Column(
         children: [
-          Text(
-            'Quick Match Game',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          GestureDetector(
+            onDoubleTap: controller._completeGame,
+            child: Text(
+              'Quick Match Game',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(height: 8),

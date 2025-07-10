@@ -699,6 +699,7 @@ class NetworkTreeScreen extends StatelessWidget {
             ),
             SizedBox(height: 8),
             // Downline Count
+    if (isCurrentNode) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -725,7 +726,7 @@ class NetworkTreeScreen extends StatelessWidget {
                   ),
 
               ],
-            ),
+            ),]
             // if (onTap != null && node.downlineCount > 0) ...[
             //   SizedBox(height: 8),
             //   Container(
