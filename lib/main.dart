@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gcoin/screens/homescreen/home_controller.dart';
@@ -16,7 +17,7 @@ import 'theme/light.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-MobileAds.instance.initialize();
+// MobileAds.instance.initialize();
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -37,6 +38,34 @@ MobileAds.instance.initialize();
   final hasValidToken = LocalStorage.getToken() != null;
 
   Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
+
+
+  // --- THIS IS THE CRITICAL PART FOR TEST DEVICES ---
+  // Only set test devices when in debug mode
+  if (kDebugMode) {
+    // Get your actual device ID from the logcat/Xcode console
+    // Example: 'YOUR_COPIED_ANDROID_DEVICE_ID_HERE'
+    // You might have separate IDs for Android and iOS devices
+    final List<String> testDeviceIds = [
+      // Add your specific Android test device ID here:
+      // 'YOUR_ANDROID_TEST_DEVICE_ID_FROM_LOGCAT',
+      // Add your specific iOS test device ID here:
+      // 'YOUR_IOS_TEST_DEVICE_ID_FROM_XCODE_CONSOLE',
+    ];
+
+    MobileAds.instance.updateRequestConfiguration(
+      RequestConfiguration(
+        testDeviceIds: testDeviceIds,
+        // You can also set tagForChildDirectedTreatment here if needed
+        // tagForChildDirectedTreatment: TagForChildDirectedTreatment.unspecified,
+        // maxAdContentRating: MaxAdContentRating.g,
+      ),
+    );
+    print('AdMob: Test devices configured for debug mode.');
+  }
+  // --- END CRITICAL PART ---
+
+  MobileAds.instance.initialize();
 
   runApp(MainApp(initialRoute: hasValidToken ? RouteHelper.homeScreen : RouteHelper.onboardScreen));
 }

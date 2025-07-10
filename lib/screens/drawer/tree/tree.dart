@@ -6,7 +6,7 @@ import 'tree_model.dart';
 
 class NetworkTreeScreen extends StatelessWidget {
   final TreeController controller = Get.put(TreeController());
-  final ScrollController scrollController = ScrollController();
+  // final ScrollController scrollController = ScrollController();
 
 
   @override
@@ -87,7 +87,7 @@ class NetworkTreeScreen extends StatelessWidget {
                 child: SlideTransition(
                   position: controller.slideAnimation,
                   child: SingleChildScrollView(
-                    controller: scrollController, // Add this
+                    // controller: scrollController, // Add this
                     child: Column(
                       children: [
                         _buildSearchResults(),
@@ -156,13 +156,13 @@ class NetworkTreeScreen extends StatelessWidget {
                   // Dismiss keyboard
                   searchFocusNode.unfocus();
                   // Trigger scroll after search
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    scrollController.animateTo(
-                      scrollController.position.maxScrollExtent,
-                      duration: Duration(milliseconds: 500),
-                      curve: Curves.easeOut,
-                    );
-                  });
+                  // WidgetsBinding.instance.addPostFrameCallback((_) {
+                  //   scrollController.animateTo(
+                  //     scrollController.position.maxScrollExtent,
+                  //     duration: Duration(milliseconds: 500),
+                  //     curve: Curves.easeOut,
+                  //   );
+                  // });
                 }
               },
             ),
@@ -195,13 +195,13 @@ class NetworkTreeScreen extends StatelessWidget {
                       // Then perform search
                       controller.searchUser(searchController.text);
                       // Trigger scroll after search
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        scrollController.animateTo(
-                          scrollController.position.maxScrollExtent,
-                          duration: Duration(milliseconds: 500),
-                          curve: Curves.easeOut,
-                        );
-                      });
+                      // WidgetsBinding.instance.addPostFrameCallback((_) {
+                      //   scrollController.animateTo(
+                      //     scrollController.position.maxScrollExtent,
+                      //     duration: Duration(milliseconds: 500),
+                      //     curve: Curves.easeOut,
+                      //   );
+                      // });
                     },
                   )
                       : SizedBox.shrink()),
@@ -901,11 +901,16 @@ class NetworkTreeScreen extends StatelessWidget {
                 SizedBox(height: 16),
                 Column(
                   children: [
-                    _buildMatrixRow('Left', controller.treeResponse.value?.left ?? 0),
+                    // _buildMatrixRow('Left', controller.treeResponse.value?.left ?? 0),
+                    // SizedBox(height: 12),
+                    // _buildMatrixRow('Middle', controller.treeResponse.value?.middle ?? 0),
+                    // SizedBox(height: 12),
+                    // _buildMatrixRow('Right', controller.treeResponse.value?.right ?? 0),
+                    _buildMatrixRow('Left', controller.treeNodes.firstWhereOrNull((node) => node.position == 'left')?.downlineCount ?? 0),
                     SizedBox(height: 12),
-                    _buildMatrixRow('Middle', controller.treeResponse.value?.middle ?? 0),
+                    _buildMatrixRow('Middle', controller.treeNodes.firstWhereOrNull((node) => node.position == 'middle')?.downlineCount ?? 0),
                     SizedBox(height: 12),
-                    _buildMatrixRow('Right', controller.treeResponse.value?.right ?? 0),
+                    _buildMatrixRow('Right', controller.treeNodes.firstWhereOrNull((node) => node.position == 'right')?.downlineCount ?? 0),
                   ],
                 ),
               ],

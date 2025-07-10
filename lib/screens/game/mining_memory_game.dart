@@ -1,14 +1,11 @@
-// game.dart
+// mining_memory_game.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:math';
 import 'dart:async';
-
-import 'package:gcoin/theme_controller.dart';
-import '../../routes/route.dart';
 import '../../utils/app_colors.dart';
 
-class EarnGameController extends GetxController {
+class MiningMemoryGameController extends GetxController {
   // Game state observables
   RxList<String> gameImages = <String>[].obs;
   RxList<bool> isFlipped = <bool>[].obs;
@@ -22,8 +19,11 @@ class EarnGameController extends GetxController {
   RxInt score = 0.obs;
 
   // Timer for game duration
-  late Timer _gameTimer;
+  Timer? _gameTimer;
   RxInt gameTime = 0.obs;
+
+  // Callback for when game completes
+  Function()? onGameCompleted;
 
   // Available images (1.png to 12.png)
   final List<String> availableImages = List.generate(12, (index) =>
@@ -31,13 +31,9 @@ class EarnGameController extends GetxController {
 
   final String hiddenCardImage = 'assets/images/game/hidden.png';
 
-  @override
-  void onInit() {
-    super.onInit();
-    _initializeGame();
-  }
+  void initializeGame({Function()? onCompleted}) {
+    onGameCompleted = onCompleted;
 
-  void _initializeGame() {
     // Reset game state
     gameImages.clear();
     isFlipped.clear();
@@ -80,6 +76,7 @@ class EarnGameController extends GetxController {
   }
 
   void _startTimer() {
+    _gameTimer?.cancel();
     _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!gameCompleted.value) {
         gameTime.value++;
@@ -121,7 +118,7 @@ class EarnGameController extends GetxController {
         matchedPairs.value++;
         score.value += 10;
 
-        if (matchedPairs.value == 8) { // Now need 8 pairs instead of 4
+        if (matchedPairs.value == 8) {
           _completeGame();
         }
       } else {
@@ -137,18 +134,18 @@ class EarnGameController extends GetxController {
 
   void _completeGame() {
     gameCompleted.value = true;
-    _gameTimer.cancel();
-    score.value += (200 - gameTime.value).clamp(0, 200); // Increased bonus for speed
+    _gameTimer?.cancel();
+    score.value += (200 - gameTime.value).clamp(0, 200);
 
-    // Navigate to dashboard after 2 seconds
+    // Call the completion callback after a short delay
     Timer(const Duration(seconds: 2), () {
-      Get.offAllNamed(RouteHelper.homeScreen); // Navigate back to dashboard
+      onGameCompleted?.call();
     });
   }
 
   void restartGame() {
-    _gameTimer.cancel();
-    _initializeGame();
+    _gameTimer?.cancel();
+    initializeGame(onCompleted: onGameCompleted);
   }
 
   String formatTime() {
@@ -159,41 +156,39 @@ class EarnGameController extends GetxController {
 
   @override
   void onClose() {
-    if (_gameTimer.isActive) {
-      _gameTimer.cancel();
-    }
+    _gameTimer?.cancel();
     super.onClose();
   }
 }
 
-class EarnGameScreen extends StatefulWidget {
-  const EarnGameScreen({Key? key}) : super(key: key);
+class MiningMemoryGame extends StatefulWidget {
+  final Function()? onGameCompleted;
+
+  const MiningMemoryGame({
+    Key? key,
+    this.onGameCompleted,
+  }) : super(key: key);
 
   @override
-  State<EarnGameScreen> createState() => _EarnGameScreenState();
+  State<MiningMemoryGame> createState() => _MiningMemoryGameState();
 }
 
-class _EarnGameScreenState extends State<EarnGameScreen>
+class _MiningMemoryGameState extends State<MiningMemoryGame>
     with TickerProviderStateMixin {
 
-  late final EarnGameController controller;
-  late AnimationController _flipController;
+  late final MiningMemoryGameController controller;
   late AnimationController _scaleController;
   late AnimationController _completionController;
 
   @override
   void initState() {
     super.initState();
-    controller = Get.put(EarnGameController());
+    controller = Get.put(MiningMemoryGameController(), tag: 'mining_game');
     _initializeAnimations();
+    controller.initializeGame(onCompleted: widget.onGameCompleted);
   }
 
   void _initializeAnimations() {
-    _flipController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -207,91 +202,63 @@ class _EarnGameScreenState extends State<EarnGameScreen>
 
   @override
   void dispose() {
-    _flipController.dispose();
     _scaleController.dispose();
     _completionController.dispose();
+    Get.delete<MiningMemoryGameController>(tag: 'mining_game');
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: MyColor.getScreenBgColor(),
-      appBar: AppBar(
-        backgroundColor: MyColor.getGCoinPrimaryColor(),
-        elevation: 0,
-        title: const Text(
-          'G Network',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          _buildGameHeader(),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Obx(() => controller.gameCompleted.value
+                ? _buildCompletionScreen()
+                : _buildGameGrid()),
           ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 20),
-              Obx(() => controller.gameStarted.value
-                  ? _buildGameContent()
-                  : _buildStartScreen()),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildGameHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: MyColor.getGCoinPrimaryGradient(),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: MyColor.getGCoinShadowColor(),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
-          Text(
-            'Quick Match Game',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.flash_on_rounded, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Mining Challenge',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
-          Obx(() => controller.gameStarted.value
-              ? Row(
+          Obx(() => Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildStatItem('Time', controller.formatTime()),
               _buildStatItem('Tries', '${controller.tries.value}'),
               _buildStatItem('Score', '${controller.score.value}'),
             ],
-          )
-              : Text(
-            'Match all 8 pairs to continue',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white.withOpacity(0.9),
-            ),
           )),
         ],
       ),
@@ -304,15 +271,15 @@ class _EarnGameScreenState extends State<EarnGameScreen>
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 10,
             color: Colors.white.withOpacity(0.8),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           value,
           style: const TextStyle(
-            fontSize: 16,
+            fontSize: 12,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
@@ -321,129 +288,46 @@ class _EarnGameScreenState extends State<EarnGameScreen>
     );
   }
 
-  Widget _buildStartScreen() {
-    return Expanded(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: MyColor.getGCoinPrimaryColor().withOpacity(0.1),
-                borderRadius: BorderRadius.circular(50),
-                border: Border.all(
-                  color: MyColor.getGCoinPrimaryColor(),
-                  width: 3,
-                ),
-              ),
-              child: Icon(
-                Icons.play_arrow,
-                size: 50,
-                color: MyColor.getGCoinPrimaryColor(),
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              'Ready to play?',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: MyColor.getTextColor(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Match all 8 pairs to continue',
-              style: TextStyle(
-                fontSize: 16,
-                color: MyColor.getTextColor().withOpacity(0.7),
-              ),
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: () {
-                controller.gameStarted.value = true;
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: MyColor.getGCoinPrimaryColor(),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 8,
-              ),
-              child: const Text(
-                'Start Game',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGameContent() {
-    return Expanded(
-      child: Obx(() => controller.gameCompleted.value
-          ? _buildCompletionScreen()
-          : _buildGameGrid()),
-    );
-  }
-
   Widget _buildGameGrid() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Calculate card size based on available space for 4x4 grid
-        double availableWidth = constraints.maxWidth - 32; // Account for padding
-        double cardSize = (availableWidth - 48) / 4; // 4 cards per row with spacing
-        cardSize = cardSize.clamp(50.0, 80.0); // Smaller cards for 4x4 grid
+        double availableWidth = constraints.maxWidth - 32;
+        double cardSize = (availableWidth - 48) / 4;
+        cardSize = cardSize.clamp(40.0, 70.0);
 
         return Center(
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: (cardSize * 4) + 48, // 4 cards + spacing
-              maxHeight: (cardSize * 4) + 48, // 4 rows + spacing
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Build 4 rows of 4 cards each
-                  for (int row = 0; row < 4; row++) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        for (int col = 0; col < 4; col++) ...[
-                          _buildCard(row * 4 + col, cardSize),
-                          if (col < 3) SizedBox(width: 12),
-                        ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Build 4 rows of 4 cards each
+                for (int row = 0; row < 4; row++) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (int col = 0; col < 4; col++) ...[
+                        _buildCard(row * 4 + col, cardSize),
+                        if (col < 3) SizedBox(width: 8),
                       ],
-                    ),
-                    if (row < 3) const SizedBox(height: 12),
-                  ],
-                  const SizedBox(height: 24),
-                  // Restart button
-                  ElevatedButton(
-                    onPressed: controller.restartGame,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: MyColor.getGCoinSecondaryColor(),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text('New Game'),
+                    ],
                   ),
+                  if (row < 3) const SizedBox(height: 8),
                 ],
-              ),
+                const SizedBox(height: 16),
+                // Restart button
+                ElevatedButton(
+                  onPressed: controller.restartGame,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: MyColor.getGCoinSecondaryColor(),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('Restart', style: TextStyle(fontSize: 12)),
+                ),
+              ],
             ),
           ),
         );
@@ -479,25 +363,25 @@ class _EarnGameScreenState extends State<EarnGameScreen>
                   color: isCardMatched
                       ? MyColor.getGCoinSuccessColor().withOpacity(0.3)
                       : MyColor.appBarColor,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isCardMatched
                         ? MyColor.getGCoinSuccessColor()
                         : isCardFlipped
                         ? MyColor.getGCoinPrimaryColor()
                         : MyColor.getGCoinDividerColor(),
-                    width: 2,
+                    width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: MyColor.getGCoinShadowColor(),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(6),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
                     child: isCardFlipped || isCardMatched
@@ -510,7 +394,7 @@ class _EarnGameScreenState extends State<EarnGameScreen>
                           color: MyColor.getGCoinPrimaryColor().withOpacity(0.1),
                           child: Icon(
                             Icons.image_not_supported,
-                            size: size * 0.4,
+                            size: size * 0.3,
                             color: MyColor.getGCoinPrimaryColor(),
                           ),
                         );
@@ -524,8 +408,8 @@ class _EarnGameScreenState extends State<EarnGameScreen>
                         return Container(
                           color: MyColor.getGCoinPrimaryColor().withOpacity(0.1),
                           child: Icon(
-                            Icons.help_outline,
-                            size: size * 0.4,
+                            Icons.flash_on_rounded,
+                            size: size * 0.3,
                             color: MyColor.getGCoinPrimaryColor(),
                           ),
                         );
@@ -542,7 +426,6 @@ class _EarnGameScreenState extends State<EarnGameScreen>
   }
 
   Widget _buildCompletionScreen() {
-    // Start completion animation
     _completionController.forward();
 
     return AnimatedBuilder(
@@ -557,56 +440,56 @@ class _EarnGameScreenState extends State<EarnGameScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    width: 120,
-                    height: 120,
+                    width: 80,
+                    height: 80,
                     decoration: BoxDecoration(
                       gradient: MyColor.getGCoinSuccessGradient(),
-                      borderRadius: BorderRadius.circular(60),
+                      borderRadius: BorderRadius.circular(40),
                       boxShadow: [
                         BoxShadow(
                           color: MyColor.getGCoinSuccessColor().withOpacity(0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
                     child: const Icon(
-                      Icons.check_circle,
-                      size: 60,
+                      Icons.flash_on_rounded,
+                      size: 40,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
                   Text(
-                    'Excellent!',
+                    'Mining Unlocked!',
                     style: TextStyle(
-                      fontSize: 28,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: MyColor.getGCoinSuccessColor(),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   Text(
-                    'Game completed in ${controller.formatTime()}',
+                    'Completed in ${controller.formatTime()}',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       color: MyColor.getTextColor(),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 5),
                   Text(
                     'Score: ${controller.score.value}',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: MyColor.getGCoinPrimaryColor(),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
                   Text(
-                    'Taking you to dashboard...',
+                    'Starting mining...',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       color: MyColor.getTextColor().withOpacity(0.7),
                     ),
                   ),
