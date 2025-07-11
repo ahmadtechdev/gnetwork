@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:gcoin/screens/auth/signup/signup_controller.dart';
 import 'package:get/get.dart';
+import 'package:cloudflare_turnstile/cloudflare_turnstile.dart';
+
+import '../../../utils/custom_snackbar.dart'; // Import Cloudflare Turnstile
 
 class GCoinSignUpScreen extends StatefulWidget {
   const GCoinSignUpScreen({super.key});
@@ -29,6 +32,9 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   // bool _isLoading = false;
+
+  // Cloudflare Turnstile token
+  String? _turnstileToken; // Variable to store the token
 
   late AnimationController _mainAnimationController;
   late AnimationController _floatingAnimationController;
@@ -376,6 +382,44 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
                 const SizedBox(height: 20),
                 _buildReferByField(), // Add this new field
                 const SizedBox(height: 20),
+                // --- Cloudflare Turnstile Widget ---
+                const Text(
+                  'Verify you are human:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFFA5D6A7),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                CloudflareTurnstile(
+                  siteKey: '0x4AAAAAABksqT2qG3ONV4l-',
+                  baseUrl: 'https://gnetwork.pro/',// <--- REPLACE THIS WITH YOUR SITE KEY
+                  options: TurnstileOptions(
+                    // mode: TurnstileMode.managed, // invisible challenge
+                    // You can customize theme, language, etc.
+                    theme: TurnstileTheme.dark, // Adjust based on your app's theme
+                  ),
+                  onTokenReceived: (token) {
+                    setState(() {
+                      _turnstileToken = token;
+                    });
+                    CustomSnackBar.success('CAPTCHA verified!');
+                    print('Turnstile Token: $token');
+                  },
+                  onError: (error) {
+                    setState(() {
+                      _turnstileToken = null; // Clear token on error
+                    });
+                    CustomSnackBar.error('CAPTCHA verification failed: $error');
+                    print('Turnstile Error: $error');
+                  },
+                  // onLoad: () {
+                  //   print('Cloudflare Turnstile loaded successfully!');
+                  // },
+                ),
+                const SizedBox(height: 20),
+                // --- End Cloudflare Turnstile Widget ---
                 _buildTermsAndConditions(),
                 const SizedBox(height: 32),
                 _buildSignUpButton(),
@@ -482,7 +526,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Referral Code (Optional)',
           style: TextStyle(
             fontSize: 14,
@@ -550,18 +594,13 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
                 vertical: 16,
               ),
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter an Referral code';
-              }
-              // if (value.length < 8) {
-              //   return 'Password must be at least 8 characters';
-              // }
-              // if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)) {
-              //   return 'Password must contain uppercase, lowercase and number';
-              // }
-              return null;
-            },
+            // Referral code is optional, so no validator needed unless you have specific format rules
+            // validator: (value) {
+            //   if (value == null || value.isEmpty) {
+            //     return 'Please enter an Referral code';
+            //   }
+            //   return null;
+            // },
           ),
         ),
       ],
@@ -661,6 +700,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
       ],
     );
   }
+
   Widget _buildUserNameField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -983,10 +1023,9 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
               borderRadius: BorderRadius.circular(6),
             ),
             side: BorderSide(
-              color:
-                  _acceptTerms
-                      ? const Color(0xFF7ED321)
-                      : const Color(0xFF2D4A2E),
+              color: _acceptTerms
+                  ? const Color(0xFF7ED321)
+                  : const Color(0xFF2D4A2E),
               width: 2,
             ),
           ),
@@ -1079,25 +1118,24 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
               borderRadius: BorderRadius.circular(16),
             ),
           ),
-          child:
-              _signUpController.isLoading.value
-                  ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                  : const Text(
-                    'CREATE ACCOUNT',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
-                    ),
-                  ),
+          child: _signUpController.isLoading.value
+              ? const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 2,
+            ),
+          )
+              : const Text(
+            'CREATE ACCOUNT',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
+          ),
         ),
       );
     });
@@ -1106,23 +1144,24 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
   void _handleSignUp() {
     if (_formKey.currentState!.validate()) {
       if (!_acceptTerms) {
-        Get.snackbar(
-          'Error',
-          'Please accept the Terms & Conditions',
-          backgroundColor: const Color(0xFFE53935),
-        );
+        CustomSnackBar.error('Please accept the Terms & Conditions');
         return;
       }
+      // --- CAPTCHA Check ---
+      if (_turnstileToken == null || _turnstileToken!.isEmpty) {
+        CustomSnackBar.error('Please complete the CAPTCHA verification.');
+        return;
+      }
+      // --- End CAPTCHA Check ---
 
       _signUpController.registerUser(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
-        username:
-            _userNameController.text
-                .trim(), // You might want to add a separate username field
+        username: _userNameController.text.trim(),
         password: _passwordController.text.trim(),
         confirmPassword: _confirmPasswordController.text.trim(),
         referBy: _referByController.text.trim(),
+        recaptchaToken: _turnstileToken!, // Pass the Turnstile token
       );
     }
   }

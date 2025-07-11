@@ -17,6 +17,8 @@ dependencies:
   shared_preferences: ^2.5.3
   shimmer: ^3.0.0
   url_launcher: ^6.3.1
+  cloudflare_turnstile: ^3.3.1 # Use the latest version from pub.dev
+  webview_flutter: ^4.7.0
 
 dev_dependencies:
   flutter_test:

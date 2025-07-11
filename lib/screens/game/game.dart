@@ -50,11 +50,11 @@ class EarnGameController extends GetxController {
     score.value = 0;
     gameTime.value = 0;
 
-    // Randomly select 8 images for matching pairs (4x4 grid = 16 cards = 8 pairs)
+    // Randomly select 4 images for matching pairs (2x4 grid = 8 cards = 4 pairs)
     final random = Random();
     final selectedImages = <String>[];
 
-    while (selectedImages.length < 8) {
+    while (selectedImages.length < 4) {
       final image = availableImages[random.nextInt(availableImages.length)];
       if (!selectedImages.contains(image)) {
         selectedImages.add(image);
@@ -69,10 +69,10 @@ class EarnGameController extends GetxController {
     }
     cardImages.shuffle();
 
-    // Initialize game arrays for 16 cards
+    // Initialize game arrays for 8 cards
     gameImages.value = cardImages;
-    isFlipped.value = List.filled(16, false);
-    isMatched.value = List.filled(16, false);
+    isFlipped.value = List.filled(8, false);
+    isMatched.value = List.filled(8, false);
 
     gameStarted.value = true;
     _startTimer();
@@ -120,7 +120,7 @@ class EarnGameController extends GetxController {
         matchedPairs.value++;
         score.value += 10;
 
-        if (matchedPairs.value == 8) { // Now need 8 pairs instead of 4
+        if (matchedPairs.value == 4) { // Now need 4 pairs instead of 8
           _completeGame();
         }
       } else {
@@ -137,7 +137,7 @@ class EarnGameController extends GetxController {
   void _completeGame() {
     gameCompleted.value = true;
     _gameTimer.cancel();
-    score.value += (200 - gameTime.value).clamp(0, 200); // Increased bonus for speed
+    score.value += (100 - gameTime.value).clamp(0, 100); // Reduced bonus for easier game
 
     // Navigate to dashboard after 2 seconds
     Timer(const Duration(seconds: 2), () {
@@ -289,7 +289,7 @@ class _EarnGameScreenState extends State<EarnGameScreen>
             ],
           )
               : Text(
-            'Match all 8 pairs to continue',
+            'Match all 4 pairs to continue',
             style: TextStyle(
               fontSize: 14,
               color: Colors.white.withOpacity(0.9),
@@ -357,7 +357,7 @@ class _EarnGameScreenState extends State<EarnGameScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'Match all 8 pairs to continue',
+              'Match all 4 pairs to continue',
               style: TextStyle(
                 fontSize: 16,
                 color: MyColor.getTextColor().withOpacity(0.7),
@@ -402,23 +402,23 @@ class _EarnGameScreenState extends State<EarnGameScreen>
   Widget _buildGameGrid() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Calculate card size based on available space for 4x4 grid
+        // Calculate card size based on available space for 2x4 grid
         double availableWidth = constraints.maxWidth - 32; // Account for padding
-        double cardSize = (availableWidth - 48) / 4; // 4 cards per row with spacing
-        cardSize = cardSize.clamp(50.0, 80.0); // Smaller cards for 4x4 grid
+        double cardSize = (availableWidth - 36) / 4; // 4 cards per row with spacing
+        cardSize = cardSize.clamp(60.0, 100.0); // Larger cards for easier game
 
         return Center(
           child: Container(
             constraints: BoxConstraints(
-              maxWidth: (cardSize * 4) + 48, // 4 cards + spacing
-              maxHeight: (cardSize * 4) + 48, // 4 rows + spacing
+              maxWidth: (cardSize * 4) + 36, // 4 cards + spacing
+              maxHeight: (cardSize * 2) + 12, // 2 rows + spacing
             ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Build 4 rows of 4 cards each
-                  for (int row = 0; row < 4; row++) ...[
+                  // Build 2 rows of 4 cards each
+                  for (int row = 0; row < 2; row++) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -428,7 +428,7 @@ class _EarnGameScreenState extends State<EarnGameScreen>
                         ],
                       ],
                     ),
-                    if (row < 3) const SizedBox(height: 12),
+                    if (row < 1) const SizedBox(height: 12),
                   ],
                   const SizedBox(height: 24),
                   // Restart button

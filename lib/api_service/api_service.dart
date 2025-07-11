@@ -124,6 +124,7 @@ class ApiService {
     required String password,
     required String passwordConfirmation,
     String? referBy,
+    required String recaptchaToken,
   }) async {
     final data = {
       'name': name,
@@ -131,6 +132,7 @@ class ApiService {
       'username': username,
       'password': password,
       'password_confirmation': passwordConfirmation,
+      'cf_turnstile_response': recaptchaToken,
       if (referBy != null && referBy.isNotEmpty) 'refer_by': referBy,
     };
 
