@@ -34,13 +34,6 @@ class ApiService {
       }
     }
 
-    // Get.snackbar(
-    //   'Error',
-    //   errorMessage,
-    //   backgroundColor: const Color(0xFFE53935),
-    //   colorText: Colors.white,
-    //   duration: const Duration(seconds: 4),
-    // );
     CustomSnackBar.error(errorMessage, title: 'Error');
   }
 
@@ -236,6 +229,24 @@ class ApiService {
     );
   }
 
+  // Wallet endpoints
+  Future<dio.Response?> getWalletData() async {
+    return await _authenticatedRequest(
+      method: 'GET',
+      endpoint: 'wallet',
+    );
+  }
+
+  Future<dio.Response?> withdrawGCoin({required String amount}) async {
+    return await _authenticatedRequest(
+      method: 'POST',
+      endpoint: 'withdraw-gcoin',
+      data: dio.FormData.fromMap({
+        'amount': amount,
+      }),
+    );
+  }
+
   // User data endpoints
   Future<dio.Response?> getProfile() async {
     return await _authenticatedRequest(
@@ -272,7 +283,7 @@ class ApiService {
       endpoint: 'user',
     );
   }
-  // Add this to your ApiService class in api_service.dart
+
   Future<dio.Response?> getDownlineTree(int userId) async {
     return await _authenticatedRequest(
       method: 'GET',
@@ -280,7 +291,6 @@ class ApiService {
     );
   }
 
-  // Add this to api_service.dart
   Future<dio.Response?> searchUserByUsername(String username) async {
     return await _authenticatedRequest(
       method: 'GET',

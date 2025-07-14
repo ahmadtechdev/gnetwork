@@ -10,6 +10,8 @@ import '../screens/drawer/profile/profile.dart';
 import '../screens/drawer/refferal/refferal_team.dart';
 import '../screens/drawer/support/support.dart';
 import '../screens/drawer/tree/tree.dart';
+import '../screens/drawer/wallet/wallet.dart';
+import '../screens/drawer/withdraw/withdraw.dart';
 import 'custom_snackbar.dart';
 
 class GNetworkDrawer extends StatelessWidget {
@@ -137,6 +139,20 @@ class GNetworkDrawer extends StatelessWidget {
                     'Support',
                     false,
                         () => Get.to(() => ModernSupportScreen()),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.wallet, // for "Profile"
+                    'Wallet',
+                    false,
+                        () => Get.to(() => WalletScreen()),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.wallet_giftcard, // for "Profile"
+                    'Withdraw',
+                    false,
+                        () => Get.to(() => WithdrawScreen()),
                   ),
                   _buildDrawerItem(
                     context,

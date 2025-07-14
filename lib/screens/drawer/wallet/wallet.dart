@@ -1,0 +1,577 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:dio/dio.dart' as dio;
+
+import '../../../api_service/api_service.dart';
+import '../../../utils/app_colors.dart';
+
+
+class WalletScreen extends StatefulWidget {
+  @override
+  _WalletScreenState createState() => _WalletScreenState();
+}
+
+class _WalletScreenState extends State<WalletScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _slideController;
+  late AnimationController _fadeController;
+  late AnimationController _pulseController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _pulseAnimation;
+
+  final ApiService _apiService = ApiService();
+  bool _isLoading = true;
+  bool _isRefreshing = false;
+
+  Map<String, dynamic>? _walletData;
+  List<dynamic> _transactions = [];
+  double _miningBalance = 0.0;
+  double _referralBalance = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAnimations();
+    _loadWalletData();
+  }
+
+  void _initializeAnimations() {
+    _slideController = AnimationController(
+      duration: Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _fadeController = AnimationController(
+      duration: Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _pulseController = AnimationController(
+      duration: Duration(milliseconds: 2000),
+      vsync: this,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, 0.5),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
+
+    _pulseAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.05,
+    ).animate(CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    ));
+
+    _pulseController.repeat(reverse: true);
+  }
+
+  Future<void> _loadWalletData() async {
+    try {
+      final response = await _apiService.getWalletData();
+      if (response != null && response.statusCode == 200) {
+        setState(() {
+          _walletData = response.data;
+          _miningBalance = double.parse(_walletData!['user']['mining_balance']);
+          _referralBalance = double.parse(_walletData!['user']['referal_balance']);
+          _transactions = _walletData!['transactions'] ?? [];
+          _isLoading = false;
+        });
+
+        _slideController.forward();
+        _fadeController.forward();
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      Get.snackbar('Error', 'Failed to load wallet data');
+    }
+  }
+
+  Future<void> _refreshWalletData() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    await _loadWalletData();
+
+    setState(() {
+      _isRefreshing = false;
+    });
+  }
+
+  String _getTransactionTypeText(String type) {
+    switch (type) {
+      case '1':
+        return 'Mining Reward';
+      case '2':
+        return 'Referral Bonus';
+      case '3':
+        return 'Transfer';
+      default:
+        return 'Transaction';
+    }
+  }
+
+  IconData _getTransactionIcon(String type) {
+    switch (type) {
+      case '1':
+        return Icons.diamond;
+      case '2':
+        return Icons.people;
+      case '3':
+        return Icons.swap_horiz;
+      default:
+        return Icons.account_balance_wallet;
+    }
+  }
+
+  @override
+  void dispose() {
+    _slideController.dispose();
+    _fadeController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: MyColor.getScreenBgColor(),
+      body: _isLoading
+          ? _buildLoadingState()
+          : RefreshIndicator(
+        onRefresh: _refreshWalletData,
+        color: MyColor.getGCoinPrimaryColor(),
+        backgroundColor: MyColor.getCardBg(),
+        child: CustomScrollView(
+          physics: BouncingScrollPhysics(),
+          slivers: [
+            _buildAppBar(),
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  _buildBalanceCards(),
+                  SizedBox(height: 20),
+                  _buildTransactionSection(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: MyColor.getCardBg(),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: MyColor.getGCoinShadowColor(),
+                  blurRadius: 20,
+                  offset: Offset(0, 10),
+                ),
+              ],
+            ),
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(MyColor.getGCoinPrimaryColor()),
+              strokeWidth: 3,
+            ),
+          ),
+          SizedBox(height: 20),
+          Text(
+            'Loading Wallet...',
+            style: TextStyle(
+              color: MyColor.getTextColor(),
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return SliverAppBar(
+      expandedHeight: 100,
+      floating: false,
+      pinned: true,
+      elevation: 0,
+      backgroundColor: MyColor.getAppbarBgColor(),
+      flexibleSpace: FlexibleSpaceBar(
+        centerTitle: true,
+        title: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Text(
+            'G Coin Wallet',
+            style: TextStyle(
+              color: MyColor.headingTextColor,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: MyColor.getGCoinPrimaryGradient(),
+          ),
+        ),
+      ),
+      actions: [
+        IconButton(
+          icon: Icon(
+            Icons.refresh,
+            color: MyColor.getAppbarTitleColor(),
+          ),
+          onPressed: _refreshWalletData,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBalanceCards() {
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              // Total Balance Card
+              _buildTotalBalanceCard(),
+              SizedBox(height: 20),
+              // Balance Breakdown Cards
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildBalanceCard(
+                      'Mining Balance',
+                      _miningBalance,
+                      Icons.diamond,
+                      MyColor.getGCoinPrimaryColor(),
+                    ),
+                  ),
+                  SizedBox(width: 15),
+                  Expanded(
+                    child: _buildBalanceCard(
+                      'Referral Balance',
+                      _referralBalance,
+                      Icons.people,
+                      MyColor.getGCoinSecondaryColor(),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotalBalanceCard() {
+    double totalBalance = _miningBalance + _referralBalance;
+
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _pulseAnimation.value,
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(25),
+            decoration: BoxDecoration(
+              gradient: MyColor.getGCoinHeroGradient(),
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: MyColor.getGCoinPrimaryColor().withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.account_balance_wallet,
+                  color: Colors.white,
+                  size: 40,
+                ),
+                SizedBox(height: 15),
+                Text(
+                  'Total Balance',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  '${totalBalance.toStringAsFixed(2)} G',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBalanceCard(String title, double amount, IconData icon, Color color) {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: MyColor.getCardBg(),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: MyColor.getGCoinShadowColor(),
+            blurRadius: 15,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 24,
+            ),
+          ),
+          SizedBox(height: 15),
+          Text(
+            title,
+            style: TextStyle(
+              color: MyColor.getTextColor().withOpacity(0.7),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(height: 5),
+          Text(
+            '${amount.toStringAsFixed(2)} G',
+            style: TextStyle(
+              color: MyColor.getTextColor(),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransactionSection() {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Transactions',
+                  style: TextStyle(
+                    color: MyColor.getTextColor(),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // Navigate to all transactions
+                  },
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      color: MyColor.getGCoinPrimaryColor(),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _buildTransactionList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransactionList() {
+    if (_transactions.isEmpty) {
+      return Container(
+        margin: EdgeInsets.all(20),
+        padding: EdgeInsets.all(40),
+        decoration: BoxDecoration(
+          color: MyColor.getCardBg(),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: MyColor.getGCoinShadowColor(),
+              blurRadius: 15,
+              offset: Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.receipt_long,
+              size: 60,
+              color: MyColor.getTextColor().withOpacity(0.3),
+            ),
+            SizedBox(height: 15),
+            Text(
+              'No transactions yet',
+              style: TextStyle(
+                color: MyColor.getTextColor().withOpacity(0.6),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      itemCount: _transactions.length,
+      itemBuilder: (context, index) {
+        final transaction = _transactions[index];
+        return _buildTransactionItem(transaction, index);
+      },
+    );
+  }
+
+  Widget _buildTransactionItem(Map<String, dynamic> transaction, int index) {
+    final amount = double.parse(transaction['amount']);
+    final type = transaction['type'];
+    final createdAt = transaction['created_at'];
+    final isPositive = amount > 0;
+
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300 + (index * 100)),
+      margin: EdgeInsets.only(bottom: 15),
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: MyColor.getCardBg(),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: MyColor.getGCoinDividerColor(),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: MyColor.getGCoinShadowColor(),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: MyColor.getGCoinPrimaryColor().withOpacity(0.1),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Icon(
+                _getTransactionIcon(type),
+                color: MyColor.getGCoinPrimaryColor(),
+                size: 24,
+              ),
+            ),
+            SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _getTransactionTypeText(type),
+                    style: TextStyle(
+                      color: MyColor.getTextColor(),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    createdAt,
+                    style: TextStyle(
+                      color: MyColor.getTextColor().withOpacity(0.6),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '${isPositive ? '+' : '-'}${amount.toStringAsFixed(2)} G',
+              style: TextStyle(
+                color: isPositive
+                    ? MyColor.getGCoinSuccessColor()
+                    : MyColor.getGCoinLossColor(),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -852,14 +852,14 @@ class NetworkTreeScreen extends StatelessWidget {
             ),
           ),
           SizedBox(height: 16),
-          // Add your image below the matrix card
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 16),
-            child: Image.asset(
-              'assets/images/img.PNG', // Replace with your actual asset path
-              fit: BoxFit.cover,
-            ),
-          ),
+          // // Add your image below the matrix card
+          // Container(
+          //   margin: EdgeInsets.symmetric(horizontal: 16),
+          //   child: Image.asset(
+          //     'assets/images/img.PNG', // Replace with your actual asset path
+          //     fit: BoxFit.cover,
+          //   ),
+          // ),
         ],
       );
     });

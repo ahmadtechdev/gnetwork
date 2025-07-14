@@ -30,7 +30,7 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
     super.onInit();
     _initializeAnimations();
     _loadInitialTree();
-    await _homeController.fetchDashboardData();
+    // await _homeController.fetchDashboardData();
   }
 
   void _initializeAnimations() {
