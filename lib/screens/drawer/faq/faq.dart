@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gcoin/utils/app_colors.dart';
 import 'package:get/get.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../../../utils/ad_helper.dart';
 import 'faq_controller.dart';
 import 'faq_model.dart';
 
@@ -18,6 +21,11 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
   final FAQController _faqController = Get.put(FAQController());
 
+  // Add these variables for banner ad
+  BannerAd? _bannerAd;
+  bool _isBannerLoaded = false;
+  bool _isLoadingBanner = false;
+
   @override
   void initState() {
     super.initState();
@@ -26,17 +34,123 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _fadeAnimation = Tween(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
+
+    // Load banner ad after a small delay
+    Future.delayed(Duration(milliseconds: 500), _loadBannerAd);
   }
 
   @override
   void dispose() {
+    _bannerAd?.dispose();
     _searchController.dispose();
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadBannerAd() async {
+    if (_isLoadingBanner) return;
+
+    _isLoadingBanner = true;
+
+    if (_bannerAd != null) {
+      _bannerAd?.dispose();
+      _bannerAd = null;
+      _isBannerLoaded = false;
+    }
+
+    try {
+      final banner = BannerAd(
+        adUnitId: AdHelper.faqScreenAdUnitId,
+        request: const AdRequest(),
+        size: AdSize.banner,
+        listener: BannerAdListener(
+          onAdLoaded: (ad) {
+            if (!mounted) {
+              ad.dispose();
+              return;
+            }
+            setState(() {
+              _bannerAd = ad as BannerAd;
+              _isBannerLoaded = true;
+              _isLoadingBanner = false;
+            });
+            if (kDebugMode) {
+              print('FAQ screen banner ad loaded successfully');
+            }
+          },
+          onAdFailedToLoad: (ad, error) {
+            ad.dispose();
+            if (mounted) {
+              setState(() {
+                _bannerAd = null;
+                _isBannerLoaded = false;
+                _isLoadingBanner = false;
+              });
+            }
+            if (kDebugMode) {
+              print('FAQ screen banner ad failed to load: $error');
+            }
+          },
+        ),
+      );
+
+      await banner.load();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingBanner = false;
+        });
+      }
+      if (kDebugMode) {
+        print('Failed to load FAQ screen banner ad: $e');
+      }
+    }
+  }
+
+  Widget _buildBannerAd() {
+    if (_isBannerLoaded && _bannerAd != null) {
+      return Container(
+        width: _bannerAd!.size.width.toDouble(),
+        height: _bannerAd!.size.height.toDouble(),
+        alignment: Alignment.center,
+        margin: EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: AdWidget(ad: _bannerAd!),
+        ),
+      );
+    } else if (_isLoadingBanner) {
+      return Container(
+        width: 320,
+        height: 50,
+        alignment: Alignment.center,
+        margin: EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: MyColor.getScreenBgColor().withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: CircularProgressIndicator(
+          color: MyColor.getGCoinPrimaryColor(),
+          strokeWidth: 2,
+        ),
+      );
+    } else {
+      return SizedBox.shrink();
+    }
   }
 
   void _filterFAQs(String query) {
@@ -60,6 +174,9 @@ class _FAQPageState extends State<FAQPage> with TickerProviderStateMixin {
               : SingleChildScrollView(
             child: Column(
               children: [
+                // Banner Ad - Above search section
+                _buildBannerAd(),
+
                 _buildSearchSection(),
                 _buildCategoriesFilter(),
                 _buildFAQList(),

@@ -45,7 +45,9 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   void onInit() {
     super.onInit();
     _initializeAnimations();
-    _checkTokenAndFetchData();
+    fetchDashboardData();
+    _loadMiningState();
+
   }
 
   void _initializeAnimations() {
@@ -61,32 +63,6 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       parent: balanceAnimationController,
       curve: Curves.easeOutCubic,
     ));
-  }
-
-  Future<void> _checkTokenAndFetchData() async {
-    try {
-      isLoading(true);
-      final token = LocalStorage.getToken();
-
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
-
-      final response = await _apiService.checkTokenValidity();
-
-      if (response == null) {
-        throw Exception('Invalid token');
-      }
-
-      await fetchDashboardData();
-      _loadMiningState();
-    } catch (e) {
-      CustomSnackBar.error('Session expired. Please login again.');
-      await LocalStorage.clear();
-      Get.offAllNamed('/sign_in');
-    } finally {
-      isLoading(false);
-    }
   }
 
   @override
@@ -328,6 +304,15 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       );
 
       if (response.statusCode == 200) {
+        // Check if the response indicates unauthenticated
+        if (response.data is Map && response.data['success'] == false &&
+            response.data['message'] == 'Unauthenticated.') {
+          CustomSnackBar.error('Session expired. Please login again.');
+          await LocalStorage.clear();
+          Get.offAllNamed('/sign_in');
+          return;
+        }
+
         userData.value = response.data['user'];
         posts.value = response.data['posts'];
         logs.value = response.data['logs'];
@@ -371,7 +356,14 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         throw Exception('Failed to load dashboard data');
       }
     } catch (e) {
-      CustomSnackBar.error('Failed to fetch dashboard data: ${e.toString()}', title: "Error");
+      // Handle DioException for unauthorized responses
+      if (e is DioException && e.response?.statusCode == 401) {
+        CustomSnackBar.error('Session expired. Please login again.');
+        await LocalStorage.clear();
+        Get.offAllNamed('/sign_in');
+      } else {
+        CustomSnackBar.error('Failed to fetch dashboard data: ${e.toString()}', title: "Error");
+      }
     } finally {
       isLoading(false);
     }
@@ -390,7 +382,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   }
 
   String getNetworkCount() {
-    return '${userData['direct_refer_count'] ?? 0}/${userData['whole_team_count'] ?? 0}';
+    // return '${userData['direct_refer_count'] ?? 0}/${userData['whole_team_count'] ?? 0}';
+    return '${userData['direct_refer_count'] ?? 0}';
   }
 
   // Get mining progress as percentage

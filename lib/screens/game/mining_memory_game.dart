@@ -1,8 +1,12 @@
 // mining_memory_game.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:math';
 import 'dart:async';
+import '../../utils/ad_helper.dart';
 import '../../utils/app_colors.dart';
 
 class MiningMemoryGameController extends GetxController {
@@ -180,12 +184,107 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
   late AnimationController _scaleController;
   late AnimationController _completionController;
 
+  // Banner Ad variables
+  BannerAd? _bannerAd;
+  bool _isBannerLoaded = false;
+  bool _isLoadingBanner = false;
+
+
+  // Rewarded Ad variables
+  RewardedAd? _rewardedAd;
+  bool _isRewardedAdLoaded = false;
+  bool _isLoadingRewardedAd = false;
+  bool _showRewardDialog = false;
+  bool _isRewardClaimed = false;
+
   @override
   void initState() {
     super.initState();
     controller = Get.put(MiningMemoryGameController(), tag: 'mining_game');
     _initializeAnimations();
-    controller.initializeGame(onCompleted: widget.onGameCompleted);
+    controller.initializeGame(onCompleted: _onGameCompleted);
+
+    // Load both banner and rewarded ad
+    Future.delayed(Duration(milliseconds: 500), () {
+      _loadBannerAd();
+      _loadRewardedAd();
+    });
+  }
+
+  // New method to handle game completion
+  void _onGameCompleted() {
+    // Show reward dialog after game completion animation
+    Future.delayed(Duration(milliseconds: 2500), () {
+      if (mounted) {
+        setState(() {
+          _showRewardDialog = true;
+        });
+      }
+    });
+
+    // Call original callback if exists
+    widget.onGameCompleted?.call();
+  }
+
+  Future<void> _loadBannerAd() async {
+    if (_isLoadingBanner) return; // Prevent multiple simultaneous loads
+
+    _isLoadingBanner = true;
+
+    // Dispose existing ad if any
+    if (_bannerAd != null) {
+      _bannerAd?.dispose();
+      _bannerAd = null;
+      _isBannerLoaded = false;
+    }
+
+    try {
+      final banner = BannerAd(
+        adUnitId: AdHelper.miningGameScreenAdUnitId,
+        request: const AdRequest(),
+        size: AdSize.banner,
+        listener: BannerAdListener(
+          onAdLoaded: (ad) {
+            if (!mounted) {
+              ad.dispose();
+              return;
+            }
+            setState(() {
+              _bannerAd = ad as BannerAd;
+              _isBannerLoaded = true;
+              _isLoadingBanner = false;
+            });
+            if (kDebugMode) {
+              print('Mining game screen banner ad loaded successfully');
+            }
+          },
+          onAdFailedToLoad: (ad, error) {
+            ad.dispose();
+            if (mounted) {
+              setState(() {
+                _bannerAd = null;
+                _isBannerLoaded = false;
+                _isLoadingBanner = false;
+              });
+            }
+            if (kDebugMode) {
+              print('Mining game screen banner ad failed to load: $error');
+            }
+          },
+        ),
+      );
+
+      await banner.load();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingBanner = false;
+        });
+      }
+      if (kDebugMode) {
+        print('Failed to load mining game screen banner ad: $e');
+      }
+    }
   }
 
   void _initializeAnimations() {
@@ -200,28 +299,595 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
     );
   }
 
+  // Method to load rewarded ad
+  Future<void> _loadRewardedAd() async {
+    if (_isLoadingRewardedAd) return;
+
+    _isLoadingRewardedAd = true;
+
+    try {
+      RewardedAd.load(
+        adUnitId: AdHelper.miningScreenRewardedAdUnitId,
+        request: const AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (RewardedAd ad) {
+            if (!mounted) {
+              ad.dispose();
+              return;
+            }
+            setState(() {
+              _rewardedAd = ad;
+              _isRewardedAdLoaded = true;
+              _isLoadingRewardedAd = false;
+            });
+            if (kDebugMode) {
+              print('Rewarded ad loaded successfully');
+            }
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            if (mounted) {
+              setState(() {
+                _rewardedAd = null;
+                _isRewardedAdLoaded = false;
+                _isLoadingRewardedAd = false;
+              });
+            }
+            if (kDebugMode) {
+              print('Rewarded ad failed to load: $error');
+            }
+          },
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingRewardedAd = false;
+        });
+      }
+      if (kDebugMode) {
+        print('Failed to load rewarded ad: $e');
+      }
+    }
+  }
+
+  // Method to show rewarded ad
+  void _showRewardedAd() {
+    if (_rewardedAd == null) {
+      _handleNoAdAvailable();
+      return;
+    }
+
+    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (RewardedAd ad) {
+        if (kDebugMode) {
+          print('Rewarded ad showed full screen content');
+        }
+      },
+      onAdDismissedFullScreenContent: (RewardedAd ad) {
+        ad.dispose();
+        _rewardedAd = null;
+        _isRewardedAdLoaded = false;
+
+        if (!_isRewardClaimed) {
+          // User closed ad without watching - show option to try again
+          _showRetryDialog();
+        }
+      },
+      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+        ad.dispose();
+        _rewardedAd = null;
+        _isRewardedAdLoaded = false;
+        _handleAdError();
+      },
+    );
+
+    _rewardedAd!.show(
+      onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+        _isRewardClaimed = true;
+        _handleRewardEarned(reward);
+      },
+    );
+  }
+
+  // Handle reward earned
+  void _handleRewardEarned(RewardItem reward) {
+    // Add haptic feedback
+    HapticFeedback.mediumImpact();
+
+    // Show success and navigate to home
+    Future.delayed(Duration(milliseconds: 500), () {
+      if (mounted) {
+        _showRewardSuccessAndNavigateHome();
+      }
+    });
+  }
+
+  // Show reward success and navigate to home
+  void _showRewardSuccessAndNavigateHome() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  gradient: MyColor.getGCoinSuccessGradient(),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Icon(
+                  Icons.card_giftcard,
+                  size: 30,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Reward Earned!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: MyColor.getGCoinSuccessColor(),
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'You earned bonus coins!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: MyColor.headingTextColor.withOpacity(0.7),
+                ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  Get.back(); // Close dialog
+                  Get.back(); // Go back to home/previous screen
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: MyColor.getGCoinPrimaryColor(),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text('Continue'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  // Handle no ad available
+  void _handleNoAdAvailable() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.wifi_off,
+                size: 48,
+                color: MyColor.gCoinLoss,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'No Ad Available',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: MyColor.headingTextColor,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Please check your internet connection and try again.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: MyColor.headingTextColor.withOpacity(0.7),
+                ),
+              ),
+              SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        _loadRewardedAd();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: MyColor.getGCoinPrimaryColor(),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text('Retry'),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back(); // Close dialog
+                        Get.back(); // Go back to home
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: MyColor.getGCoinSecondaryColor(),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text('Skip'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  // Show retry dialog
+  void _showRetryDialog() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.refresh,
+                size: 48,
+                color: MyColor.getGCoinPrimaryColor(),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Watch Ad for Reward?',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: MyColor.headingTextColor,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'You can watch an ad to earn bonus coins.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: MyColor.headingTextColor.withOpacity(0.7),
+                ),
+              ),
+              SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        _loadRewardedAd();
+                        Future.delayed(Duration(milliseconds: 500), () {
+                          if (_isRewardedAdLoaded) {
+                            _showRewardedAd();
+                          } else {
+                            _handleNoAdAvailable();
+                          }
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: MyColor.getGCoinPrimaryColor(),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text('Try Again'),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back(); // Close dialog
+                        Get.back(); // Go back to home
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: MyColor.getGCoinSecondaryColor(),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text('Skip'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  // Handle ad error
+  void _handleAdError() {
+    Get.snackbar(
+      'Ad Error',
+      'Failed to show ad. Please try again.',
+      backgroundColor: MyColor.gCoinLoss,
+      colorText: Colors.white,
+      duration: Duration(seconds: 3),
+    );
+
+    // Navigate back to home after error
+    Future.delayed(Duration(seconds: 1), () {
+      Get.back();
+    });
+  }
+
+  // Add this method to your dispose
   @override
   void dispose() {
+    _bannerAd?.dispose();
+    _rewardedAd?.dispose();
     _scaleController.dispose();
     _completionController.dispose();
     Get.delete<MiningMemoryGameController>(tag: 'mining_game');
     super.dispose();
   }
 
+
+  Widget _buildBannerAd() {
+    if (_isBannerLoaded && _bannerAd != null) {
+      return Container(
+        width: _bannerAd!.size.width.toDouble(),
+        height: _bannerAd!.size.height.toDouble(),
+        alignment: Alignment.center,
+        margin: EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: AdWidget(ad: _bannerAd!),
+        ),
+      );
+    } else if (_isLoadingBanner) {
+      return Container(
+        width: 320,
+        height: 50,
+        alignment: Alignment.center,
+        margin: EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                color: Colors.orange,
+                strokeWidth: 2,
+              ),
+            ),
+            SizedBox(width: 8),
+            Text(
+              'Loading Ad...',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return SizedBox.shrink();
+    }
+  }
+
+  // Update the build method to include reward dialog
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          _buildGameHeader(),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Obx(() => controller.gameCompleted.value
-                ? _buildCompletionScreen()
-                : _buildGameGrid()),
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Banner Ad above header
+            _buildBannerAd(),
+
+            // Game Header
+            _buildGameHeader(),
+
+            const SizedBox(height: 16),
+
+            // Game Content
+            Expanded(
+              child: Stack(
+                children: [
+                  Obx(() => controller.gameCompleted.value
+                      ? _buildCompletionScreen()
+                      : _buildGameGrid()),
+
+                  // Reward Dialog Overlay
+                  if (_showRewardDialog)
+                    _buildRewardDialog(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Build reward dialog widget
+  Widget _buildRewardDialog() {
+    return Container(
+      color: Colors.black.withOpacity(0.7),
+      child: Center(
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 32),
+          padding: EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: Offset(0, 5),
+              ),
+            ],
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  gradient: MyColor.getGCoinPrimaryGradient(),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Icon(
+                  Icons.play_arrow,
+                  size: 30,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Earn Bonus Coins!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: MyColor.getGCoinPrimaryColor(),
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Watch a short video to earn bonus coins for completing the mining challenge.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: MyColor.headingTextColor.withOpacity(0.7),
+                ),
+              ),
+              SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isRewardedAdLoaded ? () {
+                        setState(() {
+                          _showRewardDialog = false;
+                        });
+                        _showRewardedAd();
+                      } : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: MyColor.getGCoinPrimaryColor(),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: _isLoadingRewardedAd
+                          ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                          : Text('Watch Ad'),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _showRewardDialog = false;
+                        });
+                        // Navigate back to home
+                        Get.back();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: MyColor.getGCoinSecondaryColor(),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text('Skip'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

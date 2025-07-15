@@ -70,7 +70,8 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
         name: userData['name'] ?? 'Unknown',
         username: userData['username'] ?? '',
         position: 'root',
-        downlineCount: int.parse(userData['whole_team_count']) ?? 0,
+        downlineCount:  0,
+        // downlineCount: int.parse(userData['whole_team_count']) ?? 0,
       );
 
       currentNode.value = rootNode;

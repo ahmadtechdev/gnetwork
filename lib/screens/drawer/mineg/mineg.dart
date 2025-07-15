@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../../../utils/ad_helper.dart';
 import '../../../utils/app_colors.dart';
 import '../../homescreen/home_controller.dart';
 import 'mineg_controller.dart';
@@ -18,6 +21,11 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
   final MineGController _controller = Get.put(MineGController());
   final HomeController _homeController = Get.find<HomeController>();
 
+  // Add these variables for banner ad
+  BannerAd? _bannerAd;
+  bool _isBannerLoaded = false;
+  bool _isLoadingBanner = false;
+
   @override
   void initState() {
     super.initState();
@@ -29,12 +37,118 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    // Load banner ad after a small delay
+    Future.delayed(Duration(milliseconds: 500), _loadBannerAd);
   }
 
   @override
   void dispose() {
+    _bannerAd?.dispose();
     _pulseController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadBannerAd() async {
+    if (_isLoadingBanner) return;
+
+    _isLoadingBanner = true;
+
+    if (_bannerAd != null) {
+      _bannerAd?.dispose();
+      _bannerAd = null;
+      _isBannerLoaded = false;
+    }
+
+    try {
+      final banner = BannerAd(
+        adUnitId: AdHelper.miningScreenAdUnitId,
+        request: const AdRequest(),
+        size: AdSize.banner,
+        listener: BannerAdListener(
+          onAdLoaded: (ad) {
+            if (!mounted) {
+              ad.dispose();
+              return;
+            }
+            setState(() {
+              _bannerAd = ad as BannerAd;
+              _isBannerLoaded = true;
+              _isLoadingBanner = false;
+            });
+            if (kDebugMode) {
+              print('Mining screen banner ad loaded successfully');
+            }
+          },
+          onAdFailedToLoad: (ad, error) {
+            ad.dispose();
+            if (mounted) {
+              setState(() {
+                _bannerAd = null;
+                _isBannerLoaded = false;
+                _isLoadingBanner = false;
+              });
+            }
+            if (kDebugMode) {
+              print('Mining screen banner ad failed to load: $error');
+            }
+          },
+        ),
+      );
+
+      await banner.load();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingBanner = false;
+        });
+      }
+      if (kDebugMode) {
+        print('Failed to load mining screen banner ad: $e');
+      }
+    }
+  }
+
+  Widget _buildBannerAd() {
+    if (_isBannerLoaded && _bannerAd != null) {
+      return Container(
+        width: _bannerAd!.size.width.toDouble(),
+        height: _bannerAd!.size.height.toDouble(),
+        alignment: Alignment.center,
+        margin: EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: AdWidget(ad: _bannerAd!),
+        ),
+      );
+    } else if (_isLoadingBanner) {
+      return Container(
+        width: 320,
+        height: 50,
+        alignment: Alignment.center,
+        margin: EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: MyColor.getScreenBgColor().withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: CircularProgressIndicator(
+          color: MyColor.getGCoinPrimaryColor(),
+          strokeWidth: 2,
+        ),
+      );
+    } else {
+      return SizedBox.shrink();
+    }
   }
 
   @override
@@ -174,7 +288,8 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                // Banner Ad - Below Mining Session Timer Card
+                _buildBannerAd(),
 
                 // Total Mining Rate Card
                 Container(
@@ -220,7 +335,7 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
                               ),
                             ),
                             TextSpan(
-                              text: ' G/hr',
+                              text: '${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}  G/m',
                               style: TextStyle(
                                 color: MyColor.getTextColor(),
                                 fontSize: 24,
@@ -239,7 +354,7 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
                 // Base Rate Section
                 _buildExpandableSection(
                   title: 'Base Rate',
-                  value: '${_controller.getMiningReward()} G/hr',
+                  value: '${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}  G/m',
                   color: Colors.red.shade50,
                   borderColor: Colors.red,
                   icon: Icons.info_outline,

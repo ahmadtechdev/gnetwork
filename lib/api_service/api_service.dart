@@ -297,4 +297,22 @@ class ApiService {
       endpoint: 'search-user/$username',
     );
   }
+
+  Future<dio.Response?> updateProfile({
+    required String name,
+    required String walletAddress,
+    required String phone,
+    required String walletType,
+  }) async {
+    return await _authenticatedRequest(
+      method: 'POST',
+      endpoint: 'update-profile',
+      data: dio.FormData.fromMap({
+        'name': name,
+        'wallet_address': walletAddress,
+        'phone': phone,
+        'wallet_type': walletType,
+      }),
+    );
+  }
 }
