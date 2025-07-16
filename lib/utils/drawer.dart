@@ -10,6 +10,7 @@ import '../screens/drawer/profile/profile.dart';
 import '../screens/drawer/refferal/refferal_team.dart';
 import '../screens/drawer/support/support.dart';
 import '../screens/drawer/tree/tree.dart';
+import '../screens/drawer/tree/update_tree.dart';
 import '../screens/drawer/wallet/wallet.dart';
 import '../screens/drawer/withdraw/withdraw.dart';
 import 'custom_snackbar.dart';
@@ -116,7 +117,8 @@ class GNetworkDrawer extends StatelessWidget {
                     Icons.store_rounded,
                     'Team Tree',
                     false,
-                        () => Get.to(() => NetworkTreeScreen()),
+                        // () => Get.to(() => NetworkTreeScreen()),
+                        () => Get.to(() => NetworkTreeUpdateScreen()),
                   ),
                   _buildDrawerItem(
                     context,
