@@ -335,7 +335,7 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
                               ),
                             ),
                             TextSpan(
-                              text: '${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}  G/m',
+                              text: '${(_homeController.currentMiningRate).toStringAsFixed(0)} G/ ${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}m',
                               style: TextStyle(
                                 color: MyColor.getTextColor(),
                                 fontSize: 24,
@@ -354,7 +354,7 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
                 // Base Rate Section
                 _buildExpandableSection(
                   title: 'Base Rate',
-                  value: '${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}  G/m',
+                  value: '${(_homeController.currentMiningRate).toStringAsFixed(0)} G/ ${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}m',
                   color: Colors.red.shade50,
                   borderColor: Colors.red,
                   icon: Icons.info_outline,

@@ -38,6 +38,8 @@ class TreeResponse {
   final bool success;
   final String message;
   final List<TreeNode> tree;
+  final int teamCount;
+  final bool downline;
   final int? left;
   final int? middle;
   final int? right;
@@ -46,6 +48,8 @@ class TreeResponse {
     required this.success,
     required this.message,
     required this.tree,
+    required this.teamCount,
+    required this.downline,
     this.left,
     this.middle,
     this.right,
@@ -58,6 +62,8 @@ class TreeResponse {
       tree: (json['tree'] as List?)
           ?.map((item) => TreeNode.fromJson(item))
           .toList() ?? [],
+      teamCount: json['team_count'] ?? 0,
+      downline: json['downline'] ?? false,
       left: json['left'] != null ? json['left'] as int : null,
       middle: json['middle'] != null ? json['middle'] as int : null,
       right: json['right'] != null ? json['right'] as int : null,

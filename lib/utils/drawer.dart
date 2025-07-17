@@ -13,6 +13,7 @@ import '../screens/drawer/tree/tree.dart';
 import '../screens/drawer/tree/update_tree.dart';
 import '../screens/drawer/wallet/wallet.dart';
 import '../screens/drawer/withdraw/withdraw.dart';
+import '../screens/homescreen/kyc_screen.dart';
 import 'custom_snackbar.dart';
 
 class GNetworkDrawer extends StatelessWidget {
@@ -117,8 +118,8 @@ class GNetworkDrawer extends StatelessWidget {
                     Icons.store_rounded,
                     'Team Tree',
                     false,
-                        // () => Get.to(() => NetworkTreeScreen()),
-                        () => Get.to(() => NetworkTreeUpdateScreen()),
+                        () => Get.to(() => NetworkTreeScreen()),
+                        // () => Get.to(() => NetworkTreeUpdateScreen()),
                   ),
                   _buildDrawerItem(
                     context,
@@ -162,6 +163,13 @@ class GNetworkDrawer extends StatelessWidget {
                     'Profile',
                     false,
                         () => Get.to(() => ModernProfileScreen()),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.key, // for "Profile"
+                    'KYC',
+                    false,
+                        () => Get.to(() => KYCScreen()),
                   ),
 
                   // _buildDrawerItem(

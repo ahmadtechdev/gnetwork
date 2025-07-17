@@ -428,8 +428,12 @@ class NetworkTreeScreen extends StatelessWidget {
           // Child Nodes
           _buildChildNodes(),
           SizedBox(height: 20),
-          // Business Matrix
-          _buildBusinessMatrix(),
+          Obx(() {
+            if (controller.treeResponse.value?.downline == true) {
+              return _buildBusinessMatrix();
+            }
+            return SizedBox();
+          }),
           SizedBox(height: 8),
         ],
       ),
@@ -585,6 +589,7 @@ class NetworkTreeScreen extends StatelessWidget {
       child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
         padding: EdgeInsets.all(16),
+        width: double.infinity,
         decoration: BoxDecoration(
           gradient:
               isCurrentNode

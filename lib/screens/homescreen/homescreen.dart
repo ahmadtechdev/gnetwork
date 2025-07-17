@@ -602,7 +602,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                                         ),
                                       ),
                                       Text(
-                                        'Rate: ${(_homeController.totalMiningDuration/60).toStringAsFixed(0)} G/m',
+                                        'Rate: ${(_homeController.currentMiningRate).toStringAsFixed(0)} G/ ${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}m',
                                         style: TextStyle(
                                           color: Color(0xFFCED9CE),
                                           fontSize: 12,
@@ -668,7 +668,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     child: _buildStatCard(
                       icon: Icons.flash_on_rounded,
                       title: 'Mining Rate',
-                      value: '${(_homeController.totalMiningDuration/60).toStringAsFixed(0)} G/m',
+                      value: '${(_homeController.currentMiningRate).toStringAsFixed(0)} G/ ${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}m',
                       color: Color(0xFF7ED321),
                     ),
                   ),
@@ -1080,7 +1080,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                             ? _homeController.formatTime(
                               _homeController.miningTimeLeft.value,
                             )
-                            : '${(_homeController.totalMiningDuration/60).toStringAsFixed(0)} G/m',
+                            : '${(_homeController.currentMiningRate).toStringAsFixed(0)} G/ ${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}m',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 10,

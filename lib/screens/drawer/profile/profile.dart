@@ -557,7 +557,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                           ),
                         ),
                         child: Text(
-                          'Update',
+                          'Tap to Update Profile',
                           style: TextStyle(
                             color: MyColor.gCoinWarning,
                             fontSize: 12,

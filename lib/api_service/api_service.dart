@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../utils/custom_snackbar.dart';
 import 'local_stroge.dart';
 
@@ -50,6 +51,19 @@ class ApiService {
         throw Exception('No authentication token found');
       }
 
+      print("kyc request");
+      print(await _dio.request(
+        '$_baseUrl/$endpoint',
+        data: data,
+        queryParameters: queryParameters,
+        options: dio.Options(
+          method: method,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        ),
+      ));
       return await _dio.request(
         '$_baseUrl/$endpoint',
         data: data,
@@ -106,6 +120,86 @@ class ApiService {
         colorText: Colors.white,
       );
       return null;
+    }
+  }
+
+  // UPDATED METHOD: Check maintenance mode with better error handling
+  Future<MaintenanceResponse> checkMaintenanceMode() async {
+    try {
+      // First check internet connectivity
+      final connectivityResult = await Connectivity().checkConnectivity();
+      final bool hasInternet = connectivityResult != ConnectivityResult.none;
+
+      if (!hasInternet) {
+        // If no internet, return false for maintenance (allow offline usage)
+        return MaintenanceResponse(
+          isInMaintenance: false,
+          message: 'No internet connection - proceeding offline',
+          success: false,
+        );
+      }
+
+      final response = await _dio.get(
+        '$_baseUrl/splash-screen',
+        options: dio.Options(
+          headers: {
+            'Accept': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        final maintenanceMode = data['maintance_mode'] ?? data['maintenance_mode'] ?? '0';
+
+        return MaintenanceResponse(
+          isInMaintenance: maintenanceMode == '1',
+          message: data['message'] ?? 'App is under maintenance',
+          success: true,
+        );
+      }
+
+      // If response is not 200 or data is null, don't show maintenance
+      return MaintenanceResponse(
+        isInMaintenance: false,
+        message: 'Unable to check maintenance status',
+        success: false,
+      );
+    } on dio.DioException catch (e) {
+      // Handle specific error cases
+      if (e.type == dio.DioExceptionType.connectionTimeout ||
+          e.type == dio.DioExceptionType.receiveTimeout ||
+          e.type == dio.DioExceptionType.connectionError) {
+        // Network issues - don't show maintenance
+        return MaintenanceResponse(
+          isInMaintenance: false,
+          message: 'Network connection issues - proceeding offline',
+          success: false,
+        );
+      }
+
+      if (e.response?.statusCode == 500) {
+        // Server error - could be maintenance
+        return MaintenanceResponse(
+          isInMaintenance: true,
+          message: 'Server is temporarily unavailable',
+          success: true,
+        );
+      }
+
+      // For other HTTP errors, don't show maintenance
+      return MaintenanceResponse(
+        isInMaintenance: false,
+        message: 'Service temporarily unavailable',
+        success: false,
+      );
+    } catch (e) {
+      // For any unexpected errors, don't show maintenance
+      return MaintenanceResponse(
+        isInMaintenance: false,
+        message: 'Unable to connect to server',
+        success: false,
+      );
     }
   }
 
@@ -214,6 +308,28 @@ class ApiService {
     );
   }
 
+  // KYC endpoints
+  Future<dio.Response?> getKYCForm() async {
+
+    print("ky apui");
+    print(await _authenticatedRequest(
+      method: 'GET',
+      endpoint: 'kyc',
+    ));
+    return await _authenticatedRequest(
+      method: 'GET',
+      endpoint: 'kyc',
+    );
+  }
+
+  Future<dio.Response?> submitKYC(Map<String, dynamic> formData) async {
+    return await _authenticatedRequest(
+      method: 'POST',
+      endpoint: 'kyc',
+      data: dio.FormData.fromMap(formData),
+    );
+  }
+
   // Mining endpoints
   Future<dio.Response?> startMining() async {
     return await _authenticatedRequest(
@@ -315,4 +431,17 @@ class ApiService {
       }),
     );
   }
+}
+
+// Model class for maintenance response
+class MaintenanceResponse {
+  final bool isInMaintenance;
+  final String message;
+  final bool success;
+
+  MaintenanceResponse({
+    required this.isInMaintenance,
+    required this.message,
+    required this.success,
+  });
 }

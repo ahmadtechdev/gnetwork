@@ -60,9 +60,8 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
       curve: Curves.easeInOut,
     ));
   }
-
+// In the fetchTreeData method, update the root node creation:
   void _loadInitialTree() {
-    // Create root node from home controller data
     final userData = _homeController.userData;
     if (userData.isNotEmpty) {
       final rootNode = TreeNode(
@@ -70,8 +69,7 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
         name: userData['name'] ?? 'Unknown',
         username: userData['username'] ?? '',
         position: 'root',
-        downlineCount:  0,
-        // downlineCount: int.parse(userData['whole_team_count']) ?? 0,
+        downlineCount: 0, // This will be updated when we fetch the tree data
       );
 
       currentNode.value = rootNode;
@@ -79,22 +77,33 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
+// Update the fetchTreeData method to handle the new response:
   Future<void> fetchTreeData(int userId) async {
     try {
       isLoading.value = true;
-      treeResponse.value = null; // Clear previous response
+      treeResponse.value = null;
 
       final response = await _apiService.getDownlineTree(userId);
 
       if (response?.statusCode == 200) {
         final treeData = TreeResponse.fromJson(response!.data);
-        treeResponse.value = treeData; // Store the full response
+        treeResponse.value = treeData;
 
         if (treeData.success) {
+          // Update current node's downline count if it exists
+          if (currentNode.value != null) {
+            currentNode.value = TreeNode(
+              id: currentNode.value!.id,
+              name: currentNode.value!.name,
+              username: currentNode.value!.username,
+              position: currentNode.value!.position,
+              downlineCount: treeData.teamCount ?? 0,
+            );
+          }
+
           treeNodes.clear();
           treeNodes.addAll(treeData.tree);
 
-          // Start animations
           fadeAnimationController.reset();
           slideAnimationController.reset();
           fadeAnimationController.forward();
@@ -111,7 +120,6 @@ class TreeController extends GetxController with GetTickerProviderStateMixin {
       isLoading.value = false;
     }
   }
-
   // Rest of the methods remain the same...
   Future<void> searchUser(String username) async {
     try {

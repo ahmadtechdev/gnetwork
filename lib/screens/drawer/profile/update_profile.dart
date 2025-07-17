@@ -163,7 +163,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen>
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'Update Profile',
+          'Update Your Profile',
           style: TextStyle(
             color: MyColor.getAppbarTitleColor(),
             fontSize: 20,
@@ -187,9 +187,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen>
                   const SizedBox(height: 30),
                   _buildNameField(),
                   const SizedBox(height: 20),
-                  _buildWalletAddressField(),
-                  const SizedBox(height: 20),
                   _buildPhoneField(),
+                  const SizedBox(height: 20),
+                  _buildWalletAddressField(),
                   const SizedBox(height: 20),
                   _buildWalletTypeDropdown(),
                   const SizedBox(height: 40),
