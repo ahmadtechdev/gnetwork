@@ -23,26 +23,28 @@ class _GCoinOnboardingScreenState extends State<GCoinOnboardingScreen>
 
   int currentIndex = 0;
 
+
   final List<OnboardingData> onboardingData = [
     OnboardingData(
-      title: 'G Coin makes crypto mining simple',
-      subtitle: 'No rigs, no stress – just tap, watch, and earn G Coin easily',
-      icon: Icons.memory,
-      color: const Color(0xFF7ED321),
+      title: 'Grow your network through fun gameplay',
+      subtitle: 'Play simple games, earn Gaming Coins, and build your digital circle',
+      icon: Icons.gamepad,
+      color: Color(0xFF7ED321),
     ),
     OnboardingData(
-      title: 'Earn daily and grow your digital wallet',
-      subtitle: 'Start your journey to wealth with simple daily tasks',
+      title: 'Earn rewards and track your progress',
+      subtitle: 'Complete daily challenges and watch your Gaming Coins grow',
       icon: Icons.account_balance_wallet,
-      color: const Color(0xFF4CAF50),
+      color: Color(0xFF4CAF50),
     ),
     OnboardingData(
-      title: 'Unlock a new way to earn with your phone',
-      subtitle: 'Turn minutes into money with our rewarding crypto model',
-      icon: Icons.phone_android,
-      color: const Color(0xFF8BC34A),
+      title: 'Play, invite, and rise on the leaderboard',
+      subtitle: 'Level up by playing and bringing your friends along',
+      icon: Icons.group_add,
+      color: Color(0xFF8BC34A),
     ),
   ];
+
 
   @override
   void initState() {

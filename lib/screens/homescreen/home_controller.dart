@@ -44,9 +44,9 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   @override
   void onInit() {
     super.onInit();
-    _initializeAnimations();
     fetchDashboardData();
     _loadMiningState();
+    _initializeAnimations();
 
   }
 
@@ -89,16 +89,20 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
         _startFastInitialAnimation();
       } else {
         isMining.value = false;
+
         _stopBalanceAnimation();
       }
     } else {
       isMining.value = false;
+
       _stopBalanceAnimation();
     }
   }
 
   void _setupMiningBalance() {
     // Get base balance and mining rate
+    print("check");
+    print(double.parse(userData['mine_rate']?.toString() ?? '0'));
     baseBalance.value = double.parse(userData['balance']?.toString() ?? '0');
     currentMiningRate = double.parse(userData['mine_rate']?.toString() ?? '0');
 
@@ -407,24 +411,24 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       final referralCode = userData['username'] ?? '';
 
       final message = '''
-🌟 *Join G Network & Start Mining G Coins!* 🌟
+🌟 *Join G Network!* 🌟
 
-Hey! I'm $userName inviting you to join the revolutionary G Network! 
+Hey! I'm $userName inviting you to join the revolutionary Grow Network! 
 
-💰 *Earn G Coins daily* by mining & inviting friends
+💰 *Earn Gaming Coins daily* by gaming & inviting friends
 🚀 *Free to start* - No investment required
 🔗 *Global community* of miners earning together
-📱 *Simple mobile mining* - Just tap to mine!
+📱 *Simple mobile gaming* - Just tap to mine!
 
 *Your Referral Code:* `$referralCode`
 
-📲 *Download G Network App:*
-https://play.google.com/store/apps/details?id=pro.gnetwork.gnewtwork&hl=en
+📲 *Download Grow Network App:*
+https://play.google.com/store/apps/details?id=pro.gnetwork.grownetwork&hl=en
 
 Join thousands of users already earning G Coins! 
 Don't miss out on this opportunity! 🎯
 
-#GNetwork #GCoin #CryptoMining #EarnDaily
+#GrowNetwork #GamingCoin #EarnDaily
       '''.trim();
 
       final generalShareUrl =

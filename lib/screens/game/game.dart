@@ -335,7 +335,7 @@ class _EarnGameScreenState extends State<EarnGameScreen>
         backgroundColor: MyColor.getGCoinPrimaryColor(),
         elevation: 0,
         title: const Text(
-          'G Network',
+          'Grow Network',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,

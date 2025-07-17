@@ -304,7 +304,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
             const SizedBox(height: 24),
             // Welcome Text
             const Text(
-              'Join G Coin',
+              'Join Grow Network',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
@@ -314,7 +314,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Create your account and start mining',
+              'Create your account and start gaming network',
               style: TextStyle(
                 fontSize: 16,
                 color: const Color(

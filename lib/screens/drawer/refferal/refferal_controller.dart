@@ -32,24 +32,25 @@ class ReferralTeamController extends GetxController {
 
       // Create beautiful WhatsApp message
       final message = '''
-🌟 *Join G Network & Start Mining G Coins!* 🌟
+🌟 *Join G Network!* 🌟
 
-Hey! I'm $userName inviting you to join the revolutionary G Network! 
+Hey! I'm $userName inviting you to join the revolutionary Grow Network! 
 
-💰 *Earn G Coins daily* by mining & inviting friends
+💰 *Earn Gaming Coins daily* by gaming & inviting friends
 🚀 *Free to start* - No investment required
 🔗 *Global community* of miners earning together
-📱 *Simple mobile mining* - Just tap to mine!
+📱 *Simple mobile gaming* - Just tap to mine!
 
 *Your Referral Code:* `$referralCode`
 
-📲 *Download G Network App:*
-https://play.google.com/store/apps/details?id=pro.gnetwork.gnewtwork&hl=en
+📲 *Download Grow Network App:*
+https://play.google.com/store/apps/details?id=pro.gnetwork.grownetwork&hl=en
 
-Join thousands of users already earning G Coins! 
+Join thousands of users already earning Gaming Coins! 
 Don't miss out on this opportunity! 🎯
 
-#GNetwork #GCoin #CryptoMining #EarnDaily
+
+#GrowNetwork #GamingCoin #EarnDaily
       '''.trim();
 
       // // Create WhatsApp URL

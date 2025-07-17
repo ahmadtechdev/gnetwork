@@ -824,7 +824,7 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
               ),
               SizedBox(height: 8),
               Text(
-                'Watch a short video to earn bonus coins for completing the mining challenge.',
+                'Watch a short video to earn bonus coins for completing the gaming challenge.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -908,7 +908,7 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
               Icon(Icons.flash_on_rounded, color: Colors.white, size: 20),
               SizedBox(width: 8),
               Text(
-                'Mining Challenge',
+                'Game Challenge',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1128,7 +1128,7 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Mining Unlocked!',
+                    'Gaming Unlocked!',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -1154,7 +1154,7 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Starting mining...',
+                    'Starting gaming...',
                     style: TextStyle(
                       fontSize: 12,
                       color: MyColor.headingTextColor.withOpacity(0.7),

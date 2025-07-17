@@ -12,7 +12,7 @@ import 'api_service/api_service.dart';
 import 'api_service/local_stroge.dart';
 import 'routes/route.dart';
 import 'theme_controller.dart';
-import 'utils/maintenance_screen.dart';
+import 'screens/homescreen/maintenance_screen.dart';
 import 'utils/my_strings.dart';
 
 import 'theme/dark.dart';

@@ -459,7 +459,7 @@ class _WalletScreenState extends State<WalletScreen>
         title: FadeTransition(
           opacity: _fadeAnimation,
           child: Text(
-            'G Coin Wallet',
+            'Grow Coin Wallet',
             style: TextStyle(
               color: MyColor.headingTextColor,
               fontSize: 20,

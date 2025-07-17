@@ -4,16 +4,15 @@ import 'package:get/get.dart';
 import '../api_service/api_service.dart';
 import '../api_service/local_stroge.dart';
 import '../screens/drawer/faq/faq.dart';
+import '../screens/drawer/kyc/kyc_screen.dart';
 import '../screens/drawer/mineg/mineg.dart';
 import '../screens/drawer/node.dart';
 import '../screens/drawer/profile/profile.dart';
 import '../screens/drawer/refferal/refferal_team.dart';
 import '../screens/drawer/support/support.dart';
 import '../screens/drawer/tree/tree.dart';
-import '../screens/drawer/tree/update_tree.dart';
 import '../screens/drawer/wallet/wallet.dart';
 import '../screens/drawer/withdraw/withdraw.dart';
-import '../screens/homescreen/kyc_screen.dart';
 import 'custom_snackbar.dart';
 
 class GNetworkDrawer extends StatelessWidget {
@@ -55,7 +54,7 @@ class GNetworkDrawer extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'G Network',
+                        'Grow Network',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -125,7 +124,7 @@ class GNetworkDrawer extends StatelessWidget {
                     context,
                     Icons
                         .military_tech, // for "Mine g" - implies mining or achievement
-                    'Mine g',
+                    'Rate network',
                     false,
                         () => Get.to(() => MineGScreen()),
                   ),

@@ -51,19 +51,6 @@ class ApiService {
         throw Exception('No authentication token found');
       }
 
-      print("kyc request");
-      print(await _dio.request(
-        '$_baseUrl/$endpoint',
-        data: data,
-        queryParameters: queryParameters,
-        options: dio.Options(
-          method: method,
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Accept': 'application/json',
-          },
-        ),
-      ));
       return await _dio.request(
         '$_baseUrl/$endpoint',
         data: data,
@@ -311,11 +298,6 @@ class ApiService {
   // KYC endpoints
   Future<dio.Response?> getKYCForm() async {
 
-    print("ky apui");
-    print(await _authenticatedRequest(
-      method: 'GET',
-      endpoint: 'kyc',
-    ));
     return await _authenticatedRequest(
       method: 'GET',
       endpoint: 'kyc',
@@ -325,7 +307,7 @@ class ApiService {
   Future<dio.Response?> submitKYC(Map<String, dynamic> formData) async {
     return await _authenticatedRequest(
       method: 'POST',
-      endpoint: 'kyc',
+      endpoint: 'submit-kyc',
       data: dio.FormData.fromMap(formData),
     );
   }

@@ -426,7 +426,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage> {
           ),
           SizedBox(height: 12),
           Text(
-            'Invite friends to join your referral team and boost your mining rate!',
+            'Invite friends to join your referral team and boost your gaming rate!',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,

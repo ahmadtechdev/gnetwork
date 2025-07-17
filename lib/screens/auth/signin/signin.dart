@@ -277,7 +277,7 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
             ),
             const SizedBox(height: 6), // Reduced from 8
             Text(
-              'Sign in to continue mining G Coins',
+              'Sign in to continue Grow Network',
               style: TextStyle(
                 fontSize: 14, // Reduced from 16
                 color: MyColor.smallTextColor.withOpacity(0.8),

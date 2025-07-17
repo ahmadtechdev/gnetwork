@@ -264,8 +264,8 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
                       const SizedBox(height: 16),
                       Text(
                         _homeController.isMining.value
-                            ? 'Mining Session Ends'
-                            : 'No Active Mining Session',
+                            ? 'Gaming Session Ends'
+                            : 'No Active Gaming Session',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 16,
@@ -313,7 +313,7 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
                   child: Column(
                     children: [
                       Text(
-                        'Total mining rate:',
+                        'Total gaming rate:',
                         style: TextStyle(
                           color: MyColor.getTextColor(),
                           fontSize: 18,
@@ -325,7 +325,7 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: _controller.getPerHourRate(),
+                              text: "${(_homeController.userData['mine_rate'])} G/ ${(int.parse(_homeController.userData['total_mine_time'])/60).toStringAsFixed(0)}m",
                               style: TextStyle(
                                 color: MyColor.getGCoinPrimaryColor(),
                                 fontSize: 36,
@@ -334,14 +334,14 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
                                 decorationColor: MyColor.getGCoinPrimaryColor(),
                               ),
                             ),
-                            TextSpan(
-                              text: '${(_homeController.currentMiningRate).toStringAsFixed(0)} G/ ${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}m',
-                              style: TextStyle(
-                                color: MyColor.getTextColor(),
-                                fontSize: 24,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            // TextSpan(
+                            //   text: '${(_homeController.userData['mine_rate'])} G/ ${(int.parse(_homeController.userData['total_mine_time'])/60).toStringAsFixed(0)}m',
+                            //   style: TextStyle(
+                            //     color: MyColor.getTextColor(),
+                            //     fontSize: 24,
+                            //     fontWeight: FontWeight.w600,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
@@ -354,14 +354,14 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
                 // Base Rate Section
                 _buildExpandableSection(
                   title: 'Base Rate',
-                  value: '${(_homeController.currentMiningRate).toStringAsFixed(0)} G/ ${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}m',
+                  value: '${(_homeController.userData['mine_rate'])} G/ ${(int.parse(_homeController.userData['total_mine_time'])/60).toStringAsFixed(0)}m',
                   color: Colors.red.shade50,
                   borderColor: Colors.red,
                   icon: Icons.info_outline,
                   content: Container(
                     padding: const EdgeInsets.all(16),
                     child: Text(
-                      'Your base mining rate is calculated based on your account verification and activity level.',
+                      'Your base gaming rate is calculated based on your account verification and activity level.',
                       style: TextStyle(
                         color: MyColor.getTextColor(),
                         fontSize: 14,

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:gcoin/screens/drawer/kyc/kyc_screen.dart';
 import 'dart:math';
 
 import 'package:gcoin/utils/ad_helper.dart';
@@ -262,6 +263,13 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
         );
       }
 
+      // Add KYC check right after the loading check
+      if (_homeController.userData['kyc_form'] == true) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Get.to(()=> KYCScreen());
+        });
+      }
+
       return Scaffold(
         backgroundColor: Color(0xFF0D1F0F),
         drawer: GNetworkDrawer(),
@@ -279,6 +287,41 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
             child: SingleChildScrollView(
               child: Column(
                 children: [
+
+                  // Add KYC message banner if kyc_form is true
+                  if (_homeController.userData['kyc_form'] == true &&
+                      _homeController.userData['kyc_message'] != null)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      margin: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.orange.withOpacity(0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded,
+                              color: Colors.orange, size: 20),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _homeController.userData['kyc_message'].toString(),
+                              style: TextStyle(
+                                color: Colors.orange,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+
                   // Enhanced Header with gradient background
                   _buildEnhancedHeader(),
 
@@ -540,7 +583,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                               children: [
                                 Text(
                                   _homeController.isMining.value
-                                      ? 'Mining Balance'
+                                      ? 'Gaming Balance'
                                       : 'Available Balance',
                                   style: TextStyle(
                                     color: Color(0xFFCED9CE),
@@ -602,7 +645,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                                         ),
                                       ),
                                       Text(
-                                        'Rate: ${(_homeController.currentMiningRate).toStringAsFixed(0)} G/ ${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}m',
+                                        'Rate: ${(_homeController.userData['mine_rate'])} G/ ${(int.parse(_homeController.userData['total_mine_time'])/60).toStringAsFixed(0)}m',
                                         style: TextStyle(
                                           color: Color(0xFFCED9CE),
                                           fontSize: 12,
@@ -667,8 +710,8 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     opacity: value,
                     child: _buildStatCard(
                       icon: Icons.flash_on_rounded,
-                      title: 'Mining Rate',
-                      value: '${(_homeController.currentMiningRate).toStringAsFixed(0)} G/ ${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}m',
+                      title: 'Gaming Rate',
+                      value: '${(_homeController.userData['mine_rate'])} G/ ${(int.parse(_homeController.userData['total_mine_time'])/60).toStringAsFixed(0)}m',
                       color: Color(0xFF7ED321),
                     ),
                   ),
@@ -814,7 +857,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     ),
                   ),
                   Text(
-                    'in the G Network Ecosystem',
+                    'in the Gow Network Ecosystem',
                     style: TextStyle(
                       color: Color(0xFF7ED321),
                       fontSize: 18,
@@ -900,7 +943,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                   SizedBox(height: 24),
 
                   Text(
-                    'Build games on G Network &',
+                    'Build games on Grow Network &',
                     style: TextStyle(
                       color: Color(0xFFCED9CE),
                       fontSize: 16,
@@ -1044,8 +1087,8 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                   _homeController.startMiningWithGame(context);
                 } else {
                   Get.snackbar(
-                    'Mining in Progress',
-                    'Please wait until current mining completes',
+                    'Game  in Progress',
+                    'Please wait until current gaming completes',
                     backgroundColor: Colors.orange,
                     colorText: Colors.white,
                   );
@@ -1080,7 +1123,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                             ? _homeController.formatTime(
                               _homeController.miningTimeLeft.value,
                             )
-                            : '${(_homeController.currentMiningRate).toStringAsFixed(0)} G/ ${(_homeController.totalMiningDuration/60).toStringAsFixed(0)}m',
+                            : '${(_homeController.userData['mine_rate'])} G/ ${(int.parse(_homeController.userData['total_mine_time'])/60).toStringAsFixed(0)}m',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 10,
@@ -1473,7 +1516,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                         ],
                       ),
                       child: Text(
-                        'G Network',
+                        'Grow Network',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -1625,11 +1668,13 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
 
   Widget _buildTrendingTopicsSection() {
     final topics = [
-      '#GNetwork',
-      '#Blockchain',
-      '#Cryptocurrency',
-      '#FruityG',
-      '#Mining',
+      '#GrowNetwork',
+      '#GamingCommunity',
+      '#PlayAndEarn',
+      '#GamingCoins',
+      '#FunWithFriends',
+      '#DailyRewards',
+      '#GameTogether'
     ];
 
     return TweenAnimationBuilder<double>(

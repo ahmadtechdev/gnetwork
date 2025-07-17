@@ -2,7 +2,7 @@
 class MyStrings {
 
   //app name
-  static const String appName = "GCoin";
+  static const String appName = "GrowNetwork";
   static const String theme = 'theme';
 
   static List<String> onboardTitleList = [

@@ -1,13 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:label="G Network"
+        android:label="Grow Network"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-5588063718705121~8489420955"/>
+            android:value="ca-app-pub-5588063718705121~9322401728"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:country_picker/country_picker.dart';
-
 import '../../../api_service/api_service.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/custom_snackbar.dart';
