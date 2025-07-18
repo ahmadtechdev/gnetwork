@@ -2,7 +2,7 @@ name: gcoin
 description: "developed by attech."
 publish_to: 'none'
 #version: 0.2.3+16
-version: 0.1.0+4
+version: 0.1.1+6
 
 environment:
   sdk: ^3.7.2

@@ -456,7 +456,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.monetization_on_rounded,
+              Icons.g_mobiledata,
               color: Colors.white,
               size: 28,
             ),

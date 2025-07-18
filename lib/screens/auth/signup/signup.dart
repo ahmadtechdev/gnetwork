@@ -293,7 +293,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
                       ],
                     ),
                     child: const Icon(
-                      Icons.monetization_on_rounded,
+                      Icons.g_mobiledata,
                       size: 50,
                       color: Colors.white,
                     ),

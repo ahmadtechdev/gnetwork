@@ -256,7 +256,7 @@ class _GCoinSignInScreenState extends State<GCoinSignInScreen>
                       ],
                     ),
                     child: const Icon(
-                      Icons.monetization_on_rounded,
+                      Icons.g_mobiledata,
                       size: 40, // Reduced from 50
                       color: Colors.white,
                     ),

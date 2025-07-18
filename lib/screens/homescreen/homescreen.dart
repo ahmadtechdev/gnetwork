@@ -857,7 +857,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                     ),
                   ),
                   Text(
-                    'in the Gow Network Ecosystem',
+                    'in the Grow Network Ecosystem',
                     style: TextStyle(
                       color: Color(0xFF7ED321),
                       fontSize: 18,
