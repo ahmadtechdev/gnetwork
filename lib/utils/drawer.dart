@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../api_service/api_service.dart';
 import '../api_service/local_stroge.dart';
+import '../screens/drawer/active_status/active_status.dart';
 import '../screens/drawer/faq/faq.dart';
 import '../screens/drawer/kyc/kyc_screen.dart';
 import '../screens/drawer/mineg/mineg.dart';
@@ -169,6 +170,13 @@ class GNetworkDrawer extends StatelessWidget {
                     'KYC',
                     false,
                         () => Get.to(() => KYCScreen()),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    Icons.query_stats, // for "Profile"
+                    'Active Status',
+                    false,
+                        () => Get.to(() => ActivityStatusScreen()),
                   ),
 
                   // _buildDrawerItem(

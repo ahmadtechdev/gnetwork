@@ -2,7 +2,7 @@ name: gcoin
 description: "developed by attech."
 publish_to: 'none'
 #version: 0.2.3+16
-version: 0.1.1+6
+version: 0.1.2+7
 
 environment:
   sdk: ^3.7.2
@@ -23,6 +23,7 @@ dependencies:
   country_picker: ^2.0.27
   connectivity_plus: ^6.1.4
   image_picker: ^1.1.2
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:

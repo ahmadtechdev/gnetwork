@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gcoin/screens/homescreen/home_controller.dart';
+import 'package:gcoin/screens/maintenance/controller.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -12,7 +13,7 @@ import 'api_service/api_service.dart';
 import 'api_service/local_stroge.dart';
 import 'routes/route.dart';
 import 'theme_controller.dart';
-import 'screens/homescreen/maintenance_screen.dart';
+import 'screens/maintenance/maintenance_screen.dart';
 import 'utils/my_strings.dart';
 
 import 'theme/dark.dart';
@@ -38,6 +39,8 @@ Future<void> main() async {
 
   // Initialize HomeController
   Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
+  // Add this before runApp() in main()
+  Get.put(MaintenanceController());
 
   // Configure AdMob for test devices in debug mode
   if (kDebugMode) {
@@ -67,15 +70,20 @@ Future<void> main() async {
     final hasValidToken = LocalStorage.getToken() != null;
     initialRoute = hasValidToken ? RouteHelper.homeScreen : RouteHelper.onboardScreen;
   } else {
-    // If internet is available, check maintenance mode
     final apiService = ApiService();
+    // If internet is available, check maintenance mode
     final maintenanceResponse = await apiService.checkMaintenanceMode();
 
     if (maintenanceResponse.isInMaintenance && maintenanceResponse.success) {
-      // Only show maintenance if we successfully got a maintenance response
+      // Get the controller and update it with maintenance data
+      final maintenanceController = Get.find<MaintenanceController>();
+      maintenanceController.updateMaintenanceData(
+        heading: maintenanceResponse.heading,
+        description: maintenanceResponse.description,
+        estimatedTime: maintenanceResponse.estimatedTime,
+      );
       initialRoute = '/maintenance';
     } else {
-      // If not in maintenance or failed to check, proceed with normal flow
       final hasValidToken = LocalStorage.getToken() != null;
       initialRoute = hasValidToken ? RouteHelper.homeScreen : RouteHelper.onboardScreen;
     }

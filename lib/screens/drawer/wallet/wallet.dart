@@ -730,7 +730,8 @@ class _WalletScreenState extends State<WalletScreen>
 
   Widget _buildTransactionItem(Map<String, dynamic> transaction, int index) {
     final amount = double.parse(transaction['amount']);
-    final type = transaction['type'];
+    final type = transaction['type'] ?? 'Transaction';
+    final remarks = transaction['remarks'] ?? '';
     final createdAt = transaction['created_at'];
     final isPositive = amount > 0;
 
@@ -763,7 +764,7 @@ class _WalletScreenState extends State<WalletScreen>
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Icon(
-                _getTransactionIcon(type),
+                _getTransactionIconByType(type),
                 color: MyColor.getGCoinPrimaryColor(),
                 size: 24,
               ),
@@ -773,38 +774,91 @@ class _WalletScreenState extends State<WalletScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _getTransactionTypeText(type),
-                    style: TextStyle(
-                      color: MyColor.getTextColor(),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          type,
+                          style: TextStyle(
+                            color: MyColor.getTextColor(),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: (isPositive
+                              ? MyColor.getGCoinSuccessColor()
+                              : MyColor.getGCoinLossColor()).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${isPositive ? '+' : '-'}${amount.toStringAsFixed(2)} G',
+                          style: TextStyle(
+                            color: isPositive
+                                ? MyColor.getGCoinSuccessColor()
+                                : MyColor.getGCoinLossColor(),
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 4),
+                  SizedBox(height: 6),
                   Text(
                     createdAt,
                     style: TextStyle(
-                      color: MyColor.getTextColor().withOpacity(0.6),
+                      color: MyColor.getTextColor().withOpacity(0.5),
                       fontSize: 12,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
+                  if (remarks.isNotEmpty) ...[
+                    SizedBox(height: 8),
+                    Text(
+                      remarks,
+                      style: TextStyle(
+                        color: MyColor.getTextColor().withOpacity(0.7),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
                 ],
-              ),
-            ),
-            Text(
-              '${isPositive ? '+' : '-'}${amount.toStringAsFixed(2)} G',
-              style: TextStyle(
-                color: isPositive
-                    ? MyColor.getGCoinSuccessColor()
-                    : MyColor.getGCoinLossColor(),
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  IconData _getTransactionIconByType(String type) {
+    switch (type.toLowerCase()) {
+      case 'commission':
+        return Icons.swap_horiz;
+      case 'mining reward':
+      case 'mining':
+        return Icons.diamond;
+      case 'referral bonus':
+      case 'referral':
+        return Icons.people;
+      case 'transfer':
+        return Icons.swap_horiz;
+      case 'bonus':
+        return Icons.card_giftcard;
+      case 'withdrawal':
+        return Icons.arrow_upward;
+      case 'deposit':
+        return Icons.arrow_downward;
+      default:
+        return Icons.account_balance_wallet;
+    }
   }
 }

@@ -704,34 +704,34 @@ class NetworkTreeScreen extends StatelessWidget {
             ),
             SizedBox(height: 8),
             // Downline Count
-    // if (isCurrentNode) ...[
-    //         Row(
-    //           mainAxisAlignment: MainAxisAlignment.center,
-    //           children: [
-    //
-    //               Icon(
-    //                 Icons.people_outline,
-    //                 size: 16,
-    //                 color:
-    //                     isCurrentNode
-    //                         ? Colors.white.withOpacity(0.8)
-    //                         : MyColor.getTextColor().withOpacity(0.6),
-    //               ),
-    //               SizedBox(width: 4),
-    //               Text(
-    //                 '${node.downlineCount}',
-    //                 style: TextStyle(
-    //                   color:
-    //                       isCurrentNode
-    //                           ? Colors.white.withOpacity(0.8)
-    //                           : MyColor.getTextColor().withOpacity(0.6),
-    //                   fontSize: 12,
-    //                   fontWeight: FontWeight.w500,
-    //                 ),
-    //               ),
-    //
-    //           ],
-    //         ),]
+    if (isCurrentNode) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+
+                  Icon(
+                    Icons.people_outline,
+                    size: 16,
+                    color:
+                        isCurrentNode
+                            ? Colors.white.withOpacity(0.8)
+                            : MyColor.getTextColor().withOpacity(0.6),
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    '${node.downlineCount}',
+                    style: TextStyle(
+                      color:
+                          isCurrentNode
+                              ? Colors.white.withOpacity(0.8)
+                              : MyColor.getTextColor().withOpacity(0.6),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+
+              ],
+            ),]
             // if (onTap != null && node.downlineCount > 0) ...[
             //   SizedBox(height: 8),
             //   Container(

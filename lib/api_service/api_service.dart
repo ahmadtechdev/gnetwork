@@ -2,6 +2,7 @@ import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../screens/maintenance/model.dart';
 import '../utils/custom_snackbar.dart';
 import 'local_stroge.dart';
 
@@ -110,7 +111,6 @@ class ApiService {
     }
   }
 
-  // UPDATED METHOD: Check maintenance mode with better error handling
   Future<MaintenanceResponse> checkMaintenanceMode() async {
     try {
       // First check internet connectivity
@@ -118,7 +118,6 @@ class ApiService {
       final bool hasInternet = connectivityResult != ConnectivityResult.none;
 
       if (!hasInternet) {
-        // If no internet, return false for maintenance (allow offline usage)
         return MaintenanceResponse(
           isInMaintenance: false,
           message: 'No internet connection - proceeding offline',
@@ -143,21 +142,21 @@ class ApiService {
           isInMaintenance: maintenanceMode == '1',
           message: data['message'] ?? 'App is under maintenance',
           success: true,
+          heading: data['heading'] ?? 'We\'ll be back soon!',
+          description: data['description'] ?? 'We\'re currently performing scheduled maintenance. Please check back in a while.',
+          estimatedTime: data['estimated_time'] ?? 'A few minutes',
         );
       }
 
-      // If response is not 200 or data is null, don't show maintenance
       return MaintenanceResponse(
         isInMaintenance: false,
         message: 'Unable to check maintenance status',
         success: false,
       );
     } on dio.DioException catch (e) {
-      // Handle specific error cases
       if (e.type == dio.DioExceptionType.connectionTimeout ||
           e.type == dio.DioExceptionType.receiveTimeout ||
           e.type == dio.DioExceptionType.connectionError) {
-        // Network issues - don't show maintenance
         return MaintenanceResponse(
           isInMaintenance: false,
           message: 'Network connection issues - proceeding offline',
@@ -166,7 +165,6 @@ class ApiService {
       }
 
       if (e.response?.statusCode == 500) {
-        // Server error - could be maintenance
         return MaintenanceResponse(
           isInMaintenance: true,
           message: 'Server is temporarily unavailable',
@@ -174,14 +172,12 @@ class ApiService {
         );
       }
 
-      // For other HTTP errors, don't show maintenance
       return MaintenanceResponse(
         isInMaintenance: false,
         message: 'Service temporarily unavailable',
         success: false,
       );
     } catch (e) {
-      // For any unexpected errors, don't show maintenance
       return MaintenanceResponse(
         isInMaintenance: false,
         message: 'Unable to connect to server',
@@ -189,6 +185,8 @@ class ApiService {
       );
     }
   }
+
+
 
   // Authentication endpoints
   Future<dio.Response?> registerUser({
@@ -413,17 +411,12 @@ class ApiService {
       }),
     );
   }
+
+  Future<dio.Response?> getActivityStatus() async {
+    return await _authenticatedRequest(
+      method: 'GET',
+      endpoint: 'mining-status',
+    );
+  }
 }
 
-// Model class for maintenance response
-class MaintenanceResponse {
-  final bool isInMaintenance;
-  final String message;
-  final bool success;
-
-  MaintenanceResponse({
-    required this.isInMaintenance,
-    required this.message,
-    required this.success,
-  });
-}

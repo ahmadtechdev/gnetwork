@@ -527,7 +527,7 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Referral Code (Optional)',
+          'Referral Code',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -595,12 +595,12 @@ class _GCoinSignUpScreenState extends State<GCoinSignUpScreen>
               ),
             ),
             // Referral code is optional, so no validator needed unless you have specific format rules
-            // validator: (value) {
-            //   if (value == null || value.isEmpty) {
-            //     return 'Please enter an Referral code';
-            //   }
-            //   return null;
-            // },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter an Referral code';
+              }
+              return null;
+            },
           ),
         ),
       ],
