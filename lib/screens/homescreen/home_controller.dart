@@ -101,8 +101,6 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
   void _setupMiningBalance() {
     // Get base balance and mining rate
-    print("check");
-    print(double.parse(userData['mine_rate']?.toString() ?? '0'));
     baseBalance.value = double.parse(userData['balance']?.toString() ?? '0');
     currentMiningRate = double.parse(userData['mine_rate']?.toString() ?? '0');
 
@@ -298,7 +296,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       }
 
       final response = await _dio.get(
-        'https://gnetwork.pro/api/dashboard',
+        // 'https://gnetwork.pro/api/dashboard',
+        'https://grownetwork.pro/api/dashboard',
         // 'https://clone.gnetwork.pro/api/dashboard',
         options: Options(
           headers: {
