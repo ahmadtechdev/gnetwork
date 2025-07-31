@@ -1,3 +1,4 @@
+import 'package:facebook_audience_network/facebook_audience_network.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,6 +43,8 @@ Future<void> main() async {
   // Add this before runApp() in main()
   Get.put(MaintenanceController());
 
+
+
   // Configure AdMob for test devices in debug mode
   if (kDebugMode) {
     final List<String> testDeviceIds = [
@@ -55,6 +58,11 @@ Future<void> main() async {
     );
     print('AdMob: Test devices configured for debug mode.');
   }
+
+  FacebookAudienceNetwork.init(
+    testingId: "24049615897999638", // Optional for testing
+    iOSAdvertiserTrackingEnabled: true, // Required for iOS 14+
+  );
 
   // Initialize MobileAds
   MobileAds.instance.initialize();

@@ -1,4 +1,7 @@
 // mining_memory_game.dart
+import 'package:facebook_audience_network/ad/ad_banner.dart';
+import 'package:facebook_audience_network/ad/ad_interstitial.dart';
+import 'package:facebook_audience_network/ad/ad_rewarded.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -184,14 +187,12 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
   late AnimationController _scaleController;
   late AnimationController _completionController;
 
-  // Banner Ad variables
-  BannerAd? _bannerAd;
+// Replace BannerAd with FacebookBannerAd
+  FacebookBannerAd? _bannerAd;
   bool _isBannerLoaded = false;
   bool _isLoadingBanner = false;
 
-
-  // Rewarded Ad variables
-  RewardedAd? _rewardedAd;
+// Replace RewardedAd with FacebookRewardedVideoAd
   bool _isRewardedAdLoaded = false;
   bool _isLoadingRewardedAd = false;
   bool _showRewardDialog = false;
@@ -227,54 +228,58 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
   }
 
   Future<void> _loadBannerAd() async {
-    if (_isLoadingBanner) return; // Prevent multiple simultaneous loads
+    if (_isLoadingBanner) return;
 
     _isLoadingBanner = true;
 
     // Dispose existing ad if any
     if (_bannerAd != null) {
-      _bannerAd?.dispose();
+      // _bannerAd?.dispose();
       _bannerAd = null;
       _isBannerLoaded = false;
     }
 
     try {
-      final banner = BannerAd(
-        adUnitId: AdHelper.miningGameScreenAdUnitId,
-        request: const AdRequest(),
-        size: AdSize.banner,
-        listener: BannerAdListener(
-          onAdLoaded: (ad) {
-            if (!mounted) {
-              ad.dispose();
-              return;
-            }
-            setState(() {
-              _bannerAd = ad as BannerAd;
-              _isBannerLoaded = true;
-              _isLoadingBanner = false;
-            });
-            if (kDebugMode) {
-              print('Mining game screen banner ad loaded successfully');
+      setState(() {
+        _bannerAd = FacebookBannerAd(
+          placementId: AdHelper.metaBannerAdUnitId,
+          bannerSize: BannerSize.STANDARD,
+          listener: (result, value) {
+            switch (result) {
+              case BannerAdResult.ERROR:
+                if (mounted) {
+                  setState(() {
+                    _isBannerLoaded = false;
+                    _isLoadingBanner = false;
+                  });
+                }
+                if (kDebugMode) {
+                  print('Mining game banner ad error: $value');
+                }
+                break;
+              case BannerAdResult.LOADED:
+                if (mounted) {
+                  setState(() {
+                    _isBannerLoaded = true;
+                    _isLoadingBanner = false;
+                  });
+                }
+                if (kDebugMode) {
+                  print('Mining game banner ad loaded');
+                }
+                break;
+              case BannerAdResult.CLICKED:
+              // Handle click
+                break;
+              case BannerAdResult.LOGGING_IMPRESSION:
+              // Handle impression
+                break;
             }
           },
-          onAdFailedToLoad: (ad, error) {
-            ad.dispose();
-            if (mounted) {
-              setState(() {
-                _bannerAd = null;
-                _isBannerLoaded = false;
-                _isLoadingBanner = false;
-              });
-            }
-            if (kDebugMode) {
-              print('Mining game screen banner ad failed to load: $error');
-            }
-          },
-        ),
-      );
-
-      await banner.load();
+        );
+        _isBannerLoaded = true;
+        _isLoadingBanner = false;
+      });
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -282,11 +287,10 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
         });
       }
       if (kDebugMode) {
-        print('Failed to load mining game screen banner ad: $e');
+        print('Failed to load mining game banner ad: $e');
       }
     }
   }
-
   void _initializeAnimations() {
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 200),
@@ -306,37 +310,46 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
     _isLoadingRewardedAd = true;
 
     try {
-      RewardedAd.load(
-        adUnitId: AdHelper.miningScreenRewardedAdUnitId,
-        request: const AdRequest(),
-        rewardedAdLoadCallback: RewardedAdLoadCallback(
-          onAdLoaded: (RewardedAd ad) {
-            if (!mounted) {
-              ad.dispose();
-              return;
-            }
-            setState(() {
-              _rewardedAd = ad;
-              _isRewardedAdLoaded = true;
-              _isLoadingRewardedAd = false;
-            });
-            if (kDebugMode) {
-              print('Rewarded ad loaded successfully');
-            }
-          },
-          onAdFailedToLoad: (LoadAdError error) {
-            if (mounted) {
-              setState(() {
-                _rewardedAd = null;
-                _isRewardedAdLoaded = false;
-                _isLoadingRewardedAd = false;
-              });
-            }
-            if (kDebugMode) {
-              print('Rewarded ad failed to load: $error');
-            }
-          },
-        ),
+      FacebookRewardedVideoAd.loadRewardedVideoAd(
+        placementId: AdHelper.metaInterstitialRewardedAdUnitId,
+        listener: (result, value) {
+          switch (result) {
+            case RewardedVideoAdResult.LOADED:
+              if (mounted) {
+                setState(() {
+                  _isRewardedAdLoaded = true;
+                  _isLoadingRewardedAd = false;
+                });
+              }
+              if (kDebugMode) {
+                print('Rewarded video ad loaded');
+              }
+              break;
+            case RewardedVideoAdResult.ERROR:
+              if (mounted) {
+                setState(() {
+                  _isRewardedAdLoaded = false;
+                  _isLoadingRewardedAd = false;
+                });
+              }
+              if (kDebugMode) {
+                print('Rewarded video ad error: $value');
+              }
+              break;
+            case RewardedVideoAdResult.CLICKED:
+            // Handle click
+              break;
+            case RewardedVideoAdResult.LOGGING_IMPRESSION:
+            // Handle impression
+              break;
+            case RewardedVideoAdResult.VIDEO_COMPLETE:
+            // Video completed
+              break;
+            case RewardedVideoAdResult.VIDEO_CLOSED:
+            // Video closed
+              break;
+          }
+        },
       );
     } catch (e) {
       if (mounted) {
@@ -349,58 +362,37 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
       }
     }
   }
-
   // Method to show rewarded ad
   void _showRewardedAd() {
-    if (_rewardedAd == null) {
+    if (!_isRewardedAdLoaded) {
       _handleNoAdAvailable();
       return;
     }
 
-    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (RewardedAd ad) {
-        if (kDebugMode) {
-          print('Rewarded ad showed full screen content');
+    FacebookRewardedVideoAd.loadRewardedVideoAd(
+      listener: (result, value) {
+        switch (result) {
+          case RewardedVideoAdResult.VIDEO_COMPLETE:
+            _isRewardClaimed = true;
+            _showRewardSuccessAndNavigateHome();
+            break;
+          case RewardedVideoAdResult.VIDEO_CLOSED:
+            if (!_isRewardClaimed) {
+              _showRetryDialog();
+            }
+            _isRewardedAdLoaded = false;
+            _loadRewardedAd(); // Load a new ad for next time
+            break;
+          case RewardedVideoAdResult.ERROR:
+            _handleAdError();
+            break;
+          default:
+            break;
         }
-      },
-      onAdDismissedFullScreenContent: (RewardedAd ad) {
-        ad.dispose();
-        _rewardedAd = null;
-        _isRewardedAdLoaded = false;
-
-        if (!_isRewardClaimed) {
-          // User closed ad without watching - show option to try again
-          _showRetryDialog();
-        }
-      },
-      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
-        ad.dispose();
-        _rewardedAd = null;
-        _isRewardedAdLoaded = false;
-        _handleAdError();
-      },
-    );
-
-    _rewardedAd!.show(
-      onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-        _isRewardClaimed = true;
-        _handleRewardEarned(reward);
       },
     );
   }
 
-  // Handle reward earned
-  void _handleRewardEarned(RewardItem reward) {
-    // Add haptic feedback
-    HapticFeedback.mediumImpact();
-
-    // Show success and navigate to home
-    Future.delayed(Duration(milliseconds: 500), () {
-      if (mounted) {
-        _showRewardSuccessAndNavigateHome();
-      }
-    });
-  }
 
   // Show reward success and navigate to home
   void _showRewardSuccessAndNavigateHome() {
@@ -447,7 +439,7 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
               ),
               SizedBox(height: 8),
               Text(
-                'You earned bonus coins!',
+                'You earned grow coins!',
                 style: TextStyle(
                   fontSize: 14,
                   color: MyColor.headingTextColor.withOpacity(0.7),
@@ -673,8 +665,7 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
   // Add this method to your dispose
   @override
   void dispose() {
-    _bannerAd?.dispose();
-    _rewardedAd?.dispose();
+
     _scaleController.dispose();
     _completionController.dispose();
     Get.delete<MiningMemoryGameController>(tag: 'mining_game');
@@ -685,8 +676,8 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
   Widget _buildBannerAd() {
     if (_isBannerLoaded && _bannerAd != null) {
       return Container(
-        width: _bannerAd!.size.width.toDouble(),
-        height: _bannerAd!.size.height.toDouble(),
+        height: 50, // Standard banner height
+        width: MediaQuery.of(context).size.width,
         alignment: Alignment.center,
         margin: EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
@@ -701,13 +692,13 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: AdWidget(ad: _bannerAd!),
+          child: _bannerAd!,
         ),
       );
     } else if (_isLoadingBanner) {
       return Container(
-        width: 320,
         height: 50,
+        width: MediaQuery.of(context).size.width,
         alignment: Alignment.center,
         margin: EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
@@ -741,7 +732,6 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
       return SizedBox.shrink();
     }
   }
-
   // Update the build method to include reward dialog
   @override
   Widget build(BuildContext context) {

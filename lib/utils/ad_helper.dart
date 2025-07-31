@@ -2,6 +2,24 @@ import 'dart:io';
 
 class AdHelper {
   // Original Banner Ad
+  static String get metaBannerAdUnitId {
+    if (Platform.isAndroid) {
+      return '24049615897999638_24076645018630059';
+    } else if (Platform.isIOS) {
+      return '24049615897999638_24076645018630059'; // Replace with actual iOS ID if different
+    } else {
+      throw UnsupportedError('Unsupported platform');
+    }
+  }
+  static String get metaInterstitialRewardedAdUnitId {
+    if (Platform.isAndroid) {
+      return '24049615897999638_24076656371962257';
+    } else if (Platform.isIOS) {
+      return '24049615897999638_24076656371962257'; // Replace with actual iOS ID if different
+    } else {
+      throw UnsupportedError('Unsupported platform');
+    }
+  }
   static String get bannerAdUnitId {
     if (Platform.isAndroid) {
       return 'ca-app-pub-5588063718705121/6993914999';

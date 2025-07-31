@@ -1,3 +1,4 @@
+import 'package:facebook_audience_network/ad/ad_banner.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gcoin/screens/drawer/kyc/kyc_screen.dart';
@@ -34,8 +35,8 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
   late Animation<double> _rotationAnimation;
   late Animation<double> _pulseAnimation;
 
-  BannerAd? _bannerAd;
-  BannerAd? _bottomBannerAd;
+  FacebookBannerAd? _bannerAd;
+  FacebookBannerAd? _bottomBannerAd;
   bool _isBannerLoaded = false;
   bool _isBottomBannerLoaded = false;
   bool _isLoadingBanner = false;
@@ -52,7 +53,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
 
     // Load banner ads after a small delay to let UI appear first
     Future.delayed(Duration(milliseconds: 500), () {
-      _loadBannerAd();
+      // _loadBannerAd();
       _loadBottomBannerAd();
     });
   }
@@ -117,116 +118,120 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
     _pulseController.repeat(reverse: true);
   }
 
-  Future<void> _loadBannerAd() async {
-    if (_isLoadingBanner) return; // Prevent multiple simultaneous loads
-
-    _isLoadingBanner = true;
-
-    // Dispose existing ad if any
-    if (_bannerAd != null) {
-      _bannerAd?.dispose();
-      _bannerAd = null;
-      _isBannerLoaded = false;
-    }
-
-    try {
-      final banner = BannerAd(
-        adUnitId: AdHelper.bannerAdUnitId,
-        request: const AdRequest(),
-        size: AdSize.banner,
-        listener: BannerAdListener(
-          onAdLoaded: (ad) {
-            if (!mounted) {
-              ad.dispose();
-              return;
-            }
-            setState(() {
-              _bannerAd = ad as BannerAd;
-              _isBannerLoaded = true;
-              _isLoadingBanner = false;
-            });
-            if (kDebugMode) {
-              print('Banner ad loaded successfully');
-            }
-          },
-          onAdFailedToLoad: (ad, error) {
-            ad.dispose();
-            if (mounted) {
-              setState(() {
-                _bannerAd = null;
-                _isBannerLoaded = false;
-                _isLoadingBanner = false;
-              });
-            }
-            if (kDebugMode) {
-              print('Banner ad failed to load: $error');
-            }
-          },
-        ),
-      );
-
-      await banner.load();
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingBanner = false;
-        });
-      }
-      if (kDebugMode) {
-        print('Failed to load banner ad: $e');
-      }
-    }
-  }
+  // Future<void> _loadBannerAd() async {
+  //   if (_isLoadingBanner) return; // Prevent multiple simultaneous loads
+  //
+  //   _isLoadingBanner = true;
+  //
+  //   // Dispose existing ad if any
+  //   if (_bannerAd != null) {
+  //     _bannerAd?.dispose();
+  //     _bannerAd = null;
+  //     _isBannerLoaded = false;
+  //   }
+  //
+  //   try {
+  //     final banner = BannerAd(
+  //       adUnitId: AdHelper.bannerAdUnitId,
+  //       request: const AdRequest(),
+  //       size: AdSize.banner,
+  //       listener: BannerAdListener(
+  //         onAdLoaded: (ad) {
+  //           if (!mounted) {
+  //             ad.dispose();
+  //             return;
+  //           }
+  //           setState(() {
+  //             _bannerAd = ad as BannerAd;
+  //             _isBannerLoaded = true;
+  //             _isLoadingBanner = false;
+  //           });
+  //           if (kDebugMode) {
+  //             print('Banner ad loaded successfully');
+  //           }
+  //         },
+  //         onAdFailedToLoad: (ad, error) {
+  //           ad.dispose();
+  //           if (mounted) {
+  //             setState(() {
+  //               _bannerAd = null;
+  //               _isBannerLoaded = false;
+  //               _isLoadingBanner = false;
+  //             });
+  //           }
+  //           if (kDebugMode) {
+  //             print('Banner ad failed to load: $error');
+  //           }
+  //         },
+  //       ),
+  //     );
+  //
+  //     await banner.load();
+  //   } catch (e) {
+  //     if (mounted) {
+  //       setState(() {
+  //         _isLoadingBanner = false;
+  //       });
+  //     }
+  //     if (kDebugMode) {
+  //       print('Failed to load banner ad: $e');
+  //     }
+  //   }
+  // }
 
   Future<void> _loadBottomBannerAd() async {
-    if (_isLoadingBottomBanner) return; // Prevent multiple simultaneous loads
+    if (_isLoadingBottomBanner) return;
 
     _isLoadingBottomBanner = true;
 
     // Dispose existing ad if any
     if (_bottomBannerAd != null) {
-      _bottomBannerAd?.dispose();
+      // _bottomBannerAd?.dispose();
       _bottomBannerAd = null;
       _isBottomBannerLoaded = false;
     }
 
     try {
-      final banner = BannerAd(
-        adUnitId: AdHelper.dashboardBottomAdUnitId,
-        request: const AdRequest(),
-        size: AdSize.banner,
-        listener: BannerAdListener(
-          onAdLoaded: (ad) {
-            if (!mounted) {
-              ad.dispose();
-              return;
-            }
-            setState(() {
-              _bottomBannerAd = ad as BannerAd;
-              _isBottomBannerLoaded = true;
-              _isLoadingBottomBanner = false;
-            });
-            if (kDebugMode) {
-              print('Bottom banner ad loaded successfully');
+      setState(() {
+        _bottomBannerAd = FacebookBannerAd(
+          placementId: AdHelper.metaBannerAdUnitId,
+          bannerSize: BannerSize.STANDARD,
+          listener: (result, value) {
+            switch (result) {
+              case BannerAdResult.ERROR:
+                if (mounted) {
+                  setState(() {
+                    _isBottomBannerLoaded = false;
+                    _isLoadingBottomBanner = false;
+                  });
+                }
+                if (kDebugMode) {
+                  print('Bottom Banner Ad Error: $value');
+                }
+                break;
+              case BannerAdResult.LOADED:
+                if (mounted) {
+                  setState(() {
+                    _isBottomBannerLoaded = true;
+                    _isLoadingBottomBanner = false;
+                  });
+                }
+                if (kDebugMode) {
+                  print('Bottom Banner Ad Loaded');
+                }
+                break;
+              case BannerAdResult.CLICKED:
+              // Handle click
+                break;
+              case BannerAdResult.LOGGING_IMPRESSION:
+              // Handle impression
+                break;
             }
           },
-          onAdFailedToLoad: (ad, error) {
-            ad.dispose();
-            if (mounted) {
-              setState(() {
-                _bottomBannerAd = null;
-                _isBottomBannerLoaded = false;
-                _isLoadingBottomBanner = false;
-              });
-            }
-            if (kDebugMode) {
-              print('Bottom banner ad failed to load: $error');
-            }
-          },
-        ),
-      );
-
-      await banner.load();
+        );
+        _isBottomBannerLoaded = true;
+        _isLoadingBottomBanner = false;
+      });
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -241,8 +246,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
-    _bottomBannerAd?.dispose();
+
     _fadeController.dispose();
     _slideController.dispose();
     _scaleController.dispose();
@@ -281,7 +285,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
               await _homeController.fetchDashboardData();
               // Reload ads on refresh with proper delay
               await Future.delayed(Duration(milliseconds: 300));
-              _loadBannerAd();
+              // _loadBannerAd();
               _loadBottomBannerAd();
             },
             child: SingleChildScrollView(
@@ -333,16 +337,16 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                   // Top Banner Ad
                   if (_isBannerLoaded && _bannerAd != null)
                     Container(
-                      width: _bannerAd!.size.width.toDouble(),
-                      height: _bannerAd!.size.height.toDouble(),
+                      height: 50, // Standard banner height
+                      width: MediaQuery.of(context).size.width,
                       alignment: Alignment.center,
                       margin: EdgeInsets.only(bottom: 8),
-                      child: AdWidget(ad: _bannerAd!),
+                      child: _bannerAd!,
                     )
                   else if (_isLoadingBanner)
                     Container(
-                      width: 320,
                       height: 50,
+                      width: MediaQuery.of(context).size.width,
                       alignment: Alignment.center,
                       margin: EdgeInsets.only(bottom: 8),
                       child: CircularProgressIndicator(
@@ -350,6 +354,7 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
                         strokeWidth: 2,
                       ),
                     ),
+
 
                   // Enhanced Game Apps Section
                   _buildEnhancedGameAppsSection(),
@@ -359,19 +364,19 @@ class PiNetworkHomeScreenState extends State<PiNetworkHomeScreen>
 
                   SizedBox(height: 8),
 
-                  // Bottom Banner Ad (Dashboard Bottom Ad)
+                  // Bottom Banner Ad
                   if (_isBottomBannerLoaded && _bottomBannerAd != null)
                     Container(
-                      width: _bottomBannerAd!.size.width.toDouble(),
-                      height: _bottomBannerAd!.size.height.toDouble(),
+                      height: 50, // Standard banner height
+                      width: MediaQuery.of(context).size.width,
                       alignment: Alignment.center,
                       margin: EdgeInsets.only(bottom: 8),
-                      child: AdWidget(ad: _bottomBannerAd!),
+                      child: _bottomBannerAd!,
                     )
                   else if (_isLoadingBottomBanner)
                     Container(
-                      width: 320,
                       height: 50,
+                      width: MediaQuery.of(context).size.width,
                       alignment: Alignment.center,
                       margin: EdgeInsets.only(bottom: 8),
                       child: CircularProgressIndicator(

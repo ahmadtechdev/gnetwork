@@ -1,4 +1,5 @@
 // game.dart
+import 'package:facebook_audience_network/ad/ad_banner.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -184,7 +185,7 @@ class _EarnGameScreenState extends State<EarnGameScreen>
   late AnimationController _completionController;
 
   // Banner Ad variables
-  BannerAd? _bannerAd;
+  FacebookBannerAd? _bannerAd;
   bool _isBannerLoaded = false;
   bool _isLoadingBanner = false;
 
@@ -216,54 +217,58 @@ class _EarnGameScreenState extends State<EarnGameScreen>
   }
 
   Future<void> _loadBannerAd() async {
-    if (_isLoadingBanner) return; // Prevent multiple simultaneous loads
+    if (_isLoadingBanner) return;
 
     _isLoadingBanner = true;
 
     // Dispose existing ad if any
     if (_bannerAd != null) {
-      _bannerAd?.dispose();
+      // _bannerAd?.dispose();
       _bannerAd = null;
       _isBannerLoaded = false;
     }
 
     try {
-      final banner = BannerAd(
-        adUnitId: AdHelper.gameScreenAdUnitId,
-        request: const AdRequest(),
-        size: AdSize.banner,
-        listener: BannerAdListener(
-          onAdLoaded: (ad) {
-            if (!mounted) {
-              ad.dispose();
-              return;
-            }
-            setState(() {
-              _bannerAd = ad as BannerAd;
-              _isBannerLoaded = true;
-              _isLoadingBanner = false;
-            });
-            if (kDebugMode) {
-              print('Game screen banner ad loaded successfully');
+      setState(() {
+        _bannerAd = FacebookBannerAd(
+          placementId: AdHelper.metaBannerAdUnitId,
+          bannerSize: BannerSize.STANDARD,
+          listener: (result, value) {
+            switch (result) {
+              case BannerAdResult.ERROR:
+                if (mounted) {
+                  setState(() {
+                    _isBannerLoaded = false;
+                    _isLoadingBanner = false;
+                  });
+                }
+                if (kDebugMode) {
+                  print('Game screen banner ad error: $value');
+                }
+                break;
+              case BannerAdResult.LOADED:
+                if (mounted) {
+                  setState(() {
+                    _isBannerLoaded = true;
+                    _isLoadingBanner = false;
+                  });
+                }
+                if (kDebugMode) {
+                  print('Game screen banner ad loaded');
+                }
+                break;
+              case BannerAdResult.CLICKED:
+              // Handle click
+                break;
+              case BannerAdResult.LOGGING_IMPRESSION:
+              // Handle impression
+                break;
             }
           },
-          onAdFailedToLoad: (ad, error) {
-            ad.dispose();
-            if (mounted) {
-              setState(() {
-                _bannerAd = null;
-                _isBannerLoaded = false;
-                _isLoadingBanner = false;
-              });
-            }
-            if (kDebugMode) {
-              print('Game screen banner ad failed to load: $error');
-            }
-          },
-        ),
-      );
-
-      await banner.load();
+        );
+        _isBannerLoaded = true;
+        _isLoadingBanner = false;
+      });
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -275,10 +280,9 @@ class _EarnGameScreenState extends State<EarnGameScreen>
       }
     }
   }
-
   @override
   void dispose() {
-    _bannerAd?.dispose();
+    // _bannerAd?.dispose();
     _flipController.dispose();
     _scaleController.dispose();
     _completionController.dispose();
@@ -288,8 +292,8 @@ class _EarnGameScreenState extends State<EarnGameScreen>
   Widget _buildBannerAd() {
     if (_isBannerLoaded && _bannerAd != null) {
       return Container(
-        width: _bannerAd!.size.width.toDouble(),
-        height: _bannerAd!.size.height.toDouble(),
+        height: 50, // Standard banner height
+        width: MediaQuery.of(context).size.width,
         alignment: Alignment.center,
         margin: EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
@@ -304,13 +308,13 @@ class _EarnGameScreenState extends State<EarnGameScreen>
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: AdWidget(ad: _bannerAd!),
+          child: _bannerAd!,
         ),
       );
     } else if (_isLoadingBanner) {
       return Container(
-        width: 320,
         height: 50,
+        width: MediaQuery.of(context).size.width,
         alignment: Alignment.center,
         margin: EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
@@ -326,7 +330,6 @@ class _EarnGameScreenState extends State<EarnGameScreen>
       return SizedBox.shrink();
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
