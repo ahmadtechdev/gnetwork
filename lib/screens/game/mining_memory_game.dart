@@ -184,18 +184,6 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
   late AnimationController _scaleController;
   late AnimationController _completionController;
 
-  // Banner Ad variables
-  BannerAd? _bannerAd;
-  bool _isBannerLoaded = false;
-  bool _isLoadingBanner = false;
-
-
-  // Rewarded Ad variables
-  RewardedAd? _rewardedAd;
-  bool _isRewardedAdLoaded = false;
-  bool _isLoadingRewardedAd = false;
-  bool _showRewardDialog = false;
-  bool _isRewardClaimed = false;
 
   @override
   void initState() {
@@ -204,88 +192,15 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
     _initializeAnimations();
     controller.initializeGame(onCompleted: _onGameCompleted);
 
-    // Load both banner and rewarded ad
-    Future.delayed(Duration(milliseconds: 500), () {
-      _loadBannerAd();
-      _loadRewardedAd();
-    });
   }
 
   // New method to handle game completion
   void _onGameCompleted() {
-    // Show reward dialog after game completion animation
-    Future.delayed(Duration(milliseconds: 2500), () {
-      if (mounted) {
-        setState(() {
-          _showRewardDialog = true;
-        });
-      }
-    });
 
     // Call original callback if exists
     widget.onGameCompleted?.call();
   }
 
-  Future<void> _loadBannerAd() async {
-    if (_isLoadingBanner) return; // Prevent multiple simultaneous loads
-
-    _isLoadingBanner = true;
-
-    // Dispose existing ad if any
-    if (_bannerAd != null) {
-      _bannerAd?.dispose();
-      _bannerAd = null;
-      _isBannerLoaded = false;
-    }
-
-    try {
-      final banner = BannerAd(
-        adUnitId: AdHelper.miningGameScreenAdUnitId,
-        request: const AdRequest(),
-        size: AdSize.banner,
-        listener: BannerAdListener(
-          onAdLoaded: (ad) {
-            if (!mounted) {
-              ad.dispose();
-              return;
-            }
-            setState(() {
-              _bannerAd = ad as BannerAd;
-              _isBannerLoaded = true;
-              _isLoadingBanner = false;
-            });
-            if (kDebugMode) {
-              print('Mining game screen banner ad loaded successfully');
-            }
-          },
-          onAdFailedToLoad: (ad, error) {
-            ad.dispose();
-            if (mounted) {
-              setState(() {
-                _bannerAd = null;
-                _isBannerLoaded = false;
-                _isLoadingBanner = false;
-              });
-            }
-            if (kDebugMode) {
-              print('Mining game screen banner ad failed to load: $error');
-            }
-          },
-        ),
-      );
-
-      await banner.load();
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingBanner = false;
-        });
-      }
-      if (kDebugMode) {
-        print('Failed to load mining game screen banner ad: $e');
-      }
-    }
-  }
 
   void _initializeAnimations() {
     _scaleController = AnimationController(
@@ -299,98 +214,15 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
     );
   }
 
-  // Method to load rewarded ad
-  Future<void> _loadRewardedAd() async {
-    if (_isLoadingRewardedAd) return;
-
-    _isLoadingRewardedAd = true;
-
-    try {
-      RewardedAd.load(
-        adUnitId: AdHelper.miningScreenRewardedAdUnitId,
-        request: const AdRequest(),
-        rewardedAdLoadCallback: RewardedAdLoadCallback(
-          onAdLoaded: (RewardedAd ad) {
-            if (!mounted) {
-              ad.dispose();
-              return;
-            }
-            setState(() {
-              _rewardedAd = ad;
-              _isRewardedAdLoaded = true;
-              _isLoadingRewardedAd = false;
-            });
-            if (kDebugMode) {
-              print('Rewarded ad loaded successfully');
-            }
-          },
-          onAdFailedToLoad: (LoadAdError error) {
-            if (mounted) {
-              setState(() {
-                _rewardedAd = null;
-                _isRewardedAdLoaded = false;
-                _isLoadingRewardedAd = false;
-              });
-            }
-            if (kDebugMode) {
-              print('Rewarded ad failed to load: $error');
-            }
-          },
-        ),
-      );
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingRewardedAd = false;
-        });
-      }
-      if (kDebugMode) {
-        print('Failed to load rewarded ad: $e');
-      }
-    }
-  }
-
   // Method to show rewarded ad
   void _showRewardedAd() {
-    if (_rewardedAd == null) {
-      _handleNoAdAvailable();
-      return;
-    }
 
-    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (RewardedAd ad) {
-        if (kDebugMode) {
-          print('Rewarded ad showed full screen content');
-        }
-      },
-      onAdDismissedFullScreenContent: (RewardedAd ad) {
-        ad.dispose();
-        _rewardedAd = null;
-        _isRewardedAdLoaded = false;
 
-        if (!_isRewardClaimed) {
-          // User closed ad without watching - show option to try again
-          _showRetryDialog();
-        }
-      },
-      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
-        ad.dispose();
-        _rewardedAd = null;
-        _isRewardedAdLoaded = false;
-        _handleAdError();
-      },
-    );
-
-    _rewardedAd!.show(
-      onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-        _isRewardClaimed = true;
-        _handleRewardEarned(reward);
-      },
-    );
+    _handleRewardEarned();
   }
 
   // Handle reward earned
-  void _handleRewardEarned(RewardItem reward) {
+  void _handleRewardEarned() {
     // Add haptic feedback
     HapticFeedback.mediumImpact();
 
@@ -521,7 +353,7 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
                     child: ElevatedButton(
                       onPressed: () {
                         Get.back();
-                        _loadRewardedAd();
+
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: MyColor.getGCoinPrimaryColor(),
@@ -606,14 +438,7 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
                     child: ElevatedButton(
                       onPressed: () {
                         Get.back();
-                        _loadRewardedAd();
-                        Future.delayed(Duration(milliseconds: 500), () {
-                          if (_isRewardedAdLoaded) {
-                            _showRewardedAd();
-                          } else {
-                            _handleNoAdAvailable();
-                          }
-                        });
+
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: MyColor.getGCoinPrimaryColor(),
@@ -673,74 +498,13 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
   // Add this method to your dispose
   @override
   void dispose() {
-    _bannerAd?.dispose();
-    _rewardedAd?.dispose();
+
     _scaleController.dispose();
     _completionController.dispose();
     Get.delete<MiningMemoryGameController>(tag: 'mining_game');
     super.dispose();
   }
 
-
-  Widget _buildBannerAd() {
-    if (_isBannerLoaded && _bannerAd != null) {
-      return Container(
-        width: _bannerAd!.size.width.toDouble(),
-        height: _bannerAd!.size.height.toDouble(),
-        alignment: Alignment.center,
-        margin: EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: AdWidget(ad: _bannerAd!),
-        ),
-      );
-    } else if (_isLoadingBanner) {
-      return Container(
-        width: 320,
-        height: 50,
-        alignment: Alignment.center,
-        margin: EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: Colors.grey.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.withOpacity(0.3)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                color: Colors.orange,
-                strokeWidth: 2,
-              ),
-            ),
-            SizedBox(width: 8),
-            Text(
-              'Loading Ad...',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      return SizedBox.shrink();
-    }
-  }
 
   // Update the build method to include reward dialog
   @override
@@ -750,8 +514,6 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Banner Ad above header
-            _buildBannerAd(),
 
             // Game Header
             _buildGameHeader(),
@@ -766,9 +528,7 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
                       ? _buildCompletionScreen()
                       : _buildGameGrid()),
 
-                  // Reward Dialog Overlay
-                  if (_showRewardDialog)
-                    _buildRewardDialog(),
+
                 ],
               ),
             ),
@@ -834,42 +594,37 @@ class _MiningMemoryGameState extends State<MiningMemoryGame>
               SizedBox(height: 20),
               Row(
                 children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isRewardedAdLoaded ? () {
-                        setState(() {
-                          _showRewardDialog = false;
-                        });
-                        _showRewardedAd();
-                      } : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: MyColor.getGCoinPrimaryColor(),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: _isLoadingRewardedAd
-                          ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                          : Text('Watch Ad'),
-                    ),
-                  ),
+                  // Expanded(
+                  //   child: ElevatedButton(
+                  //     onPressed: () {
+                  //
+                  //       _showRewardedAd();
+                  //     },
+                  //     style: ElevatedButton.styleFrom(
+                  //       backgroundColor: MyColor.getGCoinPrimaryColor(),
+                  //       foregroundColor: Colors.white,
+                  //       padding: EdgeInsets.symmetric(vertical: 12),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(8),
+                  //       ),
+                  //     ),
+                  //     child: _isLoadingRewardedAd
+                  //         ? SizedBox(
+                  //       width: 20,
+                  //       height: 20,
+                  //       child: CircularProgressIndicator(
+                  //         color: Colors.white,
+                  //         strokeWidth: 2,
+                  //       ),
+                  //     )
+                  //         : Text('Watch Ad'),
+                  //   ),
+                  // ),
                   SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        setState(() {
-                          _showRewardDialog = false;
-                        });
-                        // Navigate back to home
+                                              // Navigate back to home
                         Get.back();
                       },
                       style: ElevatedButton.styleFrom(

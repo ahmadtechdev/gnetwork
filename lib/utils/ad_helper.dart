@@ -2,6 +2,45 @@ import 'dart:io';
 
 class AdHelper {
   // Original Banner Ad
+
+  static String get appOpenAdUnitId {
+    if (Platform.isAndroid) {
+      return 'ca-app-pub-9756236136807053/7228850140';
+    } else if (Platform.isIOS) {
+      return 'ca-app-pub-9756236136807053/7228850140'; // Replace with actual iOS ID if different
+    } else {
+      throw UnsupportedError('Unsupported platform');
+    }
+  }
+
+  static String get interstitialAdUnitId {
+    if (Platform.isAndroid) {
+      return 'ca-app-pub-9756236136807053/9372346496';
+    } else if (Platform.isIOS) {
+      return 'ca-app-pub-9756236136807053/9372346496'; // Replace with actual iOS ID if different
+    } else {
+      throw UnsupportedError('Unsupported platform');
+    }
+  }
+  static String get bannerNewAdUnitId {
+    if (Platform.isAndroid) {
+      return 'ca-app-pub-9756236136807053/4686447282';
+    } else if (Platform.isIOS) {
+      return 'ca-app-pub-9756236136807053/4686447282'; // Replace with actual iOS ID if different
+    } else {
+      throw UnsupportedError('Unsupported platform');
+    }
+  }
+  static String get nativeAdUnitId {
+    if (Platform.isAndroid) {
+      return 'ca-app-pub-9756236136807053/9092596154';
+    } else if (Platform.isIOS) {
+      return 'ca-app-pub-9756236136807053/9092596154'; // Replace with actual iOS ID if different
+    } else {
+      throw UnsupportedError('Unsupported platform');
+    }
+  }
+
   static String get bannerAdUnitId {
     if (Platform.isAndroid) {
       return 'ca-app-pub-5588063718705121/6993914999';

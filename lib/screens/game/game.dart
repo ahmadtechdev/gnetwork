@@ -2,12 +2,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:math';
 import 'dart:async';
 
 import '../../routes/route.dart';
-import '../../utils/ad_helper.dart';
 import '../../utils/app_colors.dart';
 
 class EarnGameController extends GetxController {
@@ -183,10 +181,6 @@ class _EarnGameScreenState extends State<EarnGameScreen>
   late AnimationController _scaleController;
   late AnimationController _completionController;
 
-  // Banner Ad variables
-  BannerAd? _bannerAd;
-  bool _isBannerLoaded = false;
-  bool _isLoadingBanner = false;
 
   @override
   void initState() {
@@ -194,8 +188,6 @@ class _EarnGameScreenState extends State<EarnGameScreen>
     controller = Get.put(EarnGameController());
     _initializeAnimations();
 
-    // Load banner ad after a small delay
-    Future.delayed(Duration(milliseconds: 500), _loadBannerAd);
   }
 
   void _initializeAnimations() {
@@ -215,116 +207,13 @@ class _EarnGameScreenState extends State<EarnGameScreen>
     );
   }
 
-  Future<void> _loadBannerAd() async {
-    if (_isLoadingBanner) return; // Prevent multiple simultaneous loads
-
-    _isLoadingBanner = true;
-
-    // Dispose existing ad if any
-    if (_bannerAd != null) {
-      _bannerAd?.dispose();
-      _bannerAd = null;
-      _isBannerLoaded = false;
-    }
-
-    try {
-      final banner = BannerAd(
-        adUnitId: AdHelper.gameScreenAdUnitId,
-        request: const AdRequest(),
-        size: AdSize.banner,
-        listener: BannerAdListener(
-          onAdLoaded: (ad) {
-            if (!mounted) {
-              ad.dispose();
-              return;
-            }
-            setState(() {
-              _bannerAd = ad as BannerAd;
-              _isBannerLoaded = true;
-              _isLoadingBanner = false;
-            });
-            if (kDebugMode) {
-              print('Game screen banner ad loaded successfully');
-            }
-          },
-          onAdFailedToLoad: (ad, error) {
-            ad.dispose();
-            if (mounted) {
-              setState(() {
-                _bannerAd = null;
-                _isBannerLoaded = false;
-                _isLoadingBanner = false;
-              });
-            }
-            if (kDebugMode) {
-              print('Game screen banner ad failed to load: $error');
-            }
-          },
-        ),
-      );
-
-      await banner.load();
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingBanner = false;
-        });
-      }
-      if (kDebugMode) {
-        print('Failed to load game screen banner ad: $e');
-      }
-    }
-  }
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
     _flipController.dispose();
     _scaleController.dispose();
     _completionController.dispose();
     super.dispose();
-  }
-
-  Widget _buildBannerAd() {
-    if (_isBannerLoaded && _bannerAd != null) {
-      return Container(
-        width: _bannerAd!.size.width.toDouble(),
-        height: _bannerAd!.size.height.toDouble(),
-        alignment: Alignment.center,
-        margin: EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: AdWidget(ad: _bannerAd!),
-        ),
-      );
-    } else if (_isLoadingBanner) {
-      return Container(
-        width: 320,
-        height: 50,
-        alignment: Alignment.center,
-        margin: EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: MyColor.getScreenBgColor().withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: CircularProgressIndicator(
-          color: MyColor.getGCoinPrimaryColor(),
-          strokeWidth: 2,
-        ),
-      );
-    } else {
-      return SizedBox.shrink();
-    }
   }
 
   @override
@@ -353,8 +242,6 @@ class _EarnGameScreenState extends State<EarnGameScreen>
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // Banner Ad above header
-              _buildBannerAd(),
 
               _buildHeader(),
               const SizedBox(height: 20),

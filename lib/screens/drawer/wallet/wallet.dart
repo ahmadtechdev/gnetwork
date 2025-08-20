@@ -1,13 +1,18 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:dio/dio.dart' as dio;
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../../../api_service/api_service.dart';
 import '../../../utils/ad_helper.dart';
 import '../../../utils/app_colors.dart';
 
+
+// Declare a global counter for the interstitial ad
+int walletScreenOpenCount = 0;
 
 class WalletScreen extends StatefulWidget {
   @override
@@ -32,43 +37,204 @@ class _WalletScreenState extends State<WalletScreen>
   double _miningBalance = 0.0;
   double _referralBalance = 0.0;
 
-  // Add these ad variables
-  BannerAd? _topBannerAd;
+  // Banner Ad variables
   BannerAd? _bottomBannerAd;
-  bool _isTopBannerLoaded = false;
-  bool _isBottomBannerLoaded = false;
-  bool _isLoadingTopBanner = false;
-  bool _isLoadingBottomBanner = false;
+  bool _isBottomBannerAdLoaded = false;
+
+
+
+  // Interstitial Ad variable
+  InterstitialAd? _interstitialAd;
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _loadWalletData();
+    _listenToAdSettings();
+  }
+  bool _shouldShowAds = false; // Add this variable
 
-    // Load ads after a small delay
-    Future.delayed(Duration(milliseconds: 500), () {
-      _loadTopBannerAd();
-      _loadBottomBannerAd();
-    });
+  StreamSubscription? _adSettingsSubscription; // Add this
+
+  // Replace _checkAdSettings with this listener approach
+  void _listenToAdSettings() {
+    print("Setting up Firestore listener...");
+
+    _adSettingsSubscription = FirebaseFirestore.instance
+        .collection('app_settings')
+        .doc('ads_config')
+        .snapshots()
+        .listen(
+          (DocumentSnapshot doc) {
+        print("Listener triggered - Document exists: ${doc.exists}");
+        print("Listener - Document data: ${doc.data()}");
+
+        if (doc.exists) {
+          Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
+          bool showAds = data?['show_ads'] ?? false;
+
+          print("Listener - show_ads value: $showAds");
+
+          setState(() {
+            _shouldShowAds = showAds;
+          });
+
+          if (_shouldShowAds && _bottomBannerAd == null) {
+            print("Listener - Loading ads...");
+            _loadAds();
+          } else if (!_shouldShowAds && _bottomBannerAd != null) {
+            print("Listener - Disposing ads...");
+            _bottomBannerAd?.dispose();
+            _bottomBannerAd = null;
+            _interstitialAd?.dispose();
+            _interstitialAd = null;
+            setState(() {
+              _isBottomBannerAdLoaded = false;
+            });
+          }
+        } else {
+          print("Listener - Document does not exist, creating it...");
+          _createDefaultAdSettings();
+        }
+      },
+      onError: (error) {
+        print("Listener error: $error");
+        setState(() {
+          _shouldShowAds = false;
+        });
+      },
+    );
   }
 
+  // Method to create default settings if document doesn't exist
+  Future<void> _createDefaultAdSettings() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('app_settings')
+          .doc('ads_config')
+          .set({
+        'show_ads': true, // Default value
+      });
+      print("Default ad settings created");
+    } catch (e) {
+      print("Error creating default ad settings: $e");
+    }
+  }
+
+
+  void _loadAds() {
+    _loadBottomBannerAd();
+    _showInterstitialAdIfReady();
+  }
+
+  void _loadBottomBannerAd() {
+    _bottomBannerAd = BannerAd(
+      adUnitId: kDebugMode ? 'ca-app-pub-3940256099942544/6300978111' : AdHelper.bannerNewAdUnitId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (Ad ad) {
+          if (kDebugMode) {
+            print('BannerAd loaded.');
+          }
+          setState(() {
+            _isBottomBannerAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (Ad ad, LoadAdError error) {
+          if (kDebugMode) {
+            print('BannerAd failed to load: $error');
+          }
+          ad.dispose();
+          setState(() {
+            _isBottomBannerAdLoaded = false;
+          });
+        },
+      ),
+    );
+    _bottomBannerAd!.load();
+  }
+
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: kDebugMode ? 'ca-app-pub-3940256099942544/1033173712' : AdHelper.interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          if (kDebugMode) {
+            print('InterstitialAd loaded.');
+          }
+          _interstitialAd = ad;
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          if (kDebugMode) {
+            print('InterstitialAd failed to load: $error');
+          }
+        },
+      ),
+    );
+  }
+
+  void _showInterstitialAdIfReady() {
+    walletScreenOpenCount++;
+    if (kDebugMode) {
+      print("Wallet screen opened $walletScreenOpenCount times.");
+    }
+
+    if (walletScreenOpenCount % 2 == 0) {
+      if (_interstitialAd == null) {
+        if (kDebugMode) {
+          print('Ad is not ready yet, loading new one.');
+        }
+        _loadInterstitialAd();
+        return;
+      }
+
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdShowedFullScreenContent: (InterstitialAd ad) {
+          if (kDebugMode) {
+            print('onAdShowedFullScreenContent');
+          }
+        },
+        onAdDismissedFullScreenContent: (InterstitialAd ad) {
+          if (kDebugMode) {
+            print('$ad onAdDismissedFullScreenContent');
+          }
+          ad.dispose();
+          _loadInterstitialAd(); // Load the next ad immediately
+        },
+        onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+          if (kDebugMode) {
+            print('$ad onAdFailedToShowFullScreenContent: $error');
+          }
+          ad.dispose();
+          _loadInterstitialAd();
+        },
+      );
+
+      _interstitialAd!.show();
+      _interstitialAd = null; // Clear the ad after showing
+    } else {
+      // If not an even-numbered open, just preload the ad for the next time
+      _loadInterstitialAd();
+    }
+  }
+
+  // Existing methods...
   void _initializeAnimations() {
     _slideController = AnimationController(
       duration: Duration(milliseconds: 800),
       vsync: this,
     );
-
     _fadeController = AnimationController(
       duration: Duration(milliseconds: 600),
       vsync: this,
     );
-
     _pulseController = AnimationController(
       duration: Duration(milliseconds: 2000),
       vsync: this,
     );
-
     _slideAnimation = Tween<Offset>(
       begin: Offset(0, 0.5),
       end: Offset.zero,
@@ -76,7 +242,6 @@ class _WalletScreenState extends State<WalletScreen>
       parent: _slideController,
       curve: Curves.easeOutCubic,
     ));
-
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -84,7 +249,6 @@ class _WalletScreenState extends State<WalletScreen>
       parent: _fadeController,
       curve: Curves.easeInOut,
     ));
-
     _pulseAnimation = Tween<double>(
       begin: 1.0,
       end: 1.05,
@@ -92,7 +256,6 @@ class _WalletScreenState extends State<WalletScreen>
       parent: _pulseController,
       curve: Curves.easeInOut,
     ));
-
     _pulseController.repeat(reverse: true);
   }
 
@@ -123,254 +286,23 @@ class _WalletScreenState extends State<WalletScreen>
     setState(() {
       _isRefreshing = true;
     });
-
     await _loadWalletData();
-
     setState(() {
       _isRefreshing = false;
     });
   }
 
-  String _getTransactionTypeText(String type) {
-    switch (type) {
-      case '1':
-        return 'Mining Reward';
-      case '2':
-        return 'Referral Bonus';
-      case '3':
-        return 'Transfer';
-      default:
-        return 'Transaction';
-    }
-  }
-
-  IconData _getTransactionIcon(String type) {
-    switch (type) {
-      case '1':
-        return Icons.diamond;
-      case '2':
-        return Icons.people;
-      case '3':
-        return Icons.swap_horiz;
-      default:
-        return Icons.account_balance_wallet;
-    }
-  }
-
-  Future<void> _loadTopBannerAd() async {
-    if (_isLoadingTopBanner) return;
-
-    _isLoadingTopBanner = true;
-
-    if (_topBannerAd != null) {
-      _topBannerAd?.dispose();
-      _topBannerAd = null;
-      _isTopBannerLoaded = false;
-    }
-
-    try {
-      final banner = BannerAd(
-        adUnitId: AdHelper.walletScreenTopAdUnitId,
-        request: const AdRequest(),
-        size: AdSize.banner,
-        listener: BannerAdListener(
-          onAdLoaded: (ad) {
-            if (!mounted) {
-              ad.dispose();
-              return;
-            }
-            setState(() {
-              _topBannerAd = ad as BannerAd;
-              _isTopBannerLoaded = true;
-              _isLoadingTopBanner = false;
-            });
-            if (kDebugMode) {
-              print('Wallet top banner ad loaded successfully');
-            }
-          },
-          onAdFailedToLoad: (ad, error) {
-            ad.dispose();
-            if (mounted) {
-              setState(() {
-                _topBannerAd = null;
-                _isTopBannerLoaded = false;
-                _isLoadingTopBanner = false;
-              });
-            }
-            if (kDebugMode) {
-              print('Wallet top banner ad failed to load: $error');
-            }
-          },
-        ),
-      );
-
-      await banner.load();
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingTopBanner = false;
-        });
-      }
-      if (kDebugMode) {
-        print('Failed to load wallet top banner ad: $e');
-      }
-    }
-  }
-
-  Future<void> _loadBottomBannerAd() async {
-    if (_isLoadingBottomBanner) return;
-
-    _isLoadingBottomBanner = true;
-
-    if (_bottomBannerAd != null) {
-      _bottomBannerAd?.dispose();
-      _bottomBannerAd = null;
-      _isBottomBannerLoaded = false;
-    }
-
-    try {
-      final banner = BannerAd(
-        adUnitId: AdHelper.walletScreenBottomAdUnitId,
-        request: const AdRequest(),
-        size: AdSize.banner,
-        listener: BannerAdListener(
-          onAdLoaded: (ad) {
-            if (!mounted) {
-              ad.dispose();
-              return;
-            }
-            setState(() {
-              _bottomBannerAd = ad as BannerAd;
-              _isBottomBannerLoaded = true;
-              _isLoadingBottomBanner = false;
-            });
-            if (kDebugMode) {
-              print('Wallet bottom banner ad loaded successfully');
-            }
-          },
-          onAdFailedToLoad: (ad, error) {
-            ad.dispose();
-            if (mounted) {
-              setState(() {
-                _bottomBannerAd = null;
-                _isBottomBannerLoaded = false;
-                _isLoadingBottomBanner = false;
-              });
-            }
-            if (kDebugMode) {
-              print('Wallet bottom banner ad failed to load: $error');
-            }
-          },
-        ),
-      );
-
-      await banner.load();
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingBottomBanner = false;
-        });
-      }
-      if (kDebugMode) {
-        print('Failed to load wallet bottom banner ad: $e');
-      }
-    }
-  }
-
-  Widget _buildTopBannerAd() {
-    if (_isTopBannerLoaded && _topBannerAd != null) {
-      return Container(
-        width: _topBannerAd!.size.width.toDouble(),
-        height: _topBannerAd!.size.height.toDouble(),
-        alignment: Alignment.center,
-        margin: EdgeInsets.only(top: 16, bottom: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: AdWidget(ad: _topBannerAd!),
-        ),
-      );
-    } else if (_isLoadingTopBanner) {
-      return Container(
-        width: 320,
-        height: 50,
-        alignment: Alignment.center,
-        margin: EdgeInsets.only(top: 16, bottom: 16),
-        decoration: BoxDecoration(
-          color: MyColor.getScreenBgColor().withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: CircularProgressIndicator(
-          color: MyColor.getGCoinPrimaryColor(),
-          strokeWidth: 2,
-        ),
-      );
-    } else {
-      return SizedBox.shrink();
-    }
-  }
-
-  Widget _buildBottomBannerAd() {
-    if (_isBottomBannerLoaded && _bottomBannerAd != null) {
-      return Container(
-        width: _bottomBannerAd!.size.width.toDouble(),
-        height: _bottomBannerAd!.size.height.toDouble(),
-        alignment: Alignment.center,
-        margin: EdgeInsets.only(top: 16, bottom: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: AdWidget(ad: _bottomBannerAd!),
-        ),
-      );
-    } else if (_isLoadingBottomBanner) {
-      return Container(
-        width: 320,
-        height: 50,
-        alignment: Alignment.center,
-        margin: EdgeInsets.only(top: 16, bottom: 16),
-        decoration: BoxDecoration(
-          color: MyColor.getScreenBgColor().withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: CircularProgressIndicator(
-          color: MyColor.getGCoinPrimaryColor(),
-          strokeWidth: 2,
-        ),
-      );
-    } else {
-      return SizedBox.shrink();
-    }
-  }
 
   @override
   void dispose() {
-    _topBannerAd?.dispose();
-    _bottomBannerAd?.dispose();
     _slideController.dispose();
     _fadeController.dispose();
     _pulseController.dispose();
+    _interstitialAd?.dispose();
+    _adSettingsSubscription?.cancel(); // Cancel the listener
+    _bottomBannerAd?.dispose();
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -389,17 +321,9 @@ class _WalletScreenState extends State<WalletScreen>
             SliverToBoxAdapter(
               child: Column(
                 children: [
-                  // Top Banner Ad - Right after app bar
-                  _buildTopBannerAd(),
-
                   _buildBalanceCards(),
                   SizedBox(height: 20),
                   _buildTransactionSection(),
-
-                  // Bottom Banner Ad - At the bottom
-                  _buildBottomBannerAd(),
-
-                  // Add some bottom padding
                   SizedBox(height: 20),
                 ],
               ),
@@ -407,9 +331,9 @@ class _WalletScreenState extends State<WalletScreen>
           ],
         ),
       ),
+      bottomNavigationBar: _buildBottomBannerAd(),
     );
   }
-
   Widget _buildLoadingState() {
     return Center(
       child: Column(
@@ -860,5 +784,18 @@ class _WalletScreenState extends State<WalletScreen>
       default:
         return Icons.account_balance_wallet;
     }
+  }
+
+  Widget _buildBottomBannerAd() {
+    return _isBottomBannerAdLoaded
+        ? Container(
+      width: _bottomBannerAd!.size.width.toDouble(),
+      height: _bottomBannerAd!.size.height.toDouble(),
+      child: AdWidget(ad: _bottomBannerAd!),
+    )
+        : SizedBox(
+      width: AdSize.banner.width.toDouble(),
+      height: AdSize.banner.height.toDouble(),
+    );
   }
 }

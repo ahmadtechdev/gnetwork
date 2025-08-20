@@ -2,11 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../../../api_service/api_service.dart';
 import '../../../api_service/local_stroge.dart';
-import '../../../utils/ad_helper.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/custom_snackbar.dart';
 import 'profile_controller.dart';
@@ -23,288 +21,20 @@ class ModernProfileScreen extends StatefulWidget {
 class _ModernProfileScreenState extends State<ModernProfileScreen> {
   final ProfileController _controller = Get.put(ProfileController());
 
-  // Banner Ad variables
-  BannerAd? _topBannerAd;
 
-  BannerAd? _bottomBannerAd;
-
-  bool _isTopBannerLoaded = false;
-
-  bool _isBottomBannerLoaded = false;
-
-  bool _isLoadingTopBanner = false;
-
-  bool _isLoadingBottomBanner = false;
 
   @override
   void initState() {
     super.initState();
 
 
-    // Load banner ads after a small delay
-    Future.delayed(Duration(milliseconds: 500), () {
-      _loadTopBannerAd();
-      _loadBottomBannerAd();
-    });
+
   }
 
-  Future<void> _loadTopBannerAd() async {
-    if (_isLoadingTopBanner) return; // Prevent multiple simultaneous loads
-
-    _isLoadingTopBanner = true;
-
-    // Dispose existing ad if any
-    if (_topBannerAd != null) {
-      _topBannerAd?.dispose();
-      _topBannerAd = null;
-      _isTopBannerLoaded = false;
-    }
-
-    try {
-      final banner = BannerAd(
-        adUnitId: AdHelper.profileScreenTopAdUnitId,
-        request: const AdRequest(),
-        size: AdSize.banner,
-        listener: BannerAdListener(
-          onAdLoaded: (ad) {
-            if (!mounted) {
-              ad.dispose();
-              return;
-            }
-            setState(() {
-              _topBannerAd = ad as BannerAd;
-              _isTopBannerLoaded = true;
-              _isLoadingTopBanner = false;
-            });
-            if (kDebugMode) {
-              print('Profile screen top banner ad loaded successfully');
-            }
-          },
-          onAdFailedToLoad: (ad, error) {
-            ad.dispose();
-            if (mounted) {
-              setState(() {
-                _topBannerAd = null;
-                _isTopBannerLoaded = false;
-                _isLoadingTopBanner = false;
-              });
-            }
-            if (kDebugMode) {
-              print('Profile screen top banner ad failed to load: $error');
-            }
-          },
-        ),
-      );
-
-      await banner.load();
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingTopBanner = false;
-        });
-      }
-      if (kDebugMode) {
-        print('Failed to load profile screen top banner ad: $e');
-      }
-    }
-  }
-
-  Future<void> _loadBottomBannerAd() async {
-    if (_isLoadingBottomBanner) return; // Prevent multiple simultaneous loads
-
-    _isLoadingBottomBanner = true;
-
-    // Dispose existing ad if any
-    if (_bottomBannerAd != null) {
-      _bottomBannerAd?.dispose();
-      _bottomBannerAd = null;
-      _isBottomBannerLoaded = false;
-    }
-
-    try {
-      final banner = BannerAd(
-        adUnitId: AdHelper.profileScreenBottomAdUnitId,
-        request: const AdRequest(),
-        size: AdSize.banner,
-        listener: BannerAdListener(
-          onAdLoaded: (ad) {
-            if (!mounted) {
-              ad.dispose();
-              return;
-            }
-            setState(() {
-              _bottomBannerAd = ad as BannerAd;
-              _isBottomBannerLoaded = true;
-              _isLoadingBottomBanner = false;
-            });
-            if (kDebugMode) {
-              print('Profile screen bottom banner ad loaded successfully');
-            }
-          },
-          onAdFailedToLoad: (ad, error) {
-            ad.dispose();
-            if (mounted) {
-              setState(() {
-                _bottomBannerAd = null;
-                _isBottomBannerLoaded = false;
-                _isLoadingBottomBanner = false;
-              });
-            }
-            if (kDebugMode) {
-              print('Profile screen bottom banner ad failed to load: $error');
-            }
-          },
-        ),
-      );
-
-      await banner.load();
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingBottomBanner = false;
-        });
-      }
-      if (kDebugMode) {
-        print('Failed to load profile screen bottom banner ad: $e');
-      }
-    }
-  }
 
   @override
   void dispose() {
-    _topBannerAd?.dispose();
-    _bottomBannerAd?.dispose();
     super.dispose();
-  }
-
-  Widget _buildTopBannerAd() {
-    if (_isTopBannerLoaded && _topBannerAd != null) {
-      return SliverToBoxAdapter(
-        child: Container(
-          width: _topBannerAd!.size.width.toDouble(),
-          height: _topBannerAd!.size.height.toDouble(),
-          alignment: Alignment.center,
-          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: AdWidget(ad: _topBannerAd!),
-          ),
-        ),
-      );
-    } else if (_isLoadingTopBanner) {
-      return SliverToBoxAdapter(
-        child: Container(
-          width: 320,
-          height: 50,
-          alignment: Alignment.center,
-          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: MyColor.getGCoinGlassColor(),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: MyColor.getGCoinGlassBorderColor(),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  color: MyColor.getGCoinPrimaryColor(),
-                  strokeWidth: 2,
-                ),
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Loading Ad...',
-                style: TextStyle(
-                  color: MyColor.getTextColor().withOpacity(0.7),
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    } else {
-      return SliverToBoxAdapter(child: SizedBox.shrink());
-    }
-  }
-
-  Widget _buildBottomBannerAd() {
-    if (_isBottomBannerLoaded && _bottomBannerAd != null) {
-      return Container(
-        width: _bottomBannerAd!.size.width.toDouble(),
-        height: _bottomBannerAd!.size.height.toDouble(),
-        alignment: Alignment.center,
-        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: AdWidget(ad: _bottomBannerAd!),
-        ),
-      );
-    } else if (_isLoadingBottomBanner) {
-      return Container(
-        width: 320,
-        height: 50,
-        alignment: Alignment.center,
-        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: MyColor.getGCoinGlassColor(),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: MyColor.getGCoinGlassBorderColor(),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                color: MyColor.getGCoinPrimaryColor(),
-                strokeWidth: 2,
-              ),
-            ),
-            SizedBox(width: 8),
-            Text(
-              'Loading Ad...',
-              style: TextStyle(
-                color: MyColor.getTextColor().withOpacity(0.7),
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      return SizedBox.shrink();
-    }
   }
 
   @override
@@ -385,8 +115,6 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
               ),
             ),
 
-            // Top Banner Ad (below SliverAppBar)
-            _buildTopBannerAd(),
 
             // Profile Content
             SliverToBoxAdapter(
@@ -419,8 +147,7 @@ class _ModernProfileScreenState extends State<ModernProfileScreen> {
                     _buildSignOutButton(),
                     const SizedBox(height: 32),
 
-                    // Bottom Banner Ad (below all content)
-                    _buildBottomBannerAd(),
+
 
                     const SizedBox(height: 32),
                   ],

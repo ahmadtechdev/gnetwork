@@ -1,7 +1,13 @@
 
 // referral_team.dart (updated version)
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../../../utils/ad_helper.dart';
 import '../../../utils/app_colors.dart';
 import 'refferal_controller.dart';
 
@@ -16,6 +22,116 @@ class _ReferralTeamPageState extends State<ReferralTeamPage> {
   final ReferralTeamController _controller = Get.put(ReferralTeamController());
   final Map<int, bool> _expandedStates = {}; // Track expansion states by ID
 
+  // Native Ad variables
+  NativeAd? _nativeAd;
+  bool _isNativeAdLoaded = false;
+  @override
+  void initState() {
+    super.initState();
+    _listenToAdSettings(); // Load the native ad when the screen initializes
+  }
+
+  bool _shouldShowAds = false; // Add this variable
+
+  StreamSubscription? _adSettingsSubscription; // Add this
+
+  // Replace _checkAdSettings with this listener approach
+  void _listenToAdSettings() {
+    print("Setting up Firestore listener...");
+
+    _adSettingsSubscription = FirebaseFirestore.instance
+        .collection('app_settings')
+        .doc('ads_config')
+        .snapshots()
+        .listen(
+          (DocumentSnapshot doc) {
+        print("Listener triggered - Document exists: ${doc.exists}");
+        print("Listener - Document data: ${doc.data()}");
+
+        if (doc.exists) {
+          Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
+          bool showAds = data?['show_ads'] ?? false;
+
+          print("Listener - show_ads value: $showAds");
+
+          setState(() {
+            _shouldShowAds = showAds;
+          });
+
+          if (_shouldShowAds && _nativeAd == null) {
+            print("Listener - Loading ads...");
+            _loadNativeAd();
+          } else if (!_shouldShowAds && _nativeAd != null) {
+            print("Listener - Disposing ads...");
+            _nativeAd?.dispose();
+            _nativeAd = null;
+
+            setState(() {
+              _isNativeAdLoaded = false;
+            });
+          }
+        } else {
+          print("Listener - Document does not exist, creating it...");
+          _createDefaultAdSettings();
+        }
+      },
+      onError: (error) {
+        print("Listener error: $error");
+        setState(() {
+          _shouldShowAds = false;
+        });
+      },
+    );
+  }
+
+  // Method to create default settings if document doesn't exist
+  Future<void> _createDefaultAdSettings() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('app_settings')
+          .doc('ads_config')
+          .set({
+        'show_ads': true, // Default value
+      });
+      print("Default ad settings created");
+    } catch (e) {
+      print("Error creating default ad settings: $e");
+    }
+  }
+  void _loadNativeAd() {
+    _nativeAd = NativeAd(
+      adUnitId: kDebugMode ? "ca-app-pub-3940256099942544/2247696110":AdHelper.nativeAdUnitId,
+      factoryId: 'listTile', // Make sure you have a NativeAdFactory configured
+      request: const AdRequest(),
+      listener: NativeAdListener(
+        onAdLoaded: (Ad ad) {
+          if (kDebugMode) {
+            print('NativeAd loaded successfully.');
+          }
+          setState(() {
+            _nativeAd = ad as NativeAd;
+            _isNativeAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (Ad ad, LoadAdError error) {
+          if (kDebugMode) {
+            print('NativeAd failed to load: $error');
+          }
+          ad.dispose();
+          setState(() {
+            _isNativeAdLoaded = false;
+          });
+        },
+      ),
+    );
+    _nativeAd!.load();
+  }
+  @override
+  void dispose() {
+    _nativeAd?.dispose(); // Dispose the ad when the screen is removed
+    _adSettingsSubscription?.cancel(); // Cancel the listener
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,6 +147,9 @@ class _ReferralTeamPageState extends State<ReferralTeamPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildReferralStatsCard(),
+              SizedBox(height: 20),
+              // Add the native ad here
+              _buildNativeAd(),
               SizedBox(height: 20),
               if (_controller.referrals.isEmpty) _buildEmptyState(),
               if (_controller.referrals.isNotEmpty) ...[
@@ -50,6 +169,17 @@ class _ReferralTeamPageState extends State<ReferralTeamPage> {
     );
   }
 
+  // New widget to display the native ad
+  Widget _buildNativeAd() {
+    if (_isNativeAdLoaded && _nativeAd != null) {
+      return Container(
+        height: 80, // Adjust the height as needed for your native ad format
+        child: AdWidget(ad: _nativeAd!),
+      );
+    } else {
+      return const SizedBox(); // Show an empty box if ad is not loaded
+    }
+  }
   Widget _buildReferralList() {
     return Column(
       children: _controller.referrals.map((referral) =>

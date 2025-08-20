@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:gcoin/theme_controller.dart';
-import 'package:get/get.dart';
 import '../../../utils/app_colors.dart';
 // Import your app colors
 

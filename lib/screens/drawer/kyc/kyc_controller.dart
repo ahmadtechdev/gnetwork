@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart' as dio;
 import '../../../api_service/api_service.dart';
 import '../../../utils/app_colors.dart';
-import '../../homescreen/homescreen.dart'; // Add this import
+// Add this import
 
 class KYCField {
   final String label;

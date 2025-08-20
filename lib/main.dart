@@ -1,8 +1,14 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gcoin/screens/homescreen/home_controller.dart';
 import 'package:gcoin/screens/maintenance/controller.dart';
+import 'package:gcoin/utils/ad_helper.dart';
+import 'package:gcoin/utils/app_open_add.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -15,12 +21,19 @@ import 'routes/route.dart';
 import 'theme_controller.dart';
 import 'screens/maintenance/maintenance_screen.dart';
 import 'utils/my_strings.dart';
-
 import 'theme/dark.dart';
 import 'theme/light.dart';
 
+// Declare a global instance of the AppOpenAdManager
+late AppOpenAdManager appOpenAdManager;
+
+// Global variable to control ad display
+bool shouldShowAppOpenAds = false;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // ✅ Initialize Firebase first
+  await Firebase.initializeApp();
 
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
@@ -39,7 +52,6 @@ Future<void> main() async {
 
   // Initialize HomeController
   Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
-  // Add this before runApp() in main()
   Get.put(MaintenanceController());
 
   // Configure AdMob for test devices in debug mode
@@ -58,6 +70,11 @@ Future<void> main() async {
 
   // Initialize MobileAds
   MobileAds.instance.initialize();
+
+  // Initialize the AppOpenAdManager with a test ad unit ID
+  appOpenAdManager = AppOpenAdManager(
+    adUnitId: kDebugMode ? 'ca-app-pub-3940256099942544/9257395921' : AdHelper.appOpenAdUnitId,
+  );
 
   // Check internet connectivity first
   final connectivityResult = await Connectivity().checkConnectivity();
@@ -92,17 +109,130 @@ Future<void> main() async {
   runApp(MainApp(initialRoute: initialRoute));
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   final String initialRoute;
-
   const MainApp({super.key, required this.initialRoute});
+
+  @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
+  StreamSubscription? _adSettingsSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _listenToAdSettings();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _adSettingsSubscription?.cancel();
+    super.dispose();
+  }
+
+  // Listen to Firebase ad settings
+  void _listenToAdSettings() {
+    if (kDebugMode) {
+      print("Setting up Firestore listener for app open ads...");
+    }
+
+    _adSettingsSubscription = FirebaseFirestore.instance
+        .collection('app_settings')
+        .doc('ads_config')
+        .snapshots()
+        .listen(
+          (DocumentSnapshot doc) {
+        if (kDebugMode) {
+          print("App Open Ad Listener triggered - Document exists: ${doc.exists}");
+          print("App Open Ad Listener - Document data: ${doc.data()}");
+        }
+
+        if (doc.exists) {
+          Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
+          bool showAds = data?['show_ads'] ?? false;
+
+          if (kDebugMode) {
+            print("App Open Ad Listener - show_ads value: $showAds");
+          }
+
+          setState(() {
+            shouldShowAppOpenAds = showAds;
+          });
+
+          if (shouldShowAppOpenAds) {
+            if (kDebugMode) {
+              print("App Open Ad - Loading ads...");
+            }
+            appOpenAdManager.loadAd();
+          }
+        } else {
+          if (kDebugMode) {
+            print("App Open Ad Listener - Document does not exist, creating it...");
+          }
+          _createDefaultAdSettings();
+        }
+      },
+      onError: (error) {
+        if (kDebugMode) {
+          print("App Open Ad Listener error: $error");
+        }
+        setState(() {
+          shouldShowAppOpenAds = false;
+        });
+      },
+    );
+  }
+
+  // Method to create default settings if document doesn't exist
+  Future<void> _createDefaultAdSettings() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('app_settings')
+          .doc('ads_config')
+          .set({
+        'show_ads': true, // Default value
+      });
+      if (kDebugMode) {
+        print("Default ad settings created for app open ads");
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error creating default ad settings: $e");
+      }
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (kDebugMode) {
+        print("App is in Resumed state");
+      }
+
+      // Only show app open ad if Firebase setting allows it
+      if (shouldShowAppOpenAds) {
+        if (kDebugMode) {
+          print("Showing app open ad (Firebase allows)");
+        }
+        appOpenAdManager.showAdIfAvailable();
+      } else {
+        if (kDebugMode) {
+          print("App open ad disabled via Firebase");
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ThemeController>(builder: (theme) {
       return GetMaterialApp(
         title: MyStrings.appName,
-        initialRoute: initialRoute,
+        initialRoute: widget.initialRoute,
         defaultTransition: Transition.fadeIn,
         transitionDuration: const Duration(milliseconds: 300),
         getPages: _buildRoutes(),
