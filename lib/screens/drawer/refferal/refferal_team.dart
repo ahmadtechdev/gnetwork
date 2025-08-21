@@ -41,7 +41,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage> {
 
     _adSettingsSubscription = FirebaseFirestore.instance
         .collection('app_settings')
-        .doc('ads_config')
+        .doc('REFERRAL_TEAM')
         .snapshots()
         .listen(
           (DocumentSnapshot doc) {
@@ -50,7 +50,7 @@ class _ReferralTeamPageState extends State<ReferralTeamPage> {
 
         if (doc.exists) {
           Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
-          bool showAds = data?['show_ads'] ?? false;
+          bool showAds = data?['referral_team'] ?? false;
 
           print("Listener - show_ads value: $showAds");
 
@@ -89,9 +89,9 @@ class _ReferralTeamPageState extends State<ReferralTeamPage> {
     try {
       await FirebaseFirestore.instance
           .collection('app_settings')
-          .doc('ads_config')
+          .doc('REFERRAL_TEAM')
           .set({
-        'show_ads': true, // Default value
+        'referral_team': true, // Default value
       });
       print("Default ad settings created");
     } catch (e) {

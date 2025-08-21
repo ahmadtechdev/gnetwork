@@ -56,7 +56,7 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
 
     _adSettingsSubscription = FirebaseFirestore.instance
         .collection('app_settings')
-        .doc('ads_config')
+        .doc('RATE_NETWORK')
         .snapshots()
         .listen(
           (DocumentSnapshot doc) {
@@ -65,7 +65,7 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
 
         if (doc.exists) {
           Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
-          bool showAds = data?['show_ads'] ?? false;
+          bool showAds = data?['rateNetwork'] ?? false;
 
           print("Listener - show_ads value: $showAds");
 
@@ -104,9 +104,9 @@ class _MineGScreenState extends State<MineGScreen> with TickerProviderStateMixin
     try {
       await FirebaseFirestore.instance
           .collection('app_settings')
-          .doc('ads_config')
+          .doc('RATE_NETWORK')
           .set({
-        'show_ads': true, // Default value
+        'rateNetwork': true, // Default value
       });
       print("Default ad settings created");
     } catch (e) {

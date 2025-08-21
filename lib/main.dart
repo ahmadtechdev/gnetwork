@@ -142,7 +142,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
     _adSettingsSubscription = FirebaseFirestore.instance
         .collection('app_settings')
-        .doc('ads_config')
+        .doc('APP_OPEN')
         .snapshots()
         .listen(
           (DocumentSnapshot doc) {
@@ -153,10 +153,10 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
         if (doc.exists) {
           Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
-          bool showAds = data?['show_ads'] ?? false;
+          bool showAds = data?['appOpenAdd'] ?? false;
 
           if (kDebugMode) {
-            print("App Open Ad Listener - show_ads value: $showAds");
+            print("App Open Ad Listener - appOpenAdd value: $showAds");
           }
 
           setState(() {
@@ -194,7 +194,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           .collection('app_settings')
           .doc('ads_config')
           .set({
-        'show_ads': true, // Default value
+        'appOpenAdd': true, // Default value
       });
       if (kDebugMode) {
         print("Default ad settings created for app open ads");

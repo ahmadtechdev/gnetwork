@@ -36,7 +36,7 @@ class _NetworkTreeScreenState extends State<NetworkTreeScreen> {
 
     _adSettingsSubscription = FirebaseFirestore.instance
         .collection('app_settings')
-        .doc('ads_config')
+        .doc('TREE')
         .snapshots()
         .listen(
           (DocumentSnapshot doc) {
@@ -45,7 +45,7 @@ class _NetworkTreeScreenState extends State<NetworkTreeScreen> {
 
         if (doc.exists) {
           Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
-          bool showAds = data?['show_ads'] ?? false;
+          bool showAds = data?['team_tree'] ?? false;
 
           print("Listener - show_ads value: $showAds");
 
@@ -83,9 +83,9 @@ class _NetworkTreeScreenState extends State<NetworkTreeScreen> {
     try {
       await FirebaseFirestore.instance
           .collection('app_settings')
-          .doc('ads_config')
+          .doc('TREE')
           .set({
-        'show_ads': true, // Default value
+        'team_tree': true, // Default value
       });
       print("Default ad settings created");
     } catch (e) {
